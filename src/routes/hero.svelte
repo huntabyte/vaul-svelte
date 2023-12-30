@@ -99,7 +99,7 @@
 							<div class="mx-auto flex max-w-md justify-end gap-6">
 								<a
 									class="gap-0.25 flex items-center text-xs text-gray-600"
-									href="https://github.com/huntabyte/vaul"
+									href="https://github.com/huntabyte/vaul-svelte"
 									target="_blank"
 								>
 									GitHub
@@ -149,7 +149,7 @@
 				</Drawer.Portal>
 			</Drawer.Root>
 			<a
-				href="https://github.com/huntabyte/vaul"
+				href="https://github.com/huntabyte/vaul-svelte"
 				class="rounded-full px-4 py-2.5 text-sm font-semibold hover:bg-gray-100"
 				target="_blank"
 			>
