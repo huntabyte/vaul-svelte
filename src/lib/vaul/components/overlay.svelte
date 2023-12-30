@@ -1,6 +1,6 @@
 <script lang="ts">
-	import { getCtx } from './ctx.js';
 	import { Dialog as DialogPrimitive } from 'bits-ui';
+	import { getCtx } from '../ctx.js';
 
 	const {
 		refs: { overlayRef },

@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { Dialog as DialogPrimitive } from 'bits-ui';
-	import { setCtx } from './ctx.js';
-	import type { RootProps } from './types.js';
+	import { setCtx } from '../ctx.js';
+	import type { RootProps } from '../types.js';
 
 	type $$Props = RootProps;
 
@@ -18,7 +18,7 @@
 	export let shouldScaleBackground: $$Props['shouldScaleBackground'] = false;
 
 	const {
-		states: { isOpen, hasBeenOpened, keyboardIsOpen, visible },
+		states: { isOpen, hasBeenOpened, keyboardIsOpen },
 		methods: { closeDrawer },
 		refs: { drawerRef },
 		options: { dismissible },
@@ -63,7 +63,6 @@
 		if (!o) {
 			closeDrawer();
 		} else {
-			visible.set(true);
 			hasBeenOpened.set(true);
 			isOpen.set(true);
 		}

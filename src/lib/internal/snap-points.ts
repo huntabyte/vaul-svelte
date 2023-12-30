@@ -20,7 +20,7 @@ export function createSnapPoints({
 	const isLastSnapPoint = derived(
 		[snapPoints, activeSnapPoint],
 		([$snapPoints, $activeSnapPoint]) => {
-			return $activeSnapPoint === $snapPoints?.[$snapPoints.length - 1] ?? null;
+			return $activeSnapPoint === $snapPoints?.[$snapPoints.length - 1];
 		}
 	);
 
@@ -181,7 +181,7 @@ export function createSnapPoints({
 			const dragDirection = hasDraggedUp ? 1 : -1; // 1 = up, -1 = down
 
 			// Don't do anything if we swipe upwards while being on the last snap point
-			if (dragDirection > 0 && isLastSnapPoint && $snapPoints) {
+			if (dragDirection > 0 && get(isLastSnapPoint) && $snapPoints) {
 				$snapToPoint($snapPointsOffset[$snapPoints.length - 1]);
 				return;
 			}

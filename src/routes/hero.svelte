@@ -39,8 +39,8 @@
 	</svg>
 	<div class="mx-auto max-w-2xl pt-64 text-center">
 		<div class="relative flex flex-col">
-			<h1 class="relative mb-4 text-7xl font-semibold">Vaul</h1>
-			<p class="text-xl text-gray-600">Drawer component for React.</p>
+			<h1 class="relative mb-4 text-7xl font-semibold">Vaul-Svelte</h1>
+			<p class="text-xl text-gray-600">Drawer component for Svelte.</p>
 		</div>
 		<div class="mt-6 flex justify-center gap-4">
 			<Drawer.Root shouldScaleBackground>
@@ -62,25 +62,27 @@
 						<div class="flex-1 rounded-t-[10px] bg-white p-4">
 							<div class="mx-auto mb-8 h-1.5 w-12 flex-shrink-0 rounded-full bg-gray-300" />
 							<div class="mx-auto max-w-md">
-								<Drawer.Title class="mb-4 font-medium">Drawer for React.</Drawer.Title>
+								<Drawer.Title class="mb-4 font-medium">Drawer for Svelte.</Drawer.Title>
 								<p class="mb-2 text-gray-600">
 									This component can be used as a Dialog replacement on mobile and tablet devices.
 								</p>
 								<p class="mb-2 text-gray-600">
-									It comes unstyled, has gesture-driven animations, and is made by
+									It comes unstyled, has gesture-driven animations, and was originally made by
 									<a href="https://emilkowal.ski/" class="underline" target="_blank">
 										Emil Kowalski
 									</a>
+									and ported to Svelte by
+									<a href="https://x.com/huntabyte" class="underline" target="_blank">Huntabyte</a>
 									.
 								</p>
 								<p class="mb-8 text-gray-600">
 									It uses
 									<a
-										href="https://www.radix-ui.com/docs/primitives/components/dialog"
+										href="https://www.bits-ui.com/docs/components/dialog"
 										class="underline"
 										target="_blank"
 									>
-										Radix's Dialog primitive
+										Bits' Dialog primitive
 									</a>
 									under the hood and is inspired by
 									<a
@@ -97,7 +99,7 @@
 							<div class="mx-auto flex max-w-md justify-end gap-6">
 								<a
 									class="gap-0.25 flex items-center text-xs text-gray-600"
-									href="https://github.com/emilkowalski/vaul"
+									href="https://github.com/huntabyte/vaul"
 									target="_blank"
 								>
 									GitHub
@@ -120,7 +122,7 @@
 								</a>
 								<a
 									class="gap-0.25 flex items-center text-xs text-gray-600"
-									href="https://twitter.com/emilkowalski_"
+									href="https://twitter.com/huntabyte"
 									target="_blank"
 								>
 									Twitter
@@ -147,7 +149,7 @@
 				</Drawer.Portal>
 			</Drawer.Root>
 			<a
-				href="https://github.com/emilkowalski/vaul"
+				href="https://github.com/huntabyte/vaul"
 				class="rounded-full px-4 py-2.5 text-sm font-semibold hover:bg-gray-100"
 				target="_blank"
 			>

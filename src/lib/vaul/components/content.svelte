@@ -1,30 +1,24 @@
 <script lang="ts">
 	import { Dialog as DialogPrimitive } from 'bits-ui';
-	import type { OverlayProps } from './types.js';
-	import { getCtx } from './ctx.js';
-	import { styleToString } from '$lib/internal/helpers/style.js';
+	import type { OverlayProps } from '../types.js';
+	import { getCtx } from '../ctx.js';
+	import Visible from './visible.svelte';
 
 	type $$Props = OverlayProps;
 
 	const {
 		refs: { drawerRef },
-		states: { visible, snapPointsOffset },
+		states: { visible },
+		helpers: { getContentStyle },
 		methods: { onPress, onDrag, onRelease }
 	} = getCtx();
 
 	export let style: $$Props['style'] = '';
-
-	$: styleProp =
-		$snapPointsOffset && $snapPointsOffset.length > 0
-			? styleToString({
-					'--snap-point-height': `${$snapPointsOffset[0]!}px`
-				}) + style
-			: style;
 </script>
 
 <DialogPrimitive.Content
 	bind:el={$drawerRef}
-	style={styleProp}
+	style={$getContentStyle(style)}
 	on:pointermove={onDrag}
 	on:pointerdown={onPress}
 	on:pointerup={onRelease}
@@ -32,5 +26,6 @@
 	data-vaul-drawer-visible={$visible ? 'true' : 'false'}
 	{...$$restProps}
 >
+	<Visible />
 	<slot />
 </DialogPrimitive.Content>

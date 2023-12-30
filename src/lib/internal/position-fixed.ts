@@ -96,9 +96,9 @@ export function usePositionFixed({
 		};
 	});
 
-	effect([isOpen, hasBeenOpened, activeUrl], ([$isOpen, $hasBeenOpened, _]) => {
+	effect([isOpen, activeUrl], ([$isOpen, _]) => {
 		if (typeof document === 'undefined') return;
-		if (get(nested) || !$hasBeenOpened) return;
+		if (get(nested) || !get(hasBeenOpened)) return;
 		// This is needed to force Safari toolbar to show **before** the drawer starts animating to prevent a gnarly shift from happening
 		if ($isOpen) {
 			setPositionFixed();

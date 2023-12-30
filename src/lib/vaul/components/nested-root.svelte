@@ -1,7 +1,7 @@
 <script lang="ts">
 	import Root from './root.svelte';
-	import { getCtx } from './ctx.js';
-	import type { RootProps } from './types.js';
+	import { getCtx } from '../ctx.js';
+	import type { RootProps } from '../types.js';
 
 	type $$Props = RootProps;
 

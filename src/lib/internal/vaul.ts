@@ -1,4 +1,4 @@
-import { get, writable } from 'svelte/store';
+import { derived, get, writable, type Readable } from 'svelte/store';
 import type { SvelteEvent } from './types.js';
 import { createSnapPoints } from './snap-points.js';
 import {
@@ -10,7 +10,8 @@ import {
 	set,
 	reset,
 	effect,
-	removeUndefined
+	removeUndefined,
+	styleToString
 } from '$lib/internal/helpers/index.js';
 import { isIOS, isInput, usePreventScroll } from './prevent-scroll.js';
 import { usePositionFixed } from './position-fixed.js';
@@ -176,6 +177,36 @@ export function createVaul(props: CreateVaulProps) {
 		fadeFromIndex,
 		overlayRef,
 		onSnapPointChange
+	});
+
+	const getContentStyle: Readable<(style?: string | null) => string> = derived(
+		[snapPointsOffset],
+		([$snapPointsOffset]) => {
+			return (style: string | null = '') => {
+				if ($snapPointsOffset && $snapPointsOffset.length > 0) {
+					return style;
+				}
+				const styleProp = styleToString({
+					'--snap-point-height': `${$snapPointsOffset[0]!}px`
+				});
+
+				if (style) {
+					return styleProp + style;
+				}
+
+				return styleProp;
+			};
+		}
+	);
+
+	effect([isOpen], ([$isOpen]) => {
+		if (!$isOpen && get(shouldScaleBackground)) {
+			const id = setTimeout(() => {
+				reset(document.body, 'background');
+			}, 200);
+
+			return () => clearTimeout(id);
+		}
 	});
 
 	effect([isOpen], ([$isOpen]) => {
@@ -386,13 +417,6 @@ export function createVaul(props: CreateVaulProps) {
 		}
 	}
 
-	onMount(() => {
-		return () => {
-			scaleBackground(false);
-			restorePositionSetting();
-		};
-	});
-
 	function scaleBackground(open: boolean) {
 		const wrapper = document.querySelector('[data-vaul-drawer-wrapper]');
 
@@ -531,16 +555,6 @@ export function createVaul(props: CreateVaulProps) {
 			}
 		}, TRANSITIONS.DURATION * 1000); // seconds to ms
 	}
-
-	effect([isOpen, shouldScaleBackground], ([$isOpen, $shouldScaleBackground]) => {
-		if (!$isOpen && $shouldScaleBackground) {
-			const id = setTimeout(() => {
-				reset(document.body);
-			}, 200);
-
-			return () => clearTimeout(id);
-		}
-	});
 
 	// This can be done much better
 
@@ -766,6 +780,9 @@ export function createVaul(props: CreateVaulProps) {
 			shouldFade,
 			visible
 		},
+		helpers: {
+			getContentStyle
+		},
 		methods: {
 			closeDrawer,
 			onOpenChange,
@@ -775,7 +792,8 @@ export function createVaul(props: CreateVaulProps) {
 			scaleBackground,
 			onNestedDrag,
 			onNestedOpenChange,
-			onNestedRelease
+			onNestedRelease,
+			restorePositionSetting
 		},
 		refs: {
 			drawerRef,
