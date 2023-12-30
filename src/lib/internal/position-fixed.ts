@@ -24,7 +24,6 @@ export function usePositionFixed({
 		const $scrollPos = get(scrollPos);
 		// If previousBodyPosition is already set, don't set it again.
 		if (previousBodyPosition === null && $isOpen) {
-			console.log('setting positionfixed');
 			previousBodyPosition = {
 				position: document.body.style.position,
 				top: document.body.style.top,
@@ -58,7 +57,6 @@ export function usePositionFixed({
 
 	function restorePositionSetting() {
 		if (previousBodyPosition !== null) {
-			console.log('restoring positioning');
 			const $activeUrl = get(activeUrl);
 			// Convert the position from "px" to Int
 			const y = -parseInt(document.body.style.top, 10);

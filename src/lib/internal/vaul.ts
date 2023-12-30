@@ -330,7 +330,7 @@ export function createVaul(props: CreateVaulProps) {
 
 			// We need to capture last time when drag with scroll was triggered and have a timeout between
 			const absDraggedDistance = Math.abs(draggedDistance);
-			const wrapper = document.querySelector('[vaul-drawer-wrapper]');
+			const wrapper = document.querySelector('[data-vaul-drawer-wrapper]');
 			const $drawerRefHeight = get(drawerHeightRef);
 			let percentageDragged = absDraggedDistance / $drawerRefHeight;
 			const snapPointPercentageDragged = getSnapPointsPercentageDragged(
@@ -394,7 +394,7 @@ export function createVaul(props: CreateVaulProps) {
 	});
 
 	function scaleBackground(open: boolean) {
-		const wrapper = document.querySelector('[vaul-drawer-wrapper]');
+		const wrapper = document.querySelector('[data-vaul-drawer-wrapper]');
 
 		if (!wrapper || !get(shouldScaleBackground)) return;
 
@@ -560,7 +560,7 @@ export function createVaul(props: CreateVaulProps) {
 		const $drawerRef = get(drawerRef);
 		if (!$drawerRef) return;
 		const $overlayRef = get(overlayRef);
-		const wrapper = document.querySelector('[vaul-drawer-wrapper]');
+		const wrapper = document.querySelector('[data-vaul-drawer-wrapper]');
 		const currentSwipeAmount = getTranslateY($drawerRef);
 
 		set($drawerRef, {

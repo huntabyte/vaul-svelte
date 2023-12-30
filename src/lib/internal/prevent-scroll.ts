@@ -2,10 +2,6 @@
 
 import { addEventListener } from './helpers/event.js';
 
-type PreventScrollOptions = {
-	focusCallback?: () => void;
-};
-
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function chain(...callbacks: any[]): (...args: any[]) => void {
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
