@@ -325,108 +325,107 @@ export function createVaul(props: CreateVaulProps) {
 	}
 
 	function onDrag(event: SvelteEvent<PointerEvent, HTMLElement>) {
+		if (!get(isDragging)) return;
 		// We need to know how much of the drawer has been dragged in percentages so that we can transform background accordingly
-		if (get(isDragging)) {
-			const $pointerStartY = get(pointerStartY);
-			const draggedDistance = $pointerStartY - event.screenY;
-			const isDraggingDown = draggedDistance > 0;
+		const $pointerStartY = get(pointerStartY);
+		const draggedDistance = $pointerStartY - event.screenY;
+		const isDraggingDown = draggedDistance > 0;
 
-			const $activeSnapPointIndex = get(activeSnapPointIndex);
-			const $snapPoints = get(snapPoints);
+		const $activeSnapPointIndex = get(activeSnapPointIndex);
+		const $snapPoints = get(snapPoints);
 
-			// Disallow dragging down to close when first snap point is the active one and dismissible prop is set to false.
-			if ($snapPoints && $activeSnapPointIndex === 0 && !get(dismissible)) return;
+		// Disallow dragging down to close when first snap point is the active one and dismissible prop is set to false.
+		if ($snapPoints && $activeSnapPointIndex === 0 && !get(dismissible)) return;
 
-			const $isAllowedToDrag = get(isAllowedToDrag);
-			if (!$isAllowedToDrag && !shouldDrag(event.target as HTMLElement, isDraggingDown)) {
-				return;
-			}
-			const $drawerRef = get(drawerRef);
-			if (!$drawerRef) return;
+		const $isAllowedToDrag = get(isAllowedToDrag);
+		if (!$isAllowedToDrag && !shouldDrag(event.target as HTMLElement, isDraggingDown)) {
+			return;
+		}
+		const $drawerRef = get(drawerRef);
+		if (!$drawerRef) return;
 
-			$drawerRef.classList.add(DRAG_CLASS);
-			// If shouldDrag gave true once after pressing down on the drawer, we set isAllowedToDrag to true and it will remain true until we let go, there's no reason to disable dragging mid way, ever, and that's the solution to it
-			isAllowedToDrag.set(true);
+		$drawerRef.classList.add(DRAG_CLASS);
+		// If shouldDrag gave true once after pressing down on the drawer, we set isAllowedToDrag to true and it will remain true until we let go, there's no reason to disable dragging mid way, ever, and that's the solution to it
+		isAllowedToDrag.set(true);
+
+		set($drawerRef, {
+			transition: 'none'
+		});
+
+		const $overlayRef = get(overlayRef);
+
+		set($overlayRef, {
+			transition: 'none'
+		});
+
+		if ($snapPoints) {
+			onDragSnapPoints({ draggedDistance });
+		}
+
+		// Run this only if snapPoints are not defined or if we are at the last snap point (highest one)
+		if (isDraggingDown && !$snapPoints) {
+			const dampenedDraggedDistance = dampenValue(draggedDistance);
 
 			set($drawerRef, {
-				transition: 'none'
+				transform: `translate3d(0, ${Math.min(dampenedDraggedDistance * -1, 0)}px, 0)`
 			});
+			return;
+		}
 
-			const $overlayRef = get(overlayRef);
+		// We need to capture last time when drag with scroll was triggered and have a timeout between
+		const absDraggedDistance = Math.abs(draggedDistance);
+		const wrapper = document.querySelector('[data-vaul-drawer-wrapper]');
+		const $drawerRefHeight = get(drawerHeightRef);
+		let percentageDragged = absDraggedDistance / $drawerRefHeight;
+		const snapPointPercentageDragged = getSnapPointsPercentageDragged(
+			absDraggedDistance,
+			isDraggingDown
+		);
 
-			set($overlayRef, {
-				transition: 'none'
-			});
+		if (snapPointPercentageDragged !== null) {
+			percentageDragged = snapPointPercentageDragged;
+		}
 
-			if ($snapPoints) {
-				onDragSnapPoints({ draggedDistance });
-			}
+		const opacityValue = 1 - percentageDragged;
 
-			// Run this only if snapPoints are not defined or if we are at the last snap point (highest one)
-			if (isDraggingDown && !$snapPoints) {
-				const dampenedDraggedDistance = dampenValue(draggedDistance);
+		const $fadeFromIndex = get(fadeFromIndex);
+		const $shouldFade = get(shouldFade);
 
-				set($drawerRef, {
-					transform: `translate3d(0, ${Math.min(dampenedDraggedDistance * -1, 0)}px, 0)`
-				});
-				return;
-			}
+		if ($shouldFade || ($fadeFromIndex && $activeSnapPointIndex === $fadeFromIndex - 1)) {
+			onDragProp?.(event, percentageDragged);
 
-			// We need to capture last time when drag with scroll was triggered and have a timeout between
-			const absDraggedDistance = Math.abs(draggedDistance);
-			const wrapper = document.querySelector('[data-vaul-drawer-wrapper]');
-			const $drawerRefHeight = get(drawerHeightRef);
-			let percentageDragged = absDraggedDistance / $drawerRefHeight;
-			const snapPointPercentageDragged = getSnapPointsPercentageDragged(
-				absDraggedDistance,
-				isDraggingDown
+			set(
+				$overlayRef,
+				{
+					opacity: `${opacityValue}`,
+					transition: 'none'
+				},
+				true
 			);
+		}
 
-			if (snapPointPercentageDragged !== null) {
-				percentageDragged = snapPointPercentageDragged;
-			}
+		if (wrapper && $overlayRef && get(shouldScaleBackground)) {
+			// Calculate percentageDragged as a fraction (0 to 1)
+			const scaleValue = Math.min(getScale() + percentageDragged * (1 - getScale()), 1);
+			const borderRadiusValue = 8 - percentageDragged * 8;
 
-			const opacityValue = 1 - percentageDragged;
+			const translateYValue = Math.max(0, 14 - percentageDragged * 14);
 
-			const $fadeFromIndex = get(fadeFromIndex);
-			const $shouldFade = get(shouldFade);
+			set(
+				wrapper,
+				{
+					borderRadius: `${borderRadiusValue}px`,
+					transform: `scale(${scaleValue}) translate3d(0, ${translateYValue}px, 0)`,
+					transition: 'none'
+				},
+				true
+			);
+		}
 
-			if ($shouldFade || ($fadeFromIndex && $activeSnapPointIndex === $fadeFromIndex - 1)) {
-				onDragProp?.(event, percentageDragged);
-
-				set(
-					$overlayRef,
-					{
-						opacity: `${opacityValue}`,
-						transition: 'none'
-					},
-					true
-				);
-			}
-
-			if (wrapper && $overlayRef && get(shouldScaleBackground)) {
-				// Calculate percentageDragged as a fraction (0 to 1)
-				const scaleValue = Math.min(getScale() + percentageDragged * (1 - getScale()), 1);
-				const borderRadiusValue = 8 - percentageDragged * 8;
-
-				const translateYValue = Math.max(0, 14 - percentageDragged * 14);
-
-				set(
-					wrapper,
-					{
-						borderRadius: `${borderRadiusValue}px`,
-						transform: `scale(${scaleValue}) translate3d(0, ${translateYValue}px, 0)`,
-						transition: 'none'
-					},
-					true
-				);
-			}
-
-			if (!$snapPoints) {
-				set($drawerRef, {
-					transform: `translate3d(0, ${absDraggedDistance}px, 0)`
-				});
-			}
+		if (!$snapPoints) {
+			set($drawerRef, {
+				transform: `translate3d(0, ${absDraggedDistance}px, 0)`
+			});
 		}
 	}
 

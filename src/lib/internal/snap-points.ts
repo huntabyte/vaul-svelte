@@ -73,10 +73,6 @@ export function createSnapPoints({
 			$activeSnapPointIndex !== null ? $snapPointsOffset?.[$activeSnapPointIndex] : null
 	);
 
-	// effect([activeSnapPointOffset], ([$activeSnapPointOffset]) => {
-	// 	console.log('activeSnapPointOffset', $activeSnapPointOffset);
-	// });
-
 	effect([activeSnapPoint, drawerRef], ([$activeSnapPoint, $drawerRef]) => {
 		if ($activeSnapPoint && $drawerRef) {
 			const $snapPoints = get(snapPoints);
@@ -97,6 +93,7 @@ export function createSnapPoints({
 		const $drawerRef = get(drawerRef);
 
 		onSnapPointChange(newSnapPointIndex);
+
 		set($drawerRef, {
 			transition: `transform ${TRANSITIONS.DURATION}s cubic-bezier(${TRANSITIONS.EASE.join(',')})`,
 			transform: `translate3d(0, ${height}px, 0)`
@@ -140,15 +137,19 @@ export function createSnapPoints({
 		dismissible: boolean;
 	}) {
 		const $fadeFromIndex = get(fadeFromIndex);
+		if ($fadeFromIndex === undefined) return;
 		const $activeSnapPointOffset = get(activeSnapPointOffset);
-		if ($fadeFromIndex === undefined || $activeSnapPointOffset === null) return;
 		const $activeSnapPointIndex = get(activeSnapPointIndex);
-
 		const $overlayRef = get(overlayRef);
 		const $snapPointsOffset = get(snapPointsOffset);
 		const $snapPoints = get(snapPoints);
 
-		const currentPosition = $activeSnapPointOffset - draggedDistance;
+		function getCurrPosition() {
+			const snapOffset = $activeSnapPointOffset ?? 0;
+			return snapOffset - draggedDistance;
+		}
+
+		const currentPosition = getCurrPosition();
 		const isOverlaySnapPoint = $activeSnapPointIndex === $fadeFromIndex - 1;
 		const isFirst = $activeSnapPointIndex === 0;
 		const hasDraggedUp = draggedDistance > 0;
@@ -233,7 +234,7 @@ export function createSnapPoints({
 
 		// Don't animate, but still use this one if we are dragging away from the overlaySnapPoint
 		if (isOverlaySnapPoint && !isDraggingDown) return 1;
-		if (!shouldFade && !isOverlaySnapPoint) return null;
+		if (!get(shouldFade) && !isOverlaySnapPoint) return null;
 
 		// Either fadeFrom index or the one before
 		const targetSnapPointIndex = isOverlaySnapPoint

@@ -5,7 +5,7 @@
 	const snapPoints = ['148px', '355px', 1];
 	let snap: string | number = '148px';
 
-	$: activeSnapPointIndex = snapPoints.indexOf(snap as string);
+	// $: activeSnapPointIndex = snapPoints.indexOf(snap as string);
 
 	const triggerAttrs = {
 		'data-testid': 'trigger'
@@ -13,8 +13,8 @@
 </script>
 
 <div class="flex h-screen w-screen items-center justify-center bg-white p-8">
-	<div data-testid="active-snap-index">{activeSnapPointIndex}</div>
-	<Drawer.Root {snapPoints} bind:activeSnapPoint={snap}>
+	<div data-testid="active-snap-index"></div>
+	<Drawer.Root {snapPoints} activeSnapPoint={snap}>
 		<Drawer.Trigger {...triggerAttrs}>Open Drawer</Drawer.Trigger>
 		<Drawer.Overlay class="fixed inset-0 bg-black/40" />
 		<Drawer.Portal>
