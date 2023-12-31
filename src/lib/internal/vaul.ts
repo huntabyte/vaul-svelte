@@ -157,15 +157,6 @@ export function createVaul(props: CreateVaulProps) {
 	const activeSnapPointStore = writable(getDefaultActiveSnapPoint());
 	const activeSnapPoint = overridable(activeSnapPointStore, withDefaults.onActiveSnapPointChange);
 
-	function onSnapPointChange(activeSnapPointIndex: number) {
-		// Change openTime ref when we reach the last snap point to prevent dragging for 500ms incase it's scrollable.
-		const $snapPoints = get(snapPoints);
-		const $snapPointsOffset = get(snapPointsOffset);
-		if ($snapPoints && activeSnapPointIndex === $snapPointsOffset.length - 1) {
-			openTime.set(new Date());
-		}
-	}
-
 	const {
 		activeSnapPointIndex,
 		getPercentageDragged: getSnapPointsPercentageDragged,
@@ -179,7 +170,7 @@ export function createVaul(props: CreateVaulProps) {
 		drawerRef,
 		fadeFromIndex,
 		overlayRef,
-		onSnapPointChange
+		openTime
 	});
 
 	const getContentStyle: Readable<(style?: string | null) => string> = derived(
@@ -187,17 +178,13 @@ export function createVaul(props: CreateVaulProps) {
 		([$snapPointsOffset]) => {
 			return (style: string | null = '') => {
 				if ($snapPointsOffset && $snapPointsOffset.length > 0) {
-					return style;
-				}
-				const styleProp = styleToString({
-					'--snap-point-height': `${$snapPointsOffset[0]!}px`
-				});
-
-				if (style) {
-					return styleProp + style;
+					const styleProp = styleToString({
+						'--snap-point-height': `${$snapPointsOffset[0]}px`
+					});
+					return style + styleProp;
 				}
 
-				return styleProp;
+				return style;
 			};
 		}
 	);

@@ -77,6 +77,17 @@ export type Props = {
 	 * @default false
 	 */
 	shouldScaleBackground?: CreateVaulProps['shouldScaleBackground'] & {};
+
+	/**
+	 * The active snap point of the drawer. You can bind to this value to
+	 * programatically change the active snap point.
+	 */
+	activeSnapPoint?: CreateVaulProps['defaultActiveSnapPoint'];
+
+	/**
+	 * A function called when the active snap point of the Drawer changes.
+	 */
+	onActiveSnapPointChange?: OnChangeFn<number | string | null>;
 } & DialogPrimitive.Props;
 
 export type OverlayProps = DialogPrimitive.OverlayProps;

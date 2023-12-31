@@ -15,18 +15,28 @@
 	export let onOutsideClick: $$Props['onOutsideClick'] = undefined;
 	export let nested: $$Props['nested'] = false;
 	export let shouldScaleBackground: $$Props['shouldScaleBackground'] = false;
+	export let activeSnapPoint: $$Props['activeSnapPoint'] = undefined;
+	export let onActiveSnapPointChange: $$Props['onActiveSnapPointChange'] = undefined;
 
 	const {
-		states: { keyboardIsOpen },
+		states: { keyboardIsOpen, activeSnapPoint: localActiveSnapPoint },
 		methods: { closeDrawer, openDrawer },
 		options: { dismissible },
 		updateOption
 	} = setCtx({
 		defaultOpen: open,
+		defaultActiveSnapPoint: activeSnapPoint,
 		onOpenChange: ({ next }) => {
 			if (open !== next) {
 				onOpenChange?.(next);
 				open = next;
+			}
+			return next;
+		},
+		onActiveSnapPointChange: ({ next }) => {
+			if (activeSnapPoint !== next) {
+				onActiveSnapPointChange?.(next);
+				activeSnapPoint = next;
 			}
 			return next;
 		},
@@ -38,6 +48,10 @@
 		nested,
 		shouldScaleBackground
 	});
+
+	$: if (activeSnapPoint !== undefined) {
+		localActiveSnapPoint.set(activeSnapPoint);
+	}
 
 	$: updateOption('closeThreshold', closeThreshold);
 	$: updateOption('scrollLockTimeout', scrollLockTimeout);
