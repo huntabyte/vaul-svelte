@@ -1,6 +1,6 @@
 import { derived, get, writable, type Readable } from 'svelte/store';
 import type { SvelteEvent } from './types.js';
-import { createSnapPoints } from './snap-points.js';
+import { handleSnapPoints } from './snap-points.js';
 import {
 	overridable,
 	toWritableStores,
@@ -11,15 +11,15 @@ import {
 	reset,
 	effect,
 	removeUndefined,
-	styleToString
+	styleToString,
+	isInput
 } from '$lib/internal/helpers/index.js';
-import { isIOS, isInput, usePreventScroll } from './prevent-scroll.js';
-import { usePositionFixed } from './position-fixed.js';
-import { onMount } from 'svelte';
+import { isIOS, preventScroll } from './prevent-scroll.js';
+import { handlePositionFixed } from './position-fixed.js';
 import { TRANSITIONS, VELOCITY_THRESHOLD } from './constants.js';
 import { addEventListener } from './helpers/event.js';
 import { noop } from './helpers/noop.js';
-import { useEscapeKeydown } from './escape-keydown.js';
+import { handleEscapeKeydown } from './escape-keydown.js';
 
 const CLOSE_THRESHOLD = 0.25;
 
@@ -123,26 +123,26 @@ export function createVaul(props: CreateVaulProps) {
 
 	const openStore = writable(withDefaults.defaultOpen);
 	const isOpen = overridable(openStore, withDefaults.onOpenChange);
-
 	const hasBeenOpened = writable(false);
 	const visible = writable(false);
-	const mounted = writable(false);
-	const isDragging = writable(false);
+
 	const justReleased = writable(false);
 	const overlayRef = writable<HTMLDivElement | undefined>(undefined);
 	const openTime = writable<Date | null>(null);
-	const dragStartTime = writable<Date | null>(null);
 	const dragEndTime = writable<Date | null>(null);
 	const lastTimeDragPrevented = writable<Date | null>(null);
 	const isAllowedToDrag = writable(false);
 	const nestedOpenChangeTimer = writable<NodeJS.Timeout | null>(null);
-	const pointerStartY = writable(0);
 	const keyboardIsOpen = writable(false);
 	const previousDiffFromInitial = writable(0);
 	const drawerRef = writable<HTMLDivElement | undefined>(undefined);
 	const drawerHeightRef = writable(get(drawerRef)?.getBoundingClientRect().height || 0);
 	const initialDrawerHeight = writable(0);
+
+	let isDragging = false;
+	let dragStartTime: Date | null = null;
 	let isClosing = false;
+	let pointerStartY = 0;
 
 	function getDefaultActiveSnapPoint() {
 		if (withDefaults.defaultActiveSnapPoint !== undefined) {
@@ -166,7 +166,7 @@ export function createVaul(props: CreateVaulProps) {
 		onRelease: onReleaseSnapPoints,
 		shouldFade,
 		snapPointsOffset
-	} = createSnapPoints({
+	} = handleSnapPoints({
 		snapPoints,
 		activeSnapPoint,
 		drawerRef,
@@ -201,28 +201,27 @@ export function createVaul(props: CreateVaulProps) {
 		}
 	});
 
-	effect([isOpen], ([$isOpen]) => {
+	// prevent scroll when the drawer is open
+	effect([isOpen, justReleased], ([$isOpen, $justReleased]) => {
 		let unsub = () => {};
 
-		if ($isOpen) {
-			unsub = usePreventScroll();
+		if ($isOpen && !$justReleased) {
+			unsub = preventScroll();
 		}
 
 		return unsub;
 	});
 
-	const { restorePositionSetting } = usePositionFixed({ isOpen, modal, nested, hasBeenOpened });
+	const { restorePositionSetting } = handlePositionFixed({ isOpen, modal, nested, hasBeenOpened });
 
+	// Close the drawer on escape keydown
 	effect([drawerRef], ([$drawerRef]) => {
 		let unsub = noop;
 
 		if ($drawerRef) {
-			const { destroy } = useEscapeKeydown($drawerRef, {
-				handler: () => {
-					closeDrawer();
-				}
+			unsub = handleEscapeKeydown($drawerRef, () => {
+				closeDrawer();
 			});
-			unsub = destroy;
 		}
 
 		return () => {
@@ -236,18 +235,16 @@ export function createVaul(props: CreateVaulProps) {
 		isOpen.set(true);
 	}
 
-	function getScale() {
-		return (window.innerWidth - WINDOW_TOP_OFFSET) / window.innerWidth;
-	}
-
 	function onPress(event: SvelteEvent<PointerEvent, HTMLElement>) {
 		const $drawerRef = get(drawerRef);
 
 		if (!get(dismissible) && !get(snapPoints)) return;
 		if ($drawerRef && !$drawerRef.contains(event.target as Node)) return;
 		drawerHeightRef.set($drawerRef?.getBoundingClientRect().height || 0);
-		isDragging.set(true);
-		dragStartTime.set(new Date());
+
+		isDragging = true;
+
+		dragStartTime = new Date();
 
 		// iOS doesn't trigger mouseUp after scrolling so we need to listen to touched in order to disallow dragging
 		if (isIOS()) {
@@ -256,7 +253,7 @@ export function createVaul(props: CreateVaulProps) {
 		// Ensure we maintain correct pointer capture even when going outside of the drawer
 		(event.target as HTMLElement).setPointerCapture(event.pointerId);
 
-		pointerStartY.set(event.screenY);
+		pointerStartY = event.screenY;
 	}
 
 	function shouldDrag(el: EventTarget, isDraggingDown: boolean) {
@@ -327,10 +324,9 @@ export function createVaul(props: CreateVaulProps) {
 	}
 
 	function onDrag(event: SvelteEvent<PointerEvent, HTMLElement>) {
-		if (!get(isDragging)) return;
+		if (!isDragging) return;
 		// We need to know how much of the drawer has been dragged in percentages so that we can transform background accordingly
-		const $pointerStartY = get(pointerStartY);
-		const draggedDistance = $pointerStartY - event.screenY;
+		const draggedDistance = pointerStartY - event.screenY;
 		const isDraggingDown = draggedDistance > 0;
 
 		const $activeSnapPointIndex = get(activeSnapPointIndex);
@@ -583,10 +579,6 @@ export function createVaul(props: CreateVaulProps) {
 		}
 	});
 
-	onMount(() => {
-		mounted.set(true);
-	});
-
 	function resetDrawer() {
 		const $drawerRef = get(drawerRef);
 		if (!$drawerRef) return;
@@ -626,9 +618,8 @@ export function createVaul(props: CreateVaulProps) {
 	}
 
 	function onRelease(event: SvelteEvent<PointerEvent | MouseEvent, HTMLElement>) {
-		const $isDragging = get(isDragging);
 		const $drawerRef = get(drawerRef);
-		if (!$isDragging || !$drawerRef) return;
+		if (!isDragging || !$drawerRef) return;
 
 		const $isAllowedToDrag = get(isAllowedToDrag);
 
@@ -638,7 +629,7 @@ export function createVaul(props: CreateVaulProps) {
 		}
 		$drawerRef.classList.remove(DRAG_CLASS);
 		isAllowedToDrag.set(false);
-		isDragging.set(false);
+		isDragging = false;
 
 		const $dragEndTime = new Date();
 
@@ -653,11 +644,10 @@ export function createVaul(props: CreateVaulProps) {
 		)
 			return;
 
-		const $dragStartTime = get(dragStartTime);
-		if ($dragStartTime === null) return;
+		if (dragStartTime === null) return;
 
-		const timeTaken = $dragEndTime.getTime() - $dragStartTime.getTime();
-		const distMoved = get(pointerStartY) - event.screenY;
+		const timeTaken = $dragEndTime.getTime() - dragStartTime.getTime();
+		const distMoved = pointerStartY - event.screenY;
 		const velocity = Math.abs(distMoved) / timeTaken;
 
 		if (velocity > 0.05) {
@@ -762,7 +752,7 @@ export function createVaul(props: CreateVaulProps) {
 		);
 	}
 
-	function onNestedDrag(event: SvelteEvent<PointerEvent, HTMLElement>, percentageDragged: number) {
+	function onNestedDrag(_: SvelteEvent<PointerEvent, HTMLElement>, percentageDragged: number) {
 		if (percentageDragged < 0) return;
 		const initialScale = (window.innerWidth - NESTED_DISPLACEMENT) / window.innerWidth;
 		const newScale = initialScale + percentageDragged * (1 - initialScale);
@@ -775,10 +765,9 @@ export function createVaul(props: CreateVaulProps) {
 	}
 
 	function onNestedRelease(_: SvelteEvent<PointerEvent | MouseEvent, HTMLElement>, o: boolean) {
+		if (!o) return;
 		const scale = o ? (window.innerWidth - NESTED_DISPLACEMENT) / window.innerWidth : 1;
 		const y = o ? -NESTED_DISPLACEMENT : 0;
-
-		if (!o) return;
 
 		set(get(drawerRef), {
 			transition: `transform ${TRANSITIONS.DURATION}s cubic-bezier(${TRANSITIONS.EASE.join(',')})`,
@@ -823,4 +812,8 @@ export function createVaul(props: CreateVaulProps) {
 
 export function dampenValue(v: number) {
 	return 8 * (Math.log(v + 1) - 2);
+}
+
+function getScale() {
+	return (window.innerWidth - WINDOW_TOP_OFFSET) / window.innerWidth;
 }

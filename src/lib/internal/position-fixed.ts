@@ -5,7 +5,7 @@ import { effect } from './helpers/store.js';
 
 let previousBodyPosition: Record<string, string> | null = null;
 
-export function usePositionFixed({
+export function handlePositionFixed({
 	isOpen,
 	modal,
 	nested,

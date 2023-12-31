@@ -2,7 +2,7 @@ import { derived, get, type Writable } from 'svelte/store';
 import { TRANSITIONS, VELOCITY_THRESHOLD } from './constants.js';
 import { effect, set } from './helpers/index.js';
 
-export function createSnapPoints({
+export function handleSnapPoints({
 	activeSnapPoint,
 	snapPoints,
 	drawerRef,
