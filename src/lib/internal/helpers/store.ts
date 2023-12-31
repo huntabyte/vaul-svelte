@@ -148,19 +148,3 @@ export function toWritableStores<T extends Record<string, unknown>>(
 
 	return result;
 }
-
-// export type ToReadableStores<T extends Record<string, unknown>> = {
-// 	[K in keyof T]: Readable<T[K]>;
-// };
-
-// export function toStoreValues<T extends Record<string, unknown>>(stores: ToReadableStores<T>) {
-// 	// mapped type to prefix each key with a `$` sign
-// 	const result = {} as { [K in keyof T as `$${string & K}`]: T[K] };
-
-// 	Object.keys(stores).forEach((key) => {
-// 		const storeKey = key as keyof T;
-// 		result[`$${storeKey}`] = get(stores[storeKey]);
-// 	});
-
-// 	return result;
-// }

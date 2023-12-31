@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { Dialog as DialogPrimitive } from 'bits-ui';
-	import type { OverlayProps } from '../types.js';
+	import type { OverlayProps } from './types.js';
 	import { getCtx } from '../ctx.js';
 	import Visible from './visible.svelte';
 

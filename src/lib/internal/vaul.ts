@@ -1,6 +1,6 @@
 import { derived, get, writable, type Readable } from 'svelte/store';
 import type { SvelteEvent } from './types.js';
-import { createSnapPoints } from './snap-points.js';
+import { handleSnapPoints } from './snap-points.js';
 import {
 	overridable,
 	toWritableStores,
@@ -11,15 +11,16 @@ import {
 	reset,
 	effect,
 	removeUndefined,
-	styleToString
+	styleToString,
+	isInput,
+	sleep,
+	noop,
+	addEventListener
 } from '$lib/internal/helpers/index.js';
-import { isIOS, isInput, usePreventScroll } from './prevent-scroll.js';
-import { usePositionFixed } from './position-fixed.js';
-import { onMount } from 'svelte';
+import { isIOS, preventScroll } from './prevent-scroll.js';
 import { TRANSITIONS, VELOCITY_THRESHOLD } from './constants.js';
-import { addEventListener } from './helpers/event.js';
-import { noop } from './helpers/noop.js';
-import { useEscapeKeydown } from './escape-keydown.js';
+import { handleEscapeKeydown } from './escape-keydown.js';
+import { handlePositionFixed } from './position-fixed.js';
 
 const CLOSE_THRESHOLD = 0.25;
 
@@ -32,6 +33,8 @@ const NESTED_DISPLACEMENT = 16;
 const WINDOW_TOP_OFFSET = 26;
 
 const DRAG_CLASS = 'vaul-dragging';
+
+const openDrawerIds = writable<string[]>([]);
 
 type WithFadeFromProps = {
 	snapPoints: (number | string)[];
@@ -123,48 +126,31 @@ export function createVaul(props: CreateVaulProps) {
 
 	const openStore = writable(withDefaults.defaultOpen);
 	const isOpen = overridable(openStore, withDefaults.onOpenChange);
-
 	const hasBeenOpened = writable(false);
 	const visible = writable(false);
-	const mounted = writable(false);
-	const isDragging = writable(false);
 	const justReleased = writable(false);
 	const overlayRef = writable<HTMLDivElement | undefined>(undefined);
 	const openTime = writable<Date | null>(null);
-	const dragStartTime = writable<Date | null>(null);
-	const dragEndTime = writable<Date | null>(null);
-	const lastTimeDragPrevented = writable<Date | null>(null);
-	const isAllowedToDrag = writable(false);
-	const nestedOpenChangeTimer = writable<NodeJS.Timeout | null>(null);
-	const pointerStartY = writable(0);
 	const keyboardIsOpen = writable(false);
-	const previousDiffFromInitial = writable(0);
 	const drawerRef = writable<HTMLDivElement | undefined>(undefined);
-	const drawerHeightRef = writable(get(drawerRef)?.getBoundingClientRect().height || 0);
-	const initialDrawerHeight = writable(0);
+	const drawerId = writable<string | undefined>(undefined);
+
+	let isDragging = false;
+	let dragStartTime: Date | null = null;
 	let isClosing = false;
+	let pointerStartY = 0;
+	let dragEndTime: Date | null = null;
+	let lastTimeDragPrevented: Date | null = null;
+	let isAllowedToDrag = false;
+	let drawerHeightRef = get(drawerRef)?.getBoundingClientRect().height || 0;
+	let previousDiffFromInitial = 0;
+	let initialDrawerHeight = 0;
+	let nestedOpenChangeTimer: NodeJS.Timeout | null = null;
 
-	function getDefaultActiveSnapPoint() {
-		if (withDefaults.defaultActiveSnapPoint) {
-			return withDefaults.defaultActiveSnapPoint;
-		}
-		if (snapPointsProp && snapPointsProp.length > 0) {
-			return snapPointsProp[0];
-		}
-		return undefined;
-	}
-
-	const activeSnapPointStore = writable(getDefaultActiveSnapPoint());
-	const activeSnapPoint = overridable(activeSnapPointStore, withDefaults.onActiveSnapPointChange);
-
-	function onSnapPointChange(activeSnapPointIndex: number) {
-		// Change openTime ref when we reach the last snap point to prevent dragging for 500ms incase it's scrollable.
-		const $snapPoints = get(snapPoints);
-		const $snapPointsOffset = get(snapPointsOffset);
-		if ($snapPoints && activeSnapPointIndex === $snapPointsOffset.length - 1) {
-			openTime.set(new Date());
-		}
-	}
+	const activeSnapPoint = overridable(
+		writable(withDefaults.defaultActiveSnapPoint),
+		withDefaults.onActiveSnapPointChange
+	);
 
 	const {
 		activeSnapPointIndex,
@@ -173,13 +159,13 @@ export function createVaul(props: CreateVaulProps) {
 		onRelease: onReleaseSnapPoints,
 		shouldFade,
 		snapPointsOffset
-	} = createSnapPoints({
+	} = handleSnapPoints({
 		snapPoints,
 		activeSnapPoint,
 		drawerRef,
 		fadeFromIndex,
 		overlayRef,
-		onSnapPointChange
+		openTime
 	});
 
 	const getContentStyle: Readable<(style?: string | null) => string> = derived(
@@ -187,20 +173,40 @@ export function createVaul(props: CreateVaulProps) {
 		([$snapPointsOffset]) => {
 			return (style: string | null = '') => {
 				if ($snapPointsOffset && $snapPointsOffset.length > 0) {
-					return style;
-				}
-				const styleProp = styleToString({
-					'--snap-point-height': `${$snapPointsOffset[0]!}px`
-				});
-
-				if (style) {
-					return styleProp + style;
+					const styleProp = styleToString({
+						'--snap-point-height': `${$snapPointsOffset[0]}px`
+					});
+					return style + styleProp;
 				}
 
-				return styleProp;
+				return style;
 			};
 		}
 	);
+
+	effect([drawerRef], ([$drawerRef]) => {
+		if ($drawerRef) {
+			drawerId.set($drawerRef.id);
+		}
+	});
+
+	effect([isOpen], ([$open]) => {
+		// Prevent double clicks from closing multiple dialogs
+		sleep(100).then(() => {
+			const id = get(drawerId);
+			if ($open && id) {
+				openDrawerIds.update((prev) => {
+					if (prev.includes(id)) {
+						return prev;
+					}
+					prev.push(id);
+					return prev;
+				});
+			} else {
+				openDrawerIds.update((prev) => prev.filter((id) => id !== id));
+			}
+		});
+	});
 
 	effect([isOpen], ([$isOpen]) => {
 		if (!$isOpen && get(shouldScaleBackground)) {
@@ -212,28 +218,27 @@ export function createVaul(props: CreateVaulProps) {
 		}
 	});
 
-	effect([isOpen], ([$isOpen]) => {
+	// prevent scroll when the drawer is open
+	effect([isOpen, justReleased], ([$isOpen, $justReleased]) => {
 		let unsub = () => {};
 
-		if ($isOpen) {
-			unsub = usePreventScroll();
+		if ($isOpen && !$justReleased) {
+			unsub = preventScroll();
 		}
 
 		return unsub;
 	});
 
-	const { restorePositionSetting } = usePositionFixed({ isOpen, modal, nested, hasBeenOpened });
+	const { restorePositionSetting } = handlePositionFixed({ isOpen, modal, nested, hasBeenOpened });
 
+	// Close the drawer on escape keydown
 	effect([drawerRef], ([$drawerRef]) => {
 		let unsub = noop;
 
 		if ($drawerRef) {
-			const { destroy } = useEscapeKeydown($drawerRef, {
-				handler: () => {
-					closeDrawer();
-				}
+			unsub = handleEscapeKeydown($drawerRef, () => {
+				closeDrawer();
 			});
-			unsub = destroy;
 		}
 
 		return () => {
@@ -247,27 +252,25 @@ export function createVaul(props: CreateVaulProps) {
 		isOpen.set(true);
 	}
 
-	function getScale() {
-		return (window.innerWidth - WINDOW_TOP_OFFSET) / window.innerWidth;
-	}
-
 	function onPress(event: SvelteEvent<PointerEvent, HTMLElement>) {
 		const $drawerRef = get(drawerRef);
 
 		if (!get(dismissible) && !get(snapPoints)) return;
 		if ($drawerRef && !$drawerRef.contains(event.target as Node)) return;
-		drawerHeightRef.set($drawerRef?.getBoundingClientRect().height || 0);
-		isDragging.set(true);
-		dragStartTime.set(new Date());
+		drawerHeightRef = $drawerRef?.getBoundingClientRect().height || 0;
+
+		isDragging = true;
+
+		dragStartTime = new Date();
 
 		// iOS doesn't trigger mouseUp after scrolling so we need to listen to touched in order to disallow dragging
 		if (isIOS()) {
-			window.addEventListener('touchend', () => isAllowedToDrag.set(false), { once: true });
+			window.addEventListener('touchend', () => (isAllowedToDrag = false), { once: true });
 		}
 		// Ensure we maintain correct pointer capture even when going outside of the drawer
 		(event.target as HTMLElement).setPointerCapture(event.pointerId);
 
-		pointerStartY.set(event.screenY);
+		pointerStartY = event.screenY;
 	}
 
 	function shouldDrag(el: EventTarget, isDraggingDown: boolean) {
@@ -293,21 +296,19 @@ export function createVaul(props: CreateVaulProps) {
 			return false;
 		}
 
-		const $lastTimeDragPrevented = get(lastTimeDragPrevented);
-
 		const $scrollLockTimeout = get(scrollLockTimeout);
 		// Disallow dragging if drawer was scrolled within `scrollLockTimeout`
 		if (
-			$lastTimeDragPrevented &&
-			date.getTime() - $lastTimeDragPrevented.getTime() < $scrollLockTimeout &&
+			lastTimeDragPrevented &&
+			date.getTime() - lastTimeDragPrevented.getTime() < $scrollLockTimeout &&
 			swipeAmount === 0
 		) {
-			lastTimeDragPrevented.set(date);
+			lastTimeDragPrevented = date;
 			return false;
 		}
 
 		if (isDraggingDown) {
-			lastTimeDragPrevented.set(date);
+			lastTimeDragPrevented = date;
 
 			// We are dragging down so we should allow scrolling
 			return false;
@@ -318,7 +319,7 @@ export function createVaul(props: CreateVaulProps) {
 			// Check if the element is scrollable
 			if (element.scrollHeight > element.clientHeight) {
 				if (element.scrollTop !== 0) {
-					lastTimeDragPrevented.set(new Date());
+					lastTimeDragPrevented = new Date();
 
 					// The element is scrollable and not scrolled to the top, so don't drag
 					return false;
@@ -338,108 +339,104 @@ export function createVaul(props: CreateVaulProps) {
 	}
 
 	function onDrag(event: SvelteEvent<PointerEvent, HTMLElement>) {
+		if (!isDragging) return;
 		// We need to know how much of the drawer has been dragged in percentages so that we can transform background accordingly
-		if (get(isDragging)) {
-			const $pointerStartY = get(pointerStartY);
-			const draggedDistance = $pointerStartY - event.screenY;
-			const isDraggingDown = draggedDistance > 0;
+		const draggedDistance = pointerStartY - event.screenY;
+		const isDraggingDown = draggedDistance > 0;
 
-			const $activeSnapPointIndex = get(activeSnapPointIndex);
-			const $snapPoints = get(snapPoints);
+		const $activeSnapPointIndex = get(activeSnapPointIndex);
+		const $snapPoints = get(snapPoints);
 
-			// Disallow dragging down to close when first snap point is the active one and dismissible prop is set to false.
-			if ($snapPoints && $activeSnapPointIndex === 0 && !get(dismissible)) return;
+		// Disallow dragging down to close when first snap point is the active one and dismissible prop is set to false.
+		if ($snapPoints && $activeSnapPointIndex === 0 && !get(dismissible)) return;
 
-			const $isAllowedToDrag = get(isAllowedToDrag);
-			if (!$isAllowedToDrag && !shouldDrag(event.target as HTMLElement, isDraggingDown)) {
-				return;
-			}
-			const $drawerRef = get(drawerRef);
-			if (!$drawerRef) return;
+		if (!isAllowedToDrag && !shouldDrag(event.target as HTMLElement, isDraggingDown)) {
+			return;
+		}
+		const $drawerRef = get(drawerRef);
+		if (!$drawerRef) return;
 
-			$drawerRef.classList.add(DRAG_CLASS);
-			// If shouldDrag gave true once after pressing down on the drawer, we set isAllowedToDrag to true and it will remain true until we let go, there's no reason to disable dragging mid way, ever, and that's the solution to it
-			isAllowedToDrag.set(true);
+		$drawerRef.classList.add(DRAG_CLASS);
+		// If shouldDrag gave true once after pressing down on the drawer, we set isAllowedToDrag to true and it will remain true until we let go, there's no reason to disable dragging mid way, ever, and that's the solution to it
+		isAllowedToDrag = true;
+
+		set($drawerRef, {
+			transition: 'none'
+		});
+
+		const $overlayRef = get(overlayRef);
+
+		set($overlayRef, {
+			transition: 'none'
+		});
+
+		if ($snapPoints) {
+			onDragSnapPoints({ draggedDistance });
+		}
+
+		// Run this only if snapPoints are not defined or if we are at the last snap point (highest one)
+		if (isDraggingDown && !$snapPoints) {
+			const dampenedDraggedDistance = dampenValue(draggedDistance);
 
 			set($drawerRef, {
-				transition: 'none'
+				transform: `translate3d(0, ${Math.min(dampenedDraggedDistance * -1, 0)}px, 0)`
 			});
+			return;
+		}
 
-			const $overlayRef = get(overlayRef);
+		// We need to capture last time when drag with scroll was triggered and have a timeout between
+		const absDraggedDistance = Math.abs(draggedDistance);
+		const wrapper = document.querySelector('[data-vaul-drawer-wrapper]');
+		let percentageDragged = absDraggedDistance / drawerHeightRef;
+		const snapPointPercentageDragged = getSnapPointsPercentageDragged(
+			absDraggedDistance,
+			isDraggingDown
+		);
 
-			set($overlayRef, {
-				transition: 'none'
-			});
+		if (snapPointPercentageDragged !== null) {
+			percentageDragged = snapPointPercentageDragged;
+		}
 
-			if ($snapPoints) {
-				onDragSnapPoints({ draggedDistance });
-			}
+		const opacityValue = 1 - percentageDragged;
 
-			// Run this only if snapPoints are not defined or if we are at the last snap point (highest one)
-			if (isDraggingDown && !$snapPoints) {
-				const dampenedDraggedDistance = dampenValue(draggedDistance);
+		const $fadeFromIndex = get(fadeFromIndex);
+		const $shouldFade = get(shouldFade);
 
-				set($drawerRef, {
-					transform: `translate3d(0, ${Math.min(dampenedDraggedDistance * -1, 0)}px, 0)`
-				});
-				return;
-			}
+		if ($shouldFade || ($fadeFromIndex && $activeSnapPointIndex === $fadeFromIndex - 1)) {
+			onDragProp?.(event, percentageDragged);
 
-			// We need to capture last time when drag with scroll was triggered and have a timeout between
-			const absDraggedDistance = Math.abs(draggedDistance);
-			const wrapper = document.querySelector('[data-vaul-drawer-wrapper]');
-			const $drawerRefHeight = get(drawerHeightRef);
-			let percentageDragged = absDraggedDistance / $drawerRefHeight;
-			const snapPointPercentageDragged = getSnapPointsPercentageDragged(
-				absDraggedDistance,
-				isDraggingDown
+			set(
+				$overlayRef,
+				{
+					opacity: `${opacityValue}`,
+					transition: 'none'
+				},
+				true
 			);
+		}
 
-			if (snapPointPercentageDragged !== null) {
-				percentageDragged = snapPointPercentageDragged;
-			}
+		if (wrapper && $overlayRef && get(shouldScaleBackground)) {
+			// Calculate percentageDragged as a fraction (0 to 1)
+			const scaleValue = Math.min(getScale() + percentageDragged * (1 - getScale()), 1);
+			const borderRadiusValue = 8 - percentageDragged * 8;
 
-			const opacityValue = 1 - percentageDragged;
+			const translateYValue = Math.max(0, 14 - percentageDragged * 14);
 
-			const $fadeFromIndex = get(fadeFromIndex);
-			const $shouldFade = get(shouldFade);
+			set(
+				wrapper,
+				{
+					borderRadius: `${borderRadiusValue}px`,
+					transform: `scale(${scaleValue}) translate3d(0, ${translateYValue}px, 0)`,
+					transition: 'none'
+				},
+				true
+			);
+		}
 
-			if ($shouldFade || ($fadeFromIndex && $activeSnapPointIndex === $fadeFromIndex - 1)) {
-				onDragProp?.(event, percentageDragged);
-
-				set(
-					$overlayRef,
-					{
-						opacity: `${opacityValue}`,
-						transition: 'none'
-					},
-					true
-				);
-			}
-
-			if (wrapper && $overlayRef && get(shouldScaleBackground)) {
-				// Calculate percentageDragged as a fraction (0 to 1)
-				const scaleValue = Math.min(getScale() + percentageDragged * (1 - getScale()), 1);
-				const borderRadiusValue = 8 - percentageDragged * 8;
-
-				const translateYValue = Math.max(0, 14 - percentageDragged * 14);
-
-				set(
-					wrapper,
-					{
-						borderRadius: `${borderRadiusValue}px`,
-						transform: `scale(${scaleValue}) translate3d(0, ${translateYValue}px, 0)`,
-						transition: 'none'
-					},
-					true
-				);
-			}
-
-			if (!$snapPoints) {
-				set($drawerRef, {
-					transform: `translate3d(0, ${absDraggedDistance}px, 0)`
-				});
-			}
+		if (!$snapPoints) {
+			set($drawerRef, {
+				transform: `translate3d(0, ${absDraggedDistance}px, 0)`
+			});
 		}
 	}
 
@@ -486,21 +483,20 @@ export function createVaul(props: CreateVaulProps) {
 				const $drawerRef = get(drawerRef);
 				if (!$drawerRef) return;
 				const $keyboardIsOpen = get(keyboardIsOpen);
-				const $initialDrawerHeight = get(initialDrawerHeight);
+
 				const focusedElement = document.activeElement as HTMLElement;
 				if (isInput(focusedElement) || $keyboardIsOpen) {
 					const visualViewportHeight = window.visualViewport?.height || 0;
 					// This is the height of the keyboard
 					let diffFromInitial = window.innerHeight - visualViewportHeight;
 					const drawerHeight = $drawerRef.getBoundingClientRect().height || 0;
-					if (!$initialDrawerHeight) {
-						initialDrawerHeight.set(drawerHeight);
+					if (!initialDrawerHeight) {
+						initialDrawerHeight = drawerHeight;
 					}
 					const offsetFromTop = $drawerRef.getBoundingClientRect().top;
 
 					// visualViewport height may change due to some subtle changes to the keyboard. Checking if the height changed by 60 or more will make sure that they keyboard really changed its open state.
-					const $previousDiffFromInitial = get(previousDiffFromInitial);
-					if (Math.abs($previousDiffFromInitial - diffFromInitial) > 60) {
+					if (Math.abs(previousDiffFromInitial - diffFromInitial) > 60) {
 						keyboardIsOpen.set(!$keyboardIsOpen);
 					}
 
@@ -509,7 +505,8 @@ export function createVaul(props: CreateVaulProps) {
 						diffFromInitial += activeSnapPointHeight;
 					}
 
-					previousDiffFromInitial.set(diffFromInitial);
+					previousDiffFromInitial = diffFromInitial;
+
 					// We don't have to change the height if the input is in view, when we are here we are in the opened keyboard state so we can correctly check if the input is in view
 					if (drawerHeight > visualViewportHeight || $keyboardIsOpen) {
 						const height = $drawerRef.getBoundingClientRect().height;
@@ -528,7 +525,7 @@ export function createVaul(props: CreateVaulProps) {
 							)}px`;
 						}
 					} else {
-						$drawerRef.style.height = `${$initialDrawerHeight}px`;
+						$drawerRef.style.height = `${initialDrawerHeight}px`;
 					}
 
 					if ($snapPoints && $snapPoints.length > 0 && !$keyboardIsOpen) {
@@ -556,7 +553,6 @@ export function createVaul(props: CreateVaulProps) {
 		if (isClosing) return;
 		const $drawerRef = get(drawerRef);
 		if (!$drawerRef) return;
-		const $snapPoints = get(snapPoints);
 
 		onClose?.();
 		set($drawerRef, {
@@ -578,6 +574,8 @@ export function createVaul(props: CreateVaulProps) {
 			isClosing = false;
 		}, 300);
 
+		const $snapPoints = get(snapPoints);
+
 		setTimeout(() => {
 			if ($snapPoints) {
 				activeSnapPoint.set($snapPoints[0]);
@@ -593,10 +591,6 @@ export function createVaul(props: CreateVaulProps) {
 		} else {
 			closeDrawer();
 		}
-	});
-
-	onMount(() => {
-		mounted.set(true);
 	});
 
 	function resetDrawer() {
@@ -638,23 +632,18 @@ export function createVaul(props: CreateVaulProps) {
 	}
 
 	function onRelease(event: SvelteEvent<PointerEvent | MouseEvent, HTMLElement>) {
-		const $isDragging = get(isDragging);
 		const $drawerRef = get(drawerRef);
-		if (!$isDragging || !$drawerRef) return;
+		if (!isDragging || !$drawerRef) return;
 
-		const $isAllowedToDrag = get(isAllowedToDrag);
-
-		if ($isAllowedToDrag && isInput(event.target as HTMLElement)) {
+		if (isAllowedToDrag && isInput(event.target as HTMLElement)) {
 			// If we were just dragging, prevent focusing on inputs etc. on release
 			(event.target as HTMLInputElement).blur();
 		}
 		$drawerRef.classList.remove(DRAG_CLASS);
-		isAllowedToDrag.set(false);
-		isDragging.set(false);
+		isAllowedToDrag = false;
+		isDragging = false;
 
-		const $dragEndTime = new Date();
-
-		dragEndTime.set($dragEndTime);
+		dragEndTime = new Date();
 
 		const swipeAmount = getTranslateY($drawerRef);
 
@@ -665,11 +654,10 @@ export function createVaul(props: CreateVaulProps) {
 		)
 			return;
 
-		const $dragStartTime = get(dragStartTime);
-		if ($dragStartTime === null) return;
+		if (dragStartTime === null) return;
 
-		const timeTaken = $dragEndTime.getTime() - $dragStartTime.getTime();
-		const distMoved = get(pointerStartY) - event.screenY;
+		const timeTaken = dragEndTime.getTime() - dragStartTime.getTime();
+		const distMoved = pointerStartY - event.screenY;
 		const velocity = Math.abs(distMoved) / timeTaken;
 
 		if (velocity > 0.05) {
@@ -706,7 +694,7 @@ export function createVaul(props: CreateVaulProps) {
 		}
 
 		const visibleDrawerHeight = Math.min(
-			$drawerRef.getBoundingClientRect().height ?? 0,
+			get(drawerRef)?.getBoundingClientRect().height ?? 0,
 			window.innerHeight
 		);
 
@@ -747,34 +735,33 @@ export function createVaul(props: CreateVaulProps) {
 	});
 
 	function onNestedOpenChange(o: boolean) {
+		const $drawerRef = get(drawerRef);
 		const scale = o ? (window.innerWidth - NESTED_DISPLACEMENT) / window.innerWidth : 1;
 		const y = o ? -NESTED_DISPLACEMENT : 0;
 
-		const $nestedOpenChangeTimer = get(nestedOpenChangeTimer);
-
-		if ($nestedOpenChangeTimer) {
-			window.clearTimeout($nestedOpenChangeTimer);
+		if (nestedOpenChangeTimer) {
+			window.clearTimeout(nestedOpenChangeTimer);
 		}
-		const $drawerRef = get(drawerRef);
 
 		set($drawerRef, {
 			transition: `transform ${TRANSITIONS.DURATION}s cubic-bezier(${TRANSITIONS.EASE.join(',')})`,
 			transform: `scale(${scale}) translate3d(0, ${y}px, 0)`
 		});
 
-		if (o && !$drawerRef) return;
-
-		nestedOpenChangeTimer.set(
-			setTimeout(() => {
+		if (!o && $drawerRef) {
+			nestedOpenChangeTimer = setTimeout(() => {
 				set($drawerRef, {
 					transition: 'none',
 					transform: `translate3d(0, ${getTranslateY($drawerRef as HTMLElement)}px, 0)`
 				});
-			}, 500)
-		);
+			}, 500);
+		}
 	}
 
-	function onNestedDrag(event: SvelteEvent<PointerEvent, HTMLElement>, percentageDragged: number) {
+	function onNestedDrag(
+		_: SvelteEvent<PointerEvent | MouseEvent, HTMLElement>,
+		percentageDragged: number
+	) {
 		if (percentageDragged < 0) return;
 		const initialScale = (window.innerWidth - NESTED_DISPLACEMENT) / window.innerWidth;
 		const newScale = initialScale + percentageDragged * (1 - initialScale);
@@ -790,12 +777,14 @@ export function createVaul(props: CreateVaulProps) {
 		const scale = o ? (window.innerWidth - NESTED_DISPLACEMENT) / window.innerWidth : 1;
 		const y = o ? -NESTED_DISPLACEMENT : 0;
 
-		if (!o) return;
-
-		set(get(drawerRef), {
-			transition: `transform ${TRANSITIONS.DURATION}s cubic-bezier(${TRANSITIONS.EASE.join(',')})`,
-			transform: `scale(${scale}) translate3d(0, ${y}px, 0)`
-		});
+		if (o) {
+			set(get(drawerRef), {
+				transition: `transform ${TRANSITIONS.DURATION}s cubic-bezier(${TRANSITIONS.EASE.join(
+					','
+				)})`,
+				transform: `scale(${scale}) translate3d(0, ${y}px, 0)`
+			});
+		}
 	}
 
 	return {
@@ -807,7 +796,9 @@ export function createVaul(props: CreateVaulProps) {
 			snapPointsOffset,
 			keyboardIsOpen,
 			shouldFade,
-			visible
+			visible,
+			drawerId,
+			openDrawerIds
 		},
 		helpers: {
 			getContentStyle
@@ -835,4 +826,8 @@ export function createVaul(props: CreateVaulProps) {
 
 export function dampenValue(v: number) {
 	return 8 * (Math.log(v + 1) - 2);
+}
+
+function getScale() {
+	return (window.innerWidth - WINDOW_TOP_OFFSET) / window.innerWidth;
 }

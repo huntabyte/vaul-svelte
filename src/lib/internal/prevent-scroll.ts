@@ -1,18 +1,6 @@
 // This code comes from https://github.com/adobe/react-spectrum/blob/main/packages/%40react-aria/overlays/src/usePreventScroll.ts
 
-import { addEventListener } from './helpers/event.js';
-
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export function chain(...callbacks: any[]): (...args: any[]) => void {
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	return (...args: any[]) => {
-		for (const callback of callbacks) {
-			if (typeof callback === 'function') {
-				callback(...args);
-			}
-		}
-	};
-}
+import { addEventListener, chain, isInput } from '$lib/internal/helpers/index.js';
 
 function isMac(): boolean | undefined {
 	return testPlatform(/^Mac/);
@@ -63,19 +51,6 @@ export function getScrollParent(node: Element): Element {
 	return node || document.scrollingElement || document.documentElement;
 }
 
-// HTML input types that do not cause the software keyboard to appear.
-const nonTextInputTypes = new Set([
-	'checkbox',
-	'radio',
-	'range',
-	'color',
-	'file',
-	'image',
-	'button',
-	'submit',
-	'reset'
-]);
-
 // The number of active usePreventScroll calls. Used to determine whether to revert back to the original page style/scroll position
 let preventScrollCount = 0;
 let restore: () => void;
@@ -85,7 +60,7 @@ let restore: () => void;
  * restores it on unmount. Also ensures that content does not
  * shift due to the scrollbars disappearing.
  */
-export function usePreventScroll() {
+export function preventScroll() {
 	if (typeof document === 'undefined') return () => {};
 
 	preventScrollCount++;
@@ -174,20 +149,19 @@ function preventScrollStandard() {
 function preventScrollMobileSafari() {
 	let scrollable: Element;
 	let lastY = 0;
+	const { documentElement, body, activeElement } = document;
 
 	function onTouchStart(e: TouchEvent) {
 		// Store the nearest scrollable parent element from the element that the user touched.
 		scrollable = getScrollParent(e.target as Element);
-		if (scrollable === document.documentElement && scrollable === document.body) {
-			return;
-		}
+		if (scrollable === documentElement && scrollable === body) return;
 
 		lastY = e.changedTouches[0].pageY;
 	}
 
 	function onTouchMove(e: TouchEvent) {
 		// Prevent scrolling the window.
-		if (!scrollable || scrollable === document.documentElement || scrollable === document.body) {
+		if (!scrollable || scrollable === documentElement || scrollable === body) {
 			e.preventDefault();
 			return;
 		}
@@ -200,9 +174,7 @@ function preventScrollMobileSafari() {
 		const scrollTop = scrollable.scrollTop;
 		const bottom = scrollable.scrollHeight - scrollable.clientHeight;
 
-		if (bottom === 0) {
-			return;
-		}
+		if (bottom === 0) return;
 
 		if ((scrollTop <= 0 && y > lastY) || (scrollTop >= bottom && y < lastY)) {
 			e.preventDefault();
@@ -213,50 +185,48 @@ function preventScrollMobileSafari() {
 
 	function onTouchEnd(e: TouchEvent) {
 		const target = e.target as HTMLElement;
-
+		if (!(isInput(target) && target !== activeElement)) return;
 		// Apply this change if we're not already focused on the target element
-		if (isInput(target) && target !== document.activeElement) {
-			e.preventDefault();
+		e.preventDefault();
 
-			// Apply a transform to trick Safari into thinking the input is at the top of the page
-			// so it doesn't try to scroll it into view. When tapping on an input, this needs to
-			// be done before the "focus" event, so we have to focus the element ourselves.
-			target.style.transform = 'translateY(-2000px)';
-			target.focus();
-			requestAnimationFrame(() => {
-				target.style.transform = '';
-			});
-		}
+		// Apply a transform to trick Safari into thinking the input is at the top of the page
+		// so it doesn't try to scroll it into view. When tapping on an input, this needs to
+		// be done before the "focus" event, so we have to focus the element ourselves.
+		target.style.transform = 'translateY(-2000px)';
+		target.focus();
+		requestAnimationFrame(() => {
+			target.style.transform = '';
+		});
 	}
 
 	function onFocus(e: FocusEvent) {
 		const target = e.target as HTMLElement;
-		if (isInput(target)) {
-			// Transform also needs to be applied in the focus event in cases where focus moves
-			// other than tapping on an input directly, e.g. the next/previous buttons in the
-			// software keyboard. In these cases, it seems applying the transform in the focus event
-			// is good enough, whereas when tapping an input, it must be done before the focus event. 🤷‍♂️
-			target.style.transform = 'translateY(-2000px)';
-			requestAnimationFrame(() => {
-				target.style.transform = '';
+		if (!isInput(target)) return;
 
-				// This will have prevented the browser from scrolling the focused element into view,
-				// so we need to do this ourselves in a way that doesn't cause the whole page to scroll.
-				if (visualViewport) {
-					if (visualViewport.height < window.innerHeight) {
-						// If the keyboard is already visible, do this after one additional frame
-						// to wait for the transform to be removed.
-						requestAnimationFrame(() => {
-							scrollIntoView(target);
-						});
-					} else {
-						// Otherwise, wait for the visual viewport to resize before scrolling so we can
-						// measure the correct position to scroll to.
-						visualViewport.addEventListener('resize', () => scrollIntoView(target), { once: true });
-					}
+		// Transform also needs to be applied in the focus event in cases where focus moves
+		// other than tapping on an input directly, e.g. the next/previous buttons in the
+		// software keyboard. In these cases, it seems applying the transform in the focus event
+		// is good enough, whereas when tapping an input, it must be done before the focus event. 🤷‍♂️
+		target.style.transform = 'translateY(-2000px)';
+		requestAnimationFrame(() => {
+			target.style.transform = '';
+
+			// This will have prevented the browser from scrolling the focused element into view,
+			// so we need to do this ourselves in a way that doesn't cause the whole page to scroll.
+			if (visualViewport) {
+				if (visualViewport.height < window.innerHeight) {
+					// If the keyboard is already visible, do this after one additional frame
+					// to wait for the transform to be removed.
+					requestAnimationFrame(() => {
+						scrollIntoView(target);
+					});
+				} else {
+					// Otherwise, wait for the visual viewport to resize before scrolling so we can
+					// measure the correct position to scroll to.
+					visualViewport.addEventListener('resize', () => scrollIntoView(target), { once: true });
 				}
-			});
-		}
+			}
+		});
 	}
 
 	function onWindowScroll() {
@@ -273,11 +243,11 @@ function preventScrollMobileSafari() {
 
 	const restoreStyles = chain(
 		setStyle(
-			document.documentElement,
+			documentElement,
 			'paddingRight',
-			`${window.innerWidth - document.documentElement.clientWidth}px`
+			`${window.innerWidth - documentElement.clientWidth}px`
 		),
-		setStyle(document.documentElement, 'overflow', 'hidden')
+		setStyle(documentElement, 'overflow', 'hidden')
 		// setStyle(document.body, 'marginTop', `-${scrollY}px`),
 	);
 
@@ -312,15 +282,13 @@ function setStyle(element: HTMLElement, style: any, value: string) {
 }
 
 function scrollIntoView(target: Element) {
-	const root = document.scrollingElement || document.documentElement;
+	const { documentElement, body, scrollingElement } = document;
+
+	const root = scrollingElement || documentElement;
 	while (target && target !== root) {
 		// Find the parent scrollable element and adjust the scroll position if the target is not already in view.
 		const scrollable = getScrollParent(target);
-		if (
-			scrollable !== document.documentElement &&
-			scrollable !== document.body &&
-			scrollable !== target
-		) {
+		if (scrollable !== documentElement && scrollable !== body && scrollable !== target) {
 			const scrollableTop = scrollable.getBoundingClientRect().top;
 			const targetTop = target.getBoundingClientRect().top;
 			const targetBottom = target.getBoundingClientRect().bottom;
@@ -334,12 +302,4 @@ function scrollIntoView(target: Element) {
 		//@ts-expect-error - target is not root so it must have a parentElement
 		target = scrollable.parentElement;
 	}
-}
-
-export function isInput(target: Element) {
-	return (
-		(target instanceof HTMLInputElement && !nonTextInputTypes.has(target.type)) ||
-		target instanceof HTMLTextAreaElement ||
-		(target instanceof HTMLElement && target.isContentEditable)
-	);
 }

@@ -1,21 +1,22 @@
 import { derived, get, type Writable } from 'svelte/store';
 import { TRANSITIONS, VELOCITY_THRESHOLD } from './constants.js';
 import { effect, set } from './helpers/index.js';
+import { tick } from 'svelte';
 
-export function createSnapPoints({
+export function handleSnapPoints({
 	activeSnapPoint,
 	snapPoints,
 	drawerRef,
 	overlayRef,
 	fadeFromIndex,
-	onSnapPointChange
+	openTime
 }: {
 	activeSnapPoint: Writable<number | string | null>;
 	snapPoints: Writable<(number | string)[] | undefined>;
 	fadeFromIndex: Writable<number | undefined>;
 	drawerRef: Writable<HTMLDivElement | undefined>;
 	overlayRef: Writable<HTMLDivElement | undefined>;
-	onSnapPointChange(activeSnapPointIndex: number): void;
+	openTime: Writable<Date | null>;
 }) {
 	const isLastSnapPoint = derived(
 		[snapPoints, activeSnapPoint],
@@ -44,10 +45,9 @@ export function createSnapPoints({
 			$snapPoints?.findIndex((snapPoint) => snapPoint === $activeSnapPoint) ?? null
 	);
 
-	const snapPointsOffset = derived(
-		snapPoints,
-		($snapPoints) =>
-			$snapPoints?.map((snapPoint) => {
+	const snapPointsOffset = derived(snapPoints, ($snapPoints) => {
+		if ($snapPoints) {
+			return $snapPoints.map((snapPoint) => {
 				const hasWindow = typeof window !== 'undefined';
 				const isPx = typeof snapPoint === 'string';
 				let snapPointAsNumber = 0;
@@ -63,8 +63,10 @@ export function createSnapPoints({
 				}
 
 				return height;
-			}) ?? []
-	);
+			});
+		}
+		return [];
+	});
 
 	const activeSnapPointOffset = derived(
 		[snapPointsOffset, activeSnapPointIndex],
@@ -72,61 +74,64 @@ export function createSnapPoints({
 			$activeSnapPointIndex !== null ? $snapPointsOffset?.[$activeSnapPointIndex] : null
 	);
 
-	// drawerRef.current, snapPoints, snapPointsOffset, fadeFromIndex, overlayRef, setActiveSnapPoint
-
-	const snapToPoint = derived(
-		[drawerRef, snapPoints, snapPointsOffset, fadeFromIndex, overlayRef],
-		([$drawerRef, $snapPoints, $snapPointsOffset, $fadeFromIndex, $overlayRef]) => {
-			return (height: number) => {
-				const newSnapPointIndex =
-					$snapPointsOffset?.findIndex((snapPointHeight) => snapPointHeight === height) ?? null;
-				onSnapPointChange(newSnapPointIndex);
-				set($drawerRef, {
-					transition: `transform ${TRANSITIONS.DURATION}s cubic-bezier(${TRANSITIONS.EASE.join(
-						','
-					)})`,
-					transform: `translate3d(0, ${height}px, 0)`
-				});
-
-				if (
-					$snapPointsOffset &&
-					newSnapPointIndex !== $snapPointsOffset.length - 1 &&
-					newSnapPointIndex !== $fadeFromIndex
-				) {
-					set($overlayRef, {
-						transition: `opacity ${TRANSITIONS.DURATION}s cubic-bezier(${TRANSITIONS.EASE.join(
-							','
-						)})`,
-						opacity: '0'
-					});
-				} else {
-					set($overlayRef, {
-						transition: `opacity ${TRANSITIONS.DURATION}s cubic-bezier(${TRANSITIONS.EASE.join(
-							','
-						)})`,
-						opacity: '1'
-					});
-				}
-
-				activeSnapPoint.update(() =>
-					newSnapPointIndex !== null && $snapPoints ? $snapPoints?.[newSnapPointIndex] : null
-				);
-			};
-		}
-	);
-
-	effect(
-		[activeSnapPoint, snapPoints, snapPointsOffset, snapToPoint],
-		([$activeSnapPoint, $snapPoints, $snapPointsOffset, $snapToPoint]) => {
-			if ($activeSnapPoint) {
-				const newIndex =
-					$snapPoints?.findIndex((snapPoint) => snapPoint === $activeSnapPoint) ?? null;
-				if ($snapPointsOffset && newIndex && typeof $snapPointsOffset[newIndex] === 'number') {
-					$snapToPoint($snapPointsOffset[newIndex] as number);
-				}
+	effect([activeSnapPoint, drawerRef], ([$activeSnapPoint, $drawerRef]) => {
+		if ($activeSnapPoint && $drawerRef) {
+			const $snapPoints = get(snapPoints);
+			const $snapPointsOffset = get(snapPointsOffset);
+			const newIndex =
+				$snapPoints?.findIndex((snapPoint) => snapPoint === $activeSnapPoint) ?? null;
+			if ($snapPointsOffset && newIndex && typeof $snapPointsOffset[newIndex] === 'number') {
+				snapToPoint($snapPointsOffset[newIndex] as number);
 			}
 		}
-	);
+	});
+
+	function snapToPoint(height: number) {
+		tick().then(() => {
+			const $snapPointsOffset = get(snapPointsOffset);
+			const newSnapPointIndex =
+				$snapPointsOffset?.findIndex((snapPointHeight) => snapPointHeight === height) ?? null;
+
+			const $drawerRef = get(drawerRef);
+
+			onSnapPointChange(newSnapPointIndex);
+
+			set($drawerRef, {
+				transition: `transform ${TRANSITIONS.DURATION}s cubic-bezier(${TRANSITIONS.EASE.join(
+					','
+				)})`,
+				transform: `translate3d(0, ${height}px, 0)`
+			});
+
+			const $fadeFromIndex = get(fadeFromIndex);
+			const $overlayRef = get(overlayRef);
+
+			if (
+				snapPointsOffset &&
+				newSnapPointIndex !== $snapPointsOffset.length - 1 &&
+				newSnapPointIndex !== $fadeFromIndex
+			) {
+				set($overlayRef, {
+					transition: `opacity ${TRANSITIONS.DURATION}s cubic-bezier(${TRANSITIONS.EASE.join(
+						','
+					)})`,
+					opacity: '0'
+				});
+			} else {
+				set($overlayRef, {
+					transition: `opacity ${TRANSITIONS.DURATION}s cubic-bezier(${TRANSITIONS.EASE.join(
+						','
+					)})`,
+					opacity: '1'
+				});
+			}
+			activeSnapPoint.update(() => {
+				const $snapPoints = get(snapPoints);
+				if (newSnapPointIndex === null || !$snapPoints) return null;
+				return $snapPoints[newSnapPointIndex];
+			});
+		});
+	}
 
 	function onRelease({
 		draggedDistance,
@@ -140,15 +145,19 @@ export function createSnapPoints({
 		dismissible: boolean;
 	}) {
 		const $fadeFromIndex = get(fadeFromIndex);
+		if ($fadeFromIndex === undefined) return;
 		const $activeSnapPointOffset = get(activeSnapPointOffset);
-		if ($fadeFromIndex === undefined || $activeSnapPointOffset === null) return;
 		const $activeSnapPointIndex = get(activeSnapPointIndex);
-		const $snapToPoint = get(snapToPoint);
 		const $overlayRef = get(overlayRef);
 		const $snapPointsOffset = get(snapPointsOffset);
 		const $snapPoints = get(snapPoints);
 
-		const currentPosition = $activeSnapPointOffset - draggedDistance;
+		function getCurrPosition() {
+			const snapOffset = $activeSnapPointOffset ?? 0;
+			return snapOffset - draggedDistance;
+		}
+
+		const currentPosition = getCurrPosition();
 		const isOverlaySnapPoint = $activeSnapPointIndex === $fadeFromIndex - 1;
 		const isFirst = $activeSnapPointIndex === 0;
 		const hasDraggedUp = draggedDistance > 0;
@@ -161,12 +170,12 @@ export function createSnapPoints({
 
 		if (velocity > 2 && !hasDraggedUp) {
 			if (dismissible) closeDrawer();
-			else $snapToPoint($snapPointsOffset[0]); // snap to initial point
+			else snapToPoint($snapPointsOffset[0]); // snap to initial point
 			return;
 		}
 
 		if (velocity > 2 && hasDraggedUp && $snapPointsOffset && $snapPoints) {
-			$snapToPoint($snapPointsOffset[$snapPoints.length - 1] as number);
+			snapToPoint($snapPointsOffset[$snapPoints.length - 1] as number);
 			return;
 		}
 
@@ -182,7 +191,7 @@ export function createSnapPoints({
 
 			// Don't do anything if we swipe upwards while being on the last snap point
 			if (dragDirection > 0 && get(isLastSnapPoint) && $snapPoints) {
-				$snapToPoint($snapPointsOffset[$snapPoints.length - 1]);
+				snapToPoint($snapPointsOffset[$snapPoints.length - 1]);
 				return;
 			}
 
@@ -192,11 +201,11 @@ export function createSnapPoints({
 
 			if ($activeSnapPointIndex === null) return;
 
-			$snapToPoint($snapPointsOffset[$activeSnapPointIndex + dragDirection]);
+			snapToPoint($snapPointsOffset[$activeSnapPointIndex + dragDirection]);
 			return;
 		}
 
-		$snapToPoint(closestSnapPoint);
+		snapToPoint(closestSnapPoint);
 	}
 
 	function onDrag({ draggedDistance }: { draggedDistance: number }) {
@@ -233,7 +242,7 @@ export function createSnapPoints({
 
 		// Don't animate, but still use this one if we are dragging away from the overlaySnapPoint
 		if (isOverlaySnapPoint && !isDraggingDown) return 1;
-		if (!shouldFade && !isOverlaySnapPoint) return null;
+		if (!get(shouldFade) && !isOverlaySnapPoint) return null;
 
 		// Either fadeFrom index or the one before
 		const targetSnapPointIndex = isOverlaySnapPoint
@@ -251,6 +260,15 @@ export function createSnapPoints({
 			return 1 - percentageDragged;
 		} else {
 			return percentageDragged;
+		}
+	}
+
+	function onSnapPointChange(activeSnapPointIndex: number) {
+		// Change openTime ref when we reach the last snap point to prevent dragging for 500ms incase it's scrollable.
+		const $snapPoints = get(snapPoints);
+		const $snapPointsOffset = get(snapPointsOffset);
+		if ($snapPoints && activeSnapPointIndex === $snapPointsOffset.length - 1) {
+			openTime.set(new Date());
 		}
 	}
 

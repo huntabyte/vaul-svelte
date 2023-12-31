@@ -1,11 +1,10 @@
+import { writable, get, type Writable } from 'svelte/store';
+import { effect, addEventListener } from './helpers/index.js';
 import { onMount } from 'svelte';
-import { get, writable, type Writable } from 'svelte/store';
-import { addEventListener } from './helpers/event.js';
-import { effect } from './helpers/store.js';
 
 let previousBodyPosition: Record<string, string> | null = null;
 
-export function usePositionFixed({
+export function handlePositionFixed({
 	isOpen,
 	modal,
 	nested,
@@ -17,74 +16,71 @@ export function usePositionFixed({
 	hasBeenOpened: Writable<boolean>;
 }) {
 	const activeUrl = writable(typeof window !== 'undefined' ? window.location.href : '');
-	const scrollPos = writable(0);
+	let scrollPos = 0;
 
-	function setPositionFixed() {
-		const $isOpen = get(isOpen);
-		const $scrollPos = get(scrollPos);
+	function setPositionFixed(open: boolean) {
 		// If previousBodyPosition is already set, don't set it again.
-		if (previousBodyPosition === null && $isOpen) {
-			previousBodyPosition = {
-				position: document.body.style.position,
-				top: document.body.style.top,
-				left: document.body.style.left,
-				height: document.body.style.height
-			};
+		if (!(previousBodyPosition === null && open)) return;
 
-			// Update the dom inside an animation frame
-			const { scrollX, innerHeight } = window;
+		previousBodyPosition = {
+			position: document.body.style.position,
+			top: document.body.style.top,
+			left: document.body.style.left,
+			height: document.body.style.height
+		};
 
-			document.body.style.setProperty('position', 'fixed', 'important');
-			document.body.style.top = `${-$scrollPos}px`;
-			document.body.style.left = `${-scrollX}px`;
-			document.body.style.right = '0px';
-			document.body.style.height = 'auto';
+		// Update the dom inside an animation frame
+		const { scrollX, innerHeight } = window;
 
-			setTimeout(
-				() =>
-					requestAnimationFrame(() => {
-						// Attempt to check if the bottom bar appeared due to the position change
-						const bottomBarHeight = innerHeight - window.innerHeight;
-						if (bottomBarHeight && $scrollPos >= innerHeight) {
-							// Move the content further up so that the bottom bar doesn't hide it
-							document.body.style.top = `${-($scrollPos + bottomBarHeight)}px`;
-						}
-					}),
-				300
-			);
-		}
+		document.body.style.setProperty('position', 'fixed', 'important');
+		document.body.style.top = `${-scrollPos}px`;
+		document.body.style.left = `${-scrollX}px`;
+		document.body.style.right = '0px';
+		document.body.style.height = 'auto';
+
+		setTimeout(
+			() =>
+				requestAnimationFrame(() => {
+					// Attempt to check if the bottom bar appeared due to the position change
+					const bottomBarHeight = innerHeight - window.innerHeight;
+					if (bottomBarHeight && scrollPos >= innerHeight) {
+						// Move the content further up so that the bottom bar doesn't hide it
+						document.body.style.top = `${-(scrollPos + bottomBarHeight)}px`;
+					}
+				}),
+			300
+		);
 	}
 
 	function restorePositionSetting() {
-		if (previousBodyPosition !== null) {
-			const $activeUrl = get(activeUrl);
-			// Convert the position from "px" to Int
-			const y = -parseInt(document.body.style.top, 10);
-			const x = -parseInt(document.body.style.left, 10);
+		if (previousBodyPosition === null) return;
+		const $activeUrl = get(activeUrl);
+		// Convert the position from "px" to Int
+		const y = -parseInt(document.body.style.top, 10);
+		const x = -parseInt(document.body.style.left, 10);
 
-			// Restore styles
-			document.body.style.position = previousBodyPosition.position;
-			document.body.style.top = previousBodyPosition.top;
-			document.body.style.left = previousBodyPosition.left;
-			document.body.style.height = previousBodyPosition.height;
-			document.body.style.right = 'unset';
+		// Restore styles
+		document.body.style.position = previousBodyPosition.position;
+		document.body.style.top = previousBodyPosition.top;
+		document.body.style.left = previousBodyPosition.left;
+		document.body.style.height = previousBodyPosition.height;
+		document.body.style.right = 'unset';
 
-			requestAnimationFrame(() => {
-				if ($activeUrl !== window.location.href) {
-					activeUrl.set(window.location.href);
-					return;
-				}
+		requestAnimationFrame(() => {
+			if ($activeUrl !== window.location.href) {
+				activeUrl.set(window.location.href);
+				return;
+			}
 
-				window.scrollTo(x, y);
-			});
+			window.scrollTo(x, y);
+		});
 
-			previousBodyPosition = null;
-		}
+		previousBodyPosition = null;
 	}
 
 	onMount(() => {
 		function onScroll() {
-			scrollPos.set(window.scrollY);
+			scrollPos = window.scrollY;
 		}
 
 		onScroll();
@@ -101,7 +97,7 @@ export function usePositionFixed({
 		if (get(nested) || !get(hasBeenOpened)) return;
 		// This is needed to force Safari toolbar to show **before** the drawer starts animating to prevent a gnarly shift from happening
 		if ($isOpen) {
-			setPositionFixed();
+			setPositionFixed($isOpen);
 
 			if (!get(modal)) {
 				setTimeout(() => {
