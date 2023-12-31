@@ -19,9 +19,8 @@
 </script>
 
 <Root
-	nested
+	nested={true}
 	bind:open
-	{...$$restProps}
 	onClose={() => {
 		onNestedOpenChange(false);
 	}}
@@ -36,4 +35,7 @@
 		onOpenChange?.(o);
 	}}
 	onRelease={onNestedRelease}
-/>
+	{...$$restProps}
+>
+	<slot />
+</Root>

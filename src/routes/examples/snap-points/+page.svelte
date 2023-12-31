@@ -4,16 +4,11 @@
 
 	const snapPoints = ['148px', '355px', 1];
 	let activeSnapPoint: string | number | undefined | null = '148px';
-
-	const triggerAttrs = {
-		'data-testid': 'trigger'
-	};
 </script>
 
 <div class="flex h-screen w-screen items-center justify-center bg-white p-8">
-	<div data-testid="active-snap-index">{activeSnapPoint}</div>
 	<Drawer.Root {snapPoints} bind:activeSnapPoint>
-		<Drawer.Trigger {...triggerAttrs}>Open Drawer</Drawer.Trigger>
+		<Drawer.Trigger>Open SnapPoints Drawer</Drawer.Trigger>
 		<Drawer.Overlay class="fixed inset-0 bg-black/40" />
 		<Drawer.Portal>
 			<Drawer.Content

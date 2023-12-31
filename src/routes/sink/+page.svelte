@@ -1,5 +1,11 @@
 <script lang="ts">
-	import InitialSnapTest from '../../tests/initial-snap-test.svelte';
+	import { dev } from '$app/environment';
+	import Nested from '../examples/nested/+page.svelte';
+	import { goto } from '$app/navigation';
+
+	if (!dev) {
+		goto('/');
+	}
 </script>
 
-<InitialSnapTest />
+<Nested />

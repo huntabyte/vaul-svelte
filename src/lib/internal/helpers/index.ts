@@ -5,3 +5,4 @@ export * from './noop.js';
 export * from './event-listener.js';
 export * from './is.js';
 export * from './chain.js';
+export * from './sleep.js';

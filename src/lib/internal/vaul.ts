@@ -12,12 +12,13 @@ import {
 	effect,
 	removeUndefined,
 	styleToString,
-	isInput
+	isInput,
+	sleep,
+	noop,
+	addEventListener
 } from '$lib/internal/helpers/index.js';
 import { isIOS, preventScroll } from './prevent-scroll.js';
 import { TRANSITIONS, VELOCITY_THRESHOLD } from './constants.js';
-import { addEventListener } from './helpers/event-listener.js';
-import { noop } from './helpers/noop.js';
 import { handleEscapeKeydown } from './escape-keydown.js';
 import { handlePositionFixed } from './position-fixed.js';
 
@@ -32,6 +33,8 @@ const NESTED_DISPLACEMENT = 16;
 const WINDOW_TOP_OFFSET = 26;
 
 const DRAG_CLASS = 'vaul-dragging';
+
+const openDrawerIds = writable<string[]>([]);
 
 type WithFadeFromProps = {
 	snapPoints: (number | string)[];
@@ -130,6 +133,7 @@ export function createVaul(props: CreateVaulProps) {
 	const openTime = writable<Date | null>(null);
 	const keyboardIsOpen = writable(false);
 	const drawerRef = writable<HTMLDivElement | undefined>(undefined);
+	const drawerId = writable<string | undefined>(undefined);
 
 	let isDragging = false;
 	let dragStartTime: Date | null = null;
@@ -179,6 +183,30 @@ export function createVaul(props: CreateVaulProps) {
 			};
 		}
 	);
+
+	effect([drawerRef], ([$drawerRef]) => {
+		if ($drawerRef) {
+			drawerId.set($drawerRef.id);
+		}
+	});
+
+	effect([isOpen], ([$open]) => {
+		// Prevent double clicks from closing multiple dialogs
+		sleep(100).then(() => {
+			const id = get(drawerId);
+			if ($open && id) {
+				openDrawerIds.update((prev) => {
+					if (prev.includes(id)) {
+						return prev;
+					}
+					prev.push(id);
+					return prev;
+				});
+			} else {
+				openDrawerIds.update((prev) => prev.filter((id) => id !== id));
+			}
+		});
+	});
 
 	effect([isOpen], ([$isOpen]) => {
 		if (!$isOpen && get(shouldScaleBackground)) {
@@ -525,7 +553,6 @@ export function createVaul(props: CreateVaulProps) {
 		if (isClosing) return;
 		const $drawerRef = get(drawerRef);
 		if (!$drawerRef) return;
-		const $snapPoints = get(snapPoints);
 
 		onClose?.();
 		set($drawerRef, {
@@ -546,6 +573,8 @@ export function createVaul(props: CreateVaulProps) {
 			isOpen.set(false);
 			isClosing = false;
 		}, 300);
+
+		const $snapPoints = get(snapPoints);
 
 		setTimeout(() => {
 			if ($snapPoints) {
@@ -665,7 +694,7 @@ export function createVaul(props: CreateVaulProps) {
 		}
 
 		const visibleDrawerHeight = Math.min(
-			$drawerRef.getBoundingClientRect().height ?? 0,
+			get(drawerRef)?.getBoundingClientRect().height ?? 0,
 			window.innerHeight
 		);
 
@@ -706,30 +735,33 @@ export function createVaul(props: CreateVaulProps) {
 	});
 
 	function onNestedOpenChange(o: boolean) {
+		const $drawerRef = get(drawerRef);
 		const scale = o ? (window.innerWidth - NESTED_DISPLACEMENT) / window.innerWidth : 1;
 		const y = o ? -NESTED_DISPLACEMENT : 0;
 
 		if (nestedOpenChangeTimer) {
 			window.clearTimeout(nestedOpenChangeTimer);
 		}
-		const $drawerRef = get(drawerRef);
 
 		set($drawerRef, {
 			transition: `transform ${TRANSITIONS.DURATION}s cubic-bezier(${TRANSITIONS.EASE.join(',')})`,
 			transform: `scale(${scale}) translate3d(0, ${y}px, 0)`
 		});
 
-		if (o && !$drawerRef) return;
-
-		nestedOpenChangeTimer = setTimeout(() => {
-			set($drawerRef, {
-				transition: 'none',
-				transform: `translate3d(0, ${getTranslateY($drawerRef as HTMLElement)}px, 0)`
-			});
-		}, 500);
+		if (!o && $drawerRef) {
+			nestedOpenChangeTimer = setTimeout(() => {
+				set($drawerRef, {
+					transition: 'none',
+					transform: `translate3d(0, ${getTranslateY($drawerRef as HTMLElement)}px, 0)`
+				});
+			}, 500);
+		}
 	}
 
-	function onNestedDrag(_: SvelteEvent<PointerEvent, HTMLElement>, percentageDragged: number) {
+	function onNestedDrag(
+		_: SvelteEvent<PointerEvent | MouseEvent, HTMLElement>,
+		percentageDragged: number
+	) {
 		if (percentageDragged < 0) return;
 		const initialScale = (window.innerWidth - NESTED_DISPLACEMENT) / window.innerWidth;
 		const newScale = initialScale + percentageDragged * (1 - initialScale);
@@ -742,14 +774,17 @@ export function createVaul(props: CreateVaulProps) {
 	}
 
 	function onNestedRelease(_: SvelteEvent<PointerEvent | MouseEvent, HTMLElement>, o: boolean) {
-		if (!o) return;
 		const scale = o ? (window.innerWidth - NESTED_DISPLACEMENT) / window.innerWidth : 1;
 		const y = o ? -NESTED_DISPLACEMENT : 0;
 
-		set(get(drawerRef), {
-			transition: `transform ${TRANSITIONS.DURATION}s cubic-bezier(${TRANSITIONS.EASE.join(',')})`,
-			transform: `scale(${scale}) translate3d(0, ${y}px, 0)`
-		});
+		if (o) {
+			set(get(drawerRef), {
+				transition: `transform ${TRANSITIONS.DURATION}s cubic-bezier(${TRANSITIONS.EASE.join(
+					','
+				)})`,
+				transform: `scale(${scale}) translate3d(0, ${y}px, 0)`
+			});
+		}
 	}
 
 	return {
@@ -761,7 +796,9 @@ export function createVaul(props: CreateVaulProps) {
 			snapPointsOffset,
 			keyboardIsOpen,
 			shouldFade,
-			visible
+			visible,
+			drawerId,
+			openDrawerIds
 		},
 		helpers: {
 			getContentStyle

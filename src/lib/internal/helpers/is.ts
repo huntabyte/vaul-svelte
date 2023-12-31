@@ -11,10 +11,6 @@ const nonTextInputTypes = new Set([
 	'reset'
 ]);
 
-export function isHTMLElement(el: unknown): el is HTMLElement {
-	return el instanceof HTMLElement;
-}
-
 export const isBrowser = typeof document !== 'undefined';
 
 // eslint-disable-next-line @typescript-eslint/ban-types

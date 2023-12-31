@@ -2,6 +2,7 @@
 	import { Dialog as DialogPrimitive } from 'bits-ui';
 	import { setCtx } from '../ctx.js';
 	import type { Props } from './types.js';
+	import { get } from 'svelte/store';
 
 	type $$Props = Props;
 
@@ -17,9 +18,12 @@
 	export let shouldScaleBackground: $$Props['shouldScaleBackground'] = false;
 	export let activeSnapPoint: $$Props['activeSnapPoint'] = undefined;
 	export let onActiveSnapPointChange: $$Props['onActiveSnapPointChange'] = undefined;
+	export let onRelease: $$Props['onRelease'] = undefined;
+	export let onDrag: $$Props['onDrag'] = undefined;
+	export let onClose: $$Props['onClose'] = undefined;
 
 	const {
-		states: { keyboardIsOpen, activeSnapPoint: localActiveSnapPoint },
+		states: { keyboardIsOpen, activeSnapPoint: localActiveSnapPoint, drawerId, openDrawerIds },
 		methods: { closeDrawer, openDrawer },
 		options: { dismissible },
 		updateOption
@@ -53,6 +57,9 @@
 		snapPoints: snapPoints as any,
 		fadeFromIndex,
 		nested,
+		onDrag,
+		onClose,
+		onRelease,
 		shouldScaleBackground
 	});
 
@@ -84,11 +91,15 @@
 			keyboardIsOpen.set(false);
 		}
 		e.preventDefault();
-		onOpenChange?.(false);
 		if (!$dismissible) {
 			return;
 		}
-		closeDrawer();
+		const $openDialogIds = get(openDrawerIds);
+		const isLast = $openDialogIds[$openDialogIds.length - 1] === get(drawerId);
+		if (isLast) {
+			onOpenChange?.(false);
+			closeDrawer();
+		}
 	}}
 >
 	<slot />
