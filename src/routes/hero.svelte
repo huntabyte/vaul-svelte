@@ -149,7 +149,7 @@
 				</Drawer.Portal>
 			</Drawer.Root>
 			<a
-				href="https://github.com/huntabyte/vaul"
+				href="https://github.com/huntabyte/vaul-svelte"
 				class="rounded-full px-4 py-2.5 text-sm font-semibold hover:bg-gray-100"
 				target="_blank"
 			>
