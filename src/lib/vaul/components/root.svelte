@@ -71,7 +71,7 @@
 	onOutsideClick={(e) => {
 		onOutsideClick?.(e);
 		if ($keyboardIsOpen) {
-			$keyboardIsOpen = false;
+			keyboardIsOpen.set(false);
 		}
 		e.preventDefault();
 		onOpenChange?.(false);

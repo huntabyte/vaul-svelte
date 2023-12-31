@@ -125,24 +125,23 @@ export function createVaul(props: CreateVaulProps) {
 	const isOpen = overridable(openStore, withDefaults.onOpenChange);
 	const hasBeenOpened = writable(false);
 	const visible = writable(false);
-
 	const justReleased = writable(false);
 	const overlayRef = writable<HTMLDivElement | undefined>(undefined);
 	const openTime = writable<Date | null>(null);
-	const dragEndTime = writable<Date | null>(null);
-	const lastTimeDragPrevented = writable<Date | null>(null);
-	const isAllowedToDrag = writable(false);
-	const nestedOpenChangeTimer = writable<NodeJS.Timeout | null>(null);
 	const keyboardIsOpen = writable(false);
-	const previousDiffFromInitial = writable(0);
 	const drawerRef = writable<HTMLDivElement | undefined>(undefined);
-	const drawerHeightRef = writable(get(drawerRef)?.getBoundingClientRect().height || 0);
-	const initialDrawerHeight = writable(0);
 
 	let isDragging = false;
 	let dragStartTime: Date | null = null;
 	let isClosing = false;
 	let pointerStartY = 0;
+	let dragEndTime: Date | null = null;
+	let lastTimeDragPrevented: Date | null = null;
+	let isAllowedToDrag = false;
+	let drawerHeightRef = get(drawerRef)?.getBoundingClientRect().height || 0;
+	let previousDiffFromInitial = 0;
+	let initialDrawerHeight = 0;
+	let nestedOpenChangeTimer: NodeJS.Timeout | null = null;
 
 	function getDefaultActiveSnapPoint() {
 		if (withDefaults.defaultActiveSnapPoint !== undefined) {
@@ -240,7 +239,7 @@ export function createVaul(props: CreateVaulProps) {
 
 		if (!get(dismissible) && !get(snapPoints)) return;
 		if ($drawerRef && !$drawerRef.contains(event.target as Node)) return;
-		drawerHeightRef.set($drawerRef?.getBoundingClientRect().height || 0);
+		drawerHeightRef = $drawerRef?.getBoundingClientRect().height || 0;
 
 		isDragging = true;
 
@@ -248,7 +247,7 @@ export function createVaul(props: CreateVaulProps) {
 
 		// iOS doesn't trigger mouseUp after scrolling so we need to listen to touched in order to disallow dragging
 		if (isIOS()) {
-			window.addEventListener('touchend', () => isAllowedToDrag.set(false), { once: true });
+			window.addEventListener('touchend', () => (isAllowedToDrag = false), { once: true });
 		}
 		// Ensure we maintain correct pointer capture even when going outside of the drawer
 		(event.target as HTMLElement).setPointerCapture(event.pointerId);
@@ -279,21 +278,19 @@ export function createVaul(props: CreateVaulProps) {
 			return false;
 		}
 
-		const $lastTimeDragPrevented = get(lastTimeDragPrevented);
-
 		const $scrollLockTimeout = get(scrollLockTimeout);
 		// Disallow dragging if drawer was scrolled within `scrollLockTimeout`
 		if (
-			$lastTimeDragPrevented &&
-			date.getTime() - $lastTimeDragPrevented.getTime() < $scrollLockTimeout &&
+			lastTimeDragPrevented &&
+			date.getTime() - lastTimeDragPrevented.getTime() < $scrollLockTimeout &&
 			swipeAmount === 0
 		) {
-			lastTimeDragPrevented.set(date);
+			lastTimeDragPrevented = date;
 			return false;
 		}
 
 		if (isDraggingDown) {
-			lastTimeDragPrevented.set(date);
+			lastTimeDragPrevented = date;
 
 			// We are dragging down so we should allow scrolling
 			return false;
@@ -304,7 +301,7 @@ export function createVaul(props: CreateVaulProps) {
 			// Check if the element is scrollable
 			if (element.scrollHeight > element.clientHeight) {
 				if (element.scrollTop !== 0) {
-					lastTimeDragPrevented.set(new Date());
+					lastTimeDragPrevented = new Date();
 
 					// The element is scrollable and not scrolled to the top, so don't drag
 					return false;
@@ -335,8 +332,7 @@ export function createVaul(props: CreateVaulProps) {
 		// Disallow dragging down to close when first snap point is the active one and dismissible prop is set to false.
 		if ($snapPoints && $activeSnapPointIndex === 0 && !get(dismissible)) return;
 
-		const $isAllowedToDrag = get(isAllowedToDrag);
-		if (!$isAllowedToDrag && !shouldDrag(event.target as HTMLElement, isDraggingDown)) {
+		if (!isAllowedToDrag && !shouldDrag(event.target as HTMLElement, isDraggingDown)) {
 			return;
 		}
 		const $drawerRef = get(drawerRef);
@@ -344,7 +340,7 @@ export function createVaul(props: CreateVaulProps) {
 
 		$drawerRef.classList.add(DRAG_CLASS);
 		// If shouldDrag gave true once after pressing down on the drawer, we set isAllowedToDrag to true and it will remain true until we let go, there's no reason to disable dragging mid way, ever, and that's the solution to it
-		isAllowedToDrag.set(true);
+		isAllowedToDrag = true;
 
 		set($drawerRef, {
 			transition: 'none'
@@ -373,8 +369,7 @@ export function createVaul(props: CreateVaulProps) {
 		// We need to capture last time when drag with scroll was triggered and have a timeout between
 		const absDraggedDistance = Math.abs(draggedDistance);
 		const wrapper = document.querySelector('[data-vaul-drawer-wrapper]');
-		const $drawerRefHeight = get(drawerHeightRef);
-		let percentageDragged = absDraggedDistance / $drawerRefHeight;
+		let percentageDragged = absDraggedDistance / drawerHeightRef;
 		const snapPointPercentageDragged = getSnapPointsPercentageDragged(
 			absDraggedDistance,
 			isDraggingDown
@@ -470,21 +465,20 @@ export function createVaul(props: CreateVaulProps) {
 				const $drawerRef = get(drawerRef);
 				if (!$drawerRef) return;
 				const $keyboardIsOpen = get(keyboardIsOpen);
-				const $initialDrawerHeight = get(initialDrawerHeight);
+
 				const focusedElement = document.activeElement as HTMLElement;
 				if (isInput(focusedElement) || $keyboardIsOpen) {
 					const visualViewportHeight = window.visualViewport?.height || 0;
 					// This is the height of the keyboard
 					let diffFromInitial = window.innerHeight - visualViewportHeight;
 					const drawerHeight = $drawerRef.getBoundingClientRect().height || 0;
-					if (!$initialDrawerHeight) {
-						initialDrawerHeight.set(drawerHeight);
+					if (!initialDrawerHeight) {
+						initialDrawerHeight = drawerHeight;
 					}
 					const offsetFromTop = $drawerRef.getBoundingClientRect().top;
 
 					// visualViewport height may change due to some subtle changes to the keyboard. Checking if the height changed by 60 or more will make sure that they keyboard really changed its open state.
-					const $previousDiffFromInitial = get(previousDiffFromInitial);
-					if (Math.abs($previousDiffFromInitial - diffFromInitial) > 60) {
+					if (Math.abs(previousDiffFromInitial - diffFromInitial) > 60) {
 						keyboardIsOpen.set(!$keyboardIsOpen);
 					}
 
@@ -493,7 +487,8 @@ export function createVaul(props: CreateVaulProps) {
 						diffFromInitial += activeSnapPointHeight;
 					}
 
-					previousDiffFromInitial.set(diffFromInitial);
+					previousDiffFromInitial = diffFromInitial;
+
 					// We don't have to change the height if the input is in view, when we are here we are in the opened keyboard state so we can correctly check if the input is in view
 					if (drawerHeight > visualViewportHeight || $keyboardIsOpen) {
 						const height = $drawerRef.getBoundingClientRect().height;
@@ -512,7 +507,7 @@ export function createVaul(props: CreateVaulProps) {
 							)}px`;
 						}
 					} else {
-						$drawerRef.style.height = `${$initialDrawerHeight}px`;
+						$drawerRef.style.height = `${initialDrawerHeight}px`;
 					}
 
 					if ($snapPoints && $snapPoints.length > 0 && !$keyboardIsOpen) {
@@ -621,19 +616,15 @@ export function createVaul(props: CreateVaulProps) {
 		const $drawerRef = get(drawerRef);
 		if (!isDragging || !$drawerRef) return;
 
-		const $isAllowedToDrag = get(isAllowedToDrag);
-
-		if ($isAllowedToDrag && isInput(event.target as HTMLElement)) {
+		if (isAllowedToDrag && isInput(event.target as HTMLElement)) {
 			// If we were just dragging, prevent focusing on inputs etc. on release
 			(event.target as HTMLInputElement).blur();
 		}
 		$drawerRef.classList.remove(DRAG_CLASS);
-		isAllowedToDrag.set(false);
+		isAllowedToDrag = false;
 		isDragging = false;
 
-		const $dragEndTime = new Date();
-
-		dragEndTime.set($dragEndTime);
+		dragEndTime = new Date();
 
 		const swipeAmount = getTranslateY($drawerRef);
 
@@ -646,7 +637,7 @@ export function createVaul(props: CreateVaulProps) {
 
 		if (dragStartTime === null) return;
 
-		const timeTaken = $dragEndTime.getTime() - dragStartTime.getTime();
+		const timeTaken = dragEndTime.getTime() - dragStartTime.getTime();
 		const distMoved = pointerStartY - event.screenY;
 		const velocity = Math.abs(distMoved) / timeTaken;
 
@@ -728,10 +719,8 @@ export function createVaul(props: CreateVaulProps) {
 		const scale = o ? (window.innerWidth - NESTED_DISPLACEMENT) / window.innerWidth : 1;
 		const y = o ? -NESTED_DISPLACEMENT : 0;
 
-		const $nestedOpenChangeTimer = get(nestedOpenChangeTimer);
-
-		if ($nestedOpenChangeTimer) {
-			window.clearTimeout($nestedOpenChangeTimer);
+		if (nestedOpenChangeTimer) {
+			window.clearTimeout(nestedOpenChangeTimer);
 		}
 		const $drawerRef = get(drawerRef);
 
@@ -742,14 +731,12 @@ export function createVaul(props: CreateVaulProps) {
 
 		if (o && !$drawerRef) return;
 
-		nestedOpenChangeTimer.set(
-			setTimeout(() => {
-				set($drawerRef, {
-					transition: 'none',
-					transform: `translate3d(0, ${getTranslateY($drawerRef as HTMLElement)}px, 0)`
-				});
-			}, 500)
-		);
+		nestedOpenChangeTimer = setTimeout(() => {
+			set($drawerRef, {
+				transition: 'none',
+				transform: `translate3d(0, ${getTranslateY($drawerRef as HTMLElement)}px, 0)`
+			});
+		}, 500);
 	}
 
 	function onNestedDrag(_: SvelteEvent<PointerEvent, HTMLElement>, percentageDragged: number) {

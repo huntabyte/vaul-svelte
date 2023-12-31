@@ -17,13 +17,11 @@ export function handlePositionFixed({
 	hasBeenOpened: Writable<boolean>;
 }) {
 	const activeUrl = writable(typeof window !== 'undefined' ? window.location.href : '');
-	const scrollPos = writable(0);
+	let scrollPos = 0;
 
-	function setPositionFixed() {
-		const $isOpen = get(isOpen);
-		const $scrollPos = get(scrollPos);
+	function setPositionFixed(open: boolean) {
 		// If previousBodyPosition is already set, don't set it again.
-		if (previousBodyPosition === null && $isOpen) {
+		if (previousBodyPosition === null && open) {
 			previousBodyPosition = {
 				position: document.body.style.position,
 				top: document.body.style.top,
@@ -35,7 +33,7 @@ export function handlePositionFixed({
 			const { scrollX, innerHeight } = window;
 
 			document.body.style.setProperty('position', 'fixed', 'important');
-			document.body.style.top = `${-$scrollPos}px`;
+			document.body.style.top = `${-scrollPos}px`;
 			document.body.style.left = `${-scrollX}px`;
 			document.body.style.right = '0px';
 			document.body.style.height = 'auto';
@@ -45,9 +43,9 @@ export function handlePositionFixed({
 					requestAnimationFrame(() => {
 						// Attempt to check if the bottom bar appeared due to the position change
 						const bottomBarHeight = innerHeight - window.innerHeight;
-						if (bottomBarHeight && $scrollPos >= innerHeight) {
+						if (bottomBarHeight && scrollPos >= innerHeight) {
 							// Move the content further up so that the bottom bar doesn't hide it
-							document.body.style.top = `${-($scrollPos + bottomBarHeight)}px`;
+							document.body.style.top = `${-(scrollPos + bottomBarHeight)}px`;
 						}
 					}),
 				300
@@ -84,7 +82,7 @@ export function handlePositionFixed({
 
 	onMount(() => {
 		function onScroll() {
-			scrollPos.set(window.scrollY);
+			scrollPos = window.scrollY;
 		}
 
 		onScroll();
@@ -101,7 +99,7 @@ export function handlePositionFixed({
 		if (get(nested) || !get(hasBeenOpened)) return;
 		// This is needed to force Safari toolbar to show **before** the drawer starts animating to prevent a gnarly shift from happening
 		if ($isOpen) {
-			setPositionFixed();
+			setPositionFixed($isOpen);
 
 			if (!get(modal)) {
 				setTimeout(() => {
