@@ -1,7 +1,6 @@
+import { writable, get, type Writable } from 'svelte/store';
+import { effect, addEventListener } from './helpers/index.js';
 import { onMount } from 'svelte';
-import { get, writable, type Writable } from 'svelte/store';
-import { addEventListener } from './helpers/event.js';
-import { effect } from './helpers/store.js';
 
 let previousBodyPosition: Record<string, string> | null = null;
 

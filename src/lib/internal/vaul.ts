@@ -15,11 +15,11 @@ import {
 	isInput
 } from '$lib/internal/helpers/index.js';
 import { isIOS, preventScroll } from './prevent-scroll.js';
-import { handlePositionFixed } from './position-fixed.js';
 import { TRANSITIONS, VELOCITY_THRESHOLD } from './constants.js';
-import { addEventListener } from './helpers/event.js';
+import { addEventListener } from './helpers/event-listener.js';
 import { noop } from './helpers/noop.js';
 import { handleEscapeKeydown } from './escape-keydown.js';
+import { handlePositionFixed } from './position-fixed.js';
 
 const CLOSE_THRESHOLD = 0.25;
 

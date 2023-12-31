@@ -1,19 +1,6 @@
 // This code comes from https://github.com/adobe/react-spectrum/blob/main/packages/%40react-aria/overlays/src/usePreventScroll.ts
 
-import { addEventListener } from './helpers/event.js';
-import { isInput } from './helpers/is.js';
-
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export function chain(...callbacks: any[]): (...args: any[]) => void {
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	return (...args: any[]) => {
-		for (const callback of callbacks) {
-			if (typeof callback === 'function') {
-				callback(...args);
-			}
-		}
-	};
-}
+import { addEventListener, chain, isInput } from '$lib/internal/helpers/index.js';
 
 function isMac(): boolean | undefined {
 	return testPlatform(/^Mac/);
