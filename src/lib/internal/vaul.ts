@@ -143,18 +143,8 @@ export function createVaul(props: CreateVaulProps) {
 	let initialDrawerHeight = 0;
 	let nestedOpenChangeTimer: NodeJS.Timeout | null = null;
 
-	function getDefaultActiveSnapPoint() {
-		if (withDefaults.defaultActiveSnapPoint !== undefined) {
-			return withDefaults.defaultActiveSnapPoint;
-		}
-		if (snapPointsProp && snapPointsProp.length > 0) {
-			return snapPointsProp[0];
-		}
-		return undefined;
-	}
-
 	const activeSnapPoint = overridable(
-		writable(getDefaultActiveSnapPoint()),
+		writable(withDefaults.defaultActiveSnapPoint),
 		withDefaults.onActiveSnapPointChange
 	);
 

@@ -3,9 +3,7 @@
 	import { clsx } from 'clsx';
 
 	const snapPoints = ['148px', '355px', 1];
-	let snap: string | number | undefined | null = '148px';
-
-	// $: activeSnapPointIndex = snapPoints.indexOf(snap as string);
+	let activeSnapPoint: string | number | undefined | null = '148px';
 
 	const triggerAttrs = {
 		'data-testid': 'trigger'
@@ -13,8 +11,8 @@
 </script>
 
 <div class="flex h-screen w-screen items-center justify-center bg-white p-8">
-	<div data-testid="active-snap-index">{snap}</div>
-	<Drawer.Root {snapPoints} activeSnapPoint={snap}>
+	<div data-testid="active-snap-index">{activeSnapPoint}</div>
+	<Drawer.Root {snapPoints} bind:activeSnapPoint>
 		<Drawer.Trigger {...triggerAttrs}>Open Drawer</Drawer.Trigger>
 		<Drawer.Overlay class="fixed inset-0 bg-black/40" />
 		<Drawer.Portal>
@@ -24,8 +22,8 @@
 			>
 				<div
 					class={clsx('mx-auto flex w-full max-w-md flex-col p-4 pt-5', {
-						'overflow-y-auto': snap === 1,
-						'overflow-hidden': snap !== 1
+						'overflow-y-auto': activeSnapPoint === 1,
+						'overflow-hidden': activeSnapPoint !== 1
 					})}
 				>
 					<div class="flex items-center">

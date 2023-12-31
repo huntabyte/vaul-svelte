@@ -1,6 +1,7 @@
 import { derived, get, type Writable } from 'svelte/store';
 import { TRANSITIONS, VELOCITY_THRESHOLD } from './constants.js';
 import { effect, set } from './helpers/index.js';
+import { tick } from 'svelte';
 
 export function handleSnapPoints({
 	activeSnapPoint,
@@ -86,42 +87,49 @@ export function handleSnapPoints({
 	});
 
 	function snapToPoint(height: number) {
-		const $snapPointsOffset = get(snapPointsOffset);
-		const newSnapPointIndex =
-			$snapPointsOffset?.findIndex((snapPointHeight) => snapPointHeight === height) ?? null;
+		tick().then(() => {
+			const $snapPointsOffset = get(snapPointsOffset);
+			const newSnapPointIndex =
+				$snapPointsOffset?.findIndex((snapPointHeight) => snapPointHeight === height) ?? null;
 
-		const $drawerRef = get(drawerRef);
+			const $drawerRef = get(drawerRef);
 
-		onSnapPointChange(newSnapPointIndex);
+			onSnapPointChange(newSnapPointIndex);
 
-		set($drawerRef, {
-			transition: `transform ${TRANSITIONS.DURATION}s cubic-bezier(${TRANSITIONS.EASE.join(',')})`,
-			transform: `translate3d(0, ${height}px, 0)`
-		});
-
-		const $fadeFromIndex = get(fadeFromIndex);
-		const $overlayRef = get(overlayRef);
-
-		if (
-			snapPointsOffset &&
-			newSnapPointIndex !== $snapPointsOffset.length - 1 &&
-			newSnapPointIndex !== $fadeFromIndex
-		) {
-			set($overlayRef, {
-				transition: `opacity ${TRANSITIONS.DURATION}s cubic-bezier(${TRANSITIONS.EASE.join(',')})`,
-				opacity: '0'
+			set($drawerRef, {
+				transition: `transform ${TRANSITIONS.DURATION}s cubic-bezier(${TRANSITIONS.EASE.join(
+					','
+				)})`,
+				transform: `translate3d(0, ${height}px, 0)`
 			});
-		} else {
-			set($overlayRef, {
-				transition: `opacity ${TRANSITIONS.DURATION}s cubic-bezier(${TRANSITIONS.EASE.join(',')})`,
-				opacity: '1'
-			});
-		}
-		activeSnapPoint.update(() => {
-			const $snapPoints = get(snapPoints);
-			if (newSnapPointIndex === null || !$snapPoints) return null;
 
-			return $snapPoints[newSnapPointIndex];
+			const $fadeFromIndex = get(fadeFromIndex);
+			const $overlayRef = get(overlayRef);
+
+			if (
+				snapPointsOffset &&
+				newSnapPointIndex !== $snapPointsOffset.length - 1 &&
+				newSnapPointIndex !== $fadeFromIndex
+			) {
+				set($overlayRef, {
+					transition: `opacity ${TRANSITIONS.DURATION}s cubic-bezier(${TRANSITIONS.EASE.join(
+						','
+					)})`,
+					opacity: '0'
+				});
+			} else {
+				set($overlayRef, {
+					transition: `opacity ${TRANSITIONS.DURATION}s cubic-bezier(${TRANSITIONS.EASE.join(
+						','
+					)})`,
+					opacity: '1'
+				});
+			}
+			activeSnapPoint.update(() => {
+				const $snapPoints = get(snapPoints);
+				if (newSnapPointIndex === null || !$snapPoints) return null;
+				return $snapPoints[newSnapPointIndex];
+			});
 		});
 	}
 

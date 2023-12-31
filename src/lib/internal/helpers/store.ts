@@ -107,7 +107,7 @@ export const overridable = <T>(store: Writable<T>, onChange?: ChangeFn<T>) => {
 		store.update((curr) => {
 			const next = updater(curr);
 			let res: T = next;
-			if (onChange && next !== curr) {
+			if (onChange) {
 				res = onChange({ curr, next });
 			}
 

@@ -19,7 +19,7 @@
 	export let onActiveSnapPointChange: $$Props['onActiveSnapPointChange'] = undefined;
 
 	const {
-		states: { keyboardIsOpen },
+		states: { keyboardIsOpen, activeSnapPoint: localActiveSnapPoint },
 		methods: { closeDrawer, openDrawer },
 		options: { dismissible },
 		updateOption
@@ -34,8 +34,16 @@
 			return next;
 		},
 		onActiveSnapPointChange: ({ next }) => {
+			if (next === undefined && snapPoints && activeSnapPoint !== next) {
+				const newNext = snapPoints[0];
+				onActiveSnapPointChange?.(newNext);
+				activeSnapPoint = newNext;
+				return newNext;
+			}
+
 			if (activeSnapPoint !== next) {
 				onActiveSnapPointChange?.(next);
+				activeSnapPoint = next;
 			}
 			return next;
 		},
@@ -47,6 +55,8 @@
 		nested,
 		shouldScaleBackground
 	});
+
+	$: activeSnapPoint !== undefined && localActiveSnapPoint.set(activeSnapPoint);
 
 	$: updateOption('closeThreshold', closeThreshold);
 	$: updateOption('scrollLockTimeout', scrollLockTimeout);
