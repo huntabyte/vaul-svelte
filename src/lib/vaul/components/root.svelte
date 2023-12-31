@@ -18,8 +18,8 @@
 	export let shouldScaleBackground: $$Props['shouldScaleBackground'] = false;
 
 	const {
-		states: { isOpen, hasBeenOpened, keyboardIsOpen },
-		methods: { closeDrawer },
+		states: { keyboardIsOpen },
+		methods: { closeDrawer, openDrawer },
 		refs: { drawerRef },
 		options: { dismissible },
 		updateOption
@@ -54,17 +54,16 @@
 </script>
 
 <DialogPrimitive.Root
+	closeOnEscape={false}
 	bind:open
 	preventScroll={false}
 	openFocus={openFocus ? openFocus : drawerEl}
 	onOpenChange={(o) => {
 		onOpenChange?.(o);
-
 		if (!o) {
 			closeDrawer();
-		} else {
-			hasBeenOpened.set(true);
-			isOpen.set(true);
+		} else if (o) {
+			openDrawer();
 		}
 	}}
 	onOutsideClick={(e) => {

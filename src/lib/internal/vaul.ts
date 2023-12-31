@@ -18,6 +18,8 @@ import { usePositionFixed } from './position-fixed.js';
 import { onMount } from 'svelte';
 import { TRANSITIONS, VELOCITY_THRESHOLD } from './constants.js';
 import { addEventListener } from './helpers/event.js';
+import { noop } from './helpers/noop.js';
+import { useEscapeKeydown } from './escape-keydown.js';
 
 const CLOSE_THRESHOLD = 0.25;
 
@@ -140,6 +142,7 @@ export function createVaul(props: CreateVaulProps) {
 	const drawerRef = writable<HTMLDivElement | undefined>(undefined);
 	const drawerHeightRef = writable(get(drawerRef)?.getBoundingClientRect().height || 0);
 	const initialDrawerHeight = writable(0);
+	let isClosing = false;
 
 	function getDefaultActiveSnapPoint() {
 		if (withDefaults.defaultActiveSnapPoint) {
@@ -220,6 +223,29 @@ export function createVaul(props: CreateVaulProps) {
 	});
 
 	const { restorePositionSetting } = usePositionFixed({ isOpen, modal, nested, hasBeenOpened });
+
+	effect([drawerRef], ([$drawerRef]) => {
+		let unsub = noop;
+
+		if ($drawerRef) {
+			const { destroy } = useEscapeKeydown($drawerRef, {
+				handler: () => {
+					closeDrawer();
+				}
+			});
+			unsub = destroy;
+		}
+
+		return () => {
+			unsub();
+		};
+	});
+
+	function openDrawer() {
+		if (isClosing) return;
+		hasBeenOpened.set(true);
+		isOpen.set(true);
+	}
 
 	function getScale() {
 		return (window.innerWidth - WINDOW_TOP_OFFSET) / window.innerWidth;
@@ -527,6 +553,7 @@ export function createVaul(props: CreateVaulProps) {
 	);
 
 	function closeDrawer() {
+		if (isClosing) return;
 		const $drawerRef = get(drawerRef);
 		if (!$drawerRef) return;
 		const $snapPoints = get(snapPoints);
@@ -544,9 +571,11 @@ export function createVaul(props: CreateVaulProps) {
 
 		scaleBackground(false);
 
+		isClosing = true;
 		setTimeout(() => {
 			visible.set(false);
 			isOpen.set(false);
+			isClosing = false;
 		}, 300);
 
 		setTimeout(() => {
@@ -793,7 +822,8 @@ export function createVaul(props: CreateVaulProps) {
 			onNestedDrag,
 			onNestedOpenChange,
 			onNestedRelease,
-			restorePositionSetting
+			restorePositionSetting,
+			openDrawer
 		},
 		refs: {
 			drawerRef,
@@ -805,8 +835,4 @@ export function createVaul(props: CreateVaulProps) {
 
 export function dampenValue(v: number) {
 	return 8 * (Math.log(v + 1) - 2);
-}
-
-function noop() {
-	// do nothing;
 }
