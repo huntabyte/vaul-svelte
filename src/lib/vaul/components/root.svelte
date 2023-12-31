@@ -1,9 +1,9 @@
 <script lang="ts">
 	import { Dialog as DialogPrimitive } from 'bits-ui';
 	import { setCtx } from '../ctx.js';
-	import type { RootProps } from '../types.js';
+	import type { Props } from './types.js';
 
-	type $$Props = RootProps;
+	type $$Props = Props;
 
 	export let open = false;
 	export let onOpenChange: $$Props['onOpenChange'] = undefined;
@@ -11,7 +11,6 @@
 	export let scrollLockTimeout: $$Props['scrollLockTimeout'] = undefined;
 	export let snapPoints: $$Props['snapPoints'] = undefined;
 	export let fadeFromIndex: $$Props['fadeFromIndex'] = undefined;
-	export let modal: $$Props['modal'] = true;
 	export let openFocus: $$Props['openFocus'] = undefined;
 	export let onOutsideClick: $$Props['onOutsideClick'] = undefined;
 	export let nested: $$Props['nested'] = false;
@@ -36,12 +35,10 @@
 		// eslint-disable-next-line @typescript-eslint/no-explicit-any
 		snapPoints: snapPoints as any,
 		fadeFromIndex,
-		modal,
 		nested,
 		shouldScaleBackground
 	});
 
-	$: updateOption('modal', modal);
 	$: updateOption('closeThreshold', closeThreshold);
 	$: updateOption('scrollLockTimeout', scrollLockTimeout);
 	$: updateOption('snapPoints', snapPoints);
@@ -64,10 +61,6 @@
 	}}
 	onOutsideClick={(e) => {
 		onOutsideClick?.(e);
-		if (!modal) {
-			e.preventDefault();
-			return;
-		}
 		if ($keyboardIsOpen) {
 			$keyboardIsOpen = false;
 		}

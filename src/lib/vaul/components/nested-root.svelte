@@ -1,12 +1,13 @@
 <script lang="ts">
 	import Root from './root.svelte';
 	import { getCtx } from '../ctx.js';
-	import type { RootProps } from '../types.js';
+	import type { Props } from './types.js';
 
-	type $$Props = RootProps;
+	type $$Props = Props;
 
 	export let onDrag: $$Props['onDrag'] = undefined;
 	export let onOpenChange: $$Props['onOpenChange'] = undefined;
+	export let open: $$Props['open'] = undefined;
 
 	const {
 		methods: { onNestedDrag, onNestedRelease, onNestedOpenChange }
@@ -19,6 +20,7 @@
 
 <Root
 	nested
+	bind:open
 	{...$$restProps}
 	onClose={() => {
 		onNestedOpenChange(false);
