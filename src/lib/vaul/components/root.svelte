@@ -80,7 +80,7 @@
 		}
 		e.preventDefault();
 		onOpenChange?.(false);
-		if (!$dismissible || open !== undefined) {
+		if (!$dismissible) {
 			return;
 		}
 		closeDrawer();
