@@ -99,7 +99,7 @@
 							<div class="mx-auto flex max-w-md justify-end gap-6">
 								<a
 									class="gap-0.25 flex items-center text-xs text-gray-600"
-									href="https://github.com/huntabyte/vaul"
+									href="https://github.com/huntabyte/vaul-svelte"
 									target="_blank"
 								>
 									GitHub

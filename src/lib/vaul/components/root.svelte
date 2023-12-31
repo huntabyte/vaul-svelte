@@ -57,7 +57,6 @@
 	closeOnEscape={false}
 	bind:open
 	preventScroll={false}
-	openFocus={openFocus ? openFocus : drawerEl}
 	onOpenChange={(o) => {
 		onOpenChange?.(o);
 		if (!o) {
