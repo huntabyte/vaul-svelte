@@ -20,7 +20,6 @@
 	const {
 		states: { keyboardIsOpen },
 		methods: { closeDrawer, openDrawer },
-		refs: { drawerRef },
 		options: { dismissible },
 		updateOption
 	} = setCtx({
@@ -41,8 +40,6 @@
 		nested,
 		shouldScaleBackground
 	});
-
-	$: drawerEl = $drawerRef as HTMLElement;
 
 	$: updateOption('modal', modal);
 	$: updateOption('closeThreshold', closeThreshold);
