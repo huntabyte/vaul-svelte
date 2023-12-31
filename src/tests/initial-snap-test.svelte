@@ -3,7 +3,7 @@
 	import { clsx } from 'clsx';
 
 	const snapPoints = ['148px', '355px', 1];
-	let snap: string | number = '148px';
+	let snap: string | number | undefined | null = '148px';
 
 	// $: activeSnapPointIndex = snapPoints.indexOf(snap as string);
 
@@ -13,7 +13,7 @@
 </script>
 
 <div class="flex h-screen w-screen items-center justify-center bg-white p-8">
-	<div data-testid="active-snap-index"></div>
+	<div data-testid="active-snap-index">{snap}</div>
 	<Drawer.Root {snapPoints} activeSnapPoint={snap}>
 		<Drawer.Trigger {...triggerAttrs}>Open Drawer</Drawer.Trigger>
 		<Drawer.Overlay class="fixed inset-0 bg-black/40" />

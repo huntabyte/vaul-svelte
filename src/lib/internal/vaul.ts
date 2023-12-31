@@ -145,7 +145,7 @@ export function createVaul(props: CreateVaulProps) {
 	let isClosing = false;
 
 	function getDefaultActiveSnapPoint() {
-		if (withDefaults.defaultActiveSnapPoint) {
+		if (withDefaults.defaultActiveSnapPoint !== undefined) {
 			return withDefaults.defaultActiveSnapPoint;
 		}
 		if (snapPointsProp && snapPointsProp.length > 0) {
@@ -154,8 +154,10 @@ export function createVaul(props: CreateVaulProps) {
 		return undefined;
 	}
 
-	const activeSnapPointStore = writable(getDefaultActiveSnapPoint());
-	const activeSnapPoint = overridable(activeSnapPointStore, withDefaults.onActiveSnapPointChange);
+	const activeSnapPoint = overridable(
+		writable(getDefaultActiveSnapPoint()),
+		withDefaults.onActiveSnapPointChange
+	);
 
 	const {
 		activeSnapPointIndex,

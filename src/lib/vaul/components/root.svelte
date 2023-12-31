@@ -16,7 +16,7 @@
 	export let nested: $$Props['nested'] = false;
 	export let shouldScaleBackground: $$Props['shouldScaleBackground'] = false;
 	export let activeSnapPoint: $$Props['activeSnapPoint'] = undefined;
-	// export let onActiveSnapPointChange: $$Props['onActiveSnapPointChange'] = undefined;
+	export let onActiveSnapPointChange: $$Props['onActiveSnapPointChange'] = undefined;
 
 	const {
 		states: { keyboardIsOpen },
@@ -33,13 +33,12 @@
 			}
 			return next;
 		},
-		// onActiveSnapPointChange: ({ next }) => {
-		// 	if (activeSnapPoint !== next) {
-		// 		onActiveSnapPointChange?.(next);
-		// 		activeSnapPoint = next;
-		// 	}
-		// 	return next;
-		// },
+		onActiveSnapPointChange: ({ next }) => {
+			if (activeSnapPoint !== next) {
+				onActiveSnapPointChange?.(next);
+			}
+			return next;
+		},
 		closeThreshold,
 		scrollLockTimeout,
 		// eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -48,10 +47,6 @@
 		nested,
 		shouldScaleBackground
 	});
-
-	// $: if (activeSnapPoint !== undefined) {
-	// 	localActiveSnapPoint.set(activeSnapPoint);
-	// }
 
 	$: updateOption('closeThreshold', closeThreshold);
 	$: updateOption('scrollLockTimeout', scrollLockTimeout);
