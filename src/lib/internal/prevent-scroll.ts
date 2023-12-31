@@ -3,7 +3,7 @@
 import { addEventListener } from './helpers/event.js';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-function chain(...callbacks: any[]): (...args: any[]) => void {
+export function chain(...callbacks: any[]): (...args: any[]) => void {
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	return (...args: any[]) => {
 		for (const callback of callbacks) {

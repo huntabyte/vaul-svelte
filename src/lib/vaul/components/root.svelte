@@ -18,9 +18,8 @@
 	export let shouldScaleBackground: $$Props['shouldScaleBackground'] = false;
 
 	const {
-		states: { isOpen, hasBeenOpened, keyboardIsOpen },
-		methods: { closeDrawer },
-		refs: { drawerRef },
+		states: { keyboardIsOpen },
+		methods: { closeDrawer, openDrawer },
 		options: { dismissible },
 		updateOption
 	} = setCtx({
@@ -42,8 +41,6 @@
 		shouldScaleBackground
 	});
 
-	$: drawerEl = $drawerRef as HTMLElement;
-
 	$: updateOption('modal', modal);
 	$: updateOption('closeThreshold', closeThreshold);
 	$: updateOption('scrollLockTimeout', scrollLockTimeout);
@@ -54,17 +51,15 @@
 </script>
 
 <DialogPrimitive.Root
+	closeOnEscape={false}
 	bind:open
 	preventScroll={false}
-	openFocus={openFocus ? openFocus : drawerEl}
 	onOpenChange={(o) => {
 		onOpenChange?.(o);
-
 		if (!o) {
 			closeDrawer();
-		} else {
-			hasBeenOpened.set(true);
-			isOpen.set(true);
+		} else if (o) {
+			openDrawer();
 		}
 	}}
 	onOutsideClick={(e) => {
