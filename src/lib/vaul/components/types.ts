@@ -88,6 +88,16 @@ export type Props = {
 	 * A function called when the active snap point of the Drawer changes.
 	 */
 	onActiveSnapPointChange?: OnChangeFn<number | string | null>;
+
+	/**
+	 * Whether the drawer is able to be dismissed naturally.
+	 * If `true` the user can swipe or press outside the drawer to close it,
+	 * if `false` you must provide another way to close the drawer, via
+	 * programmatic control.
+	 *
+	 * @default true
+	 */
+	dismissible?: boolean;
 } & DialogPrimitive.Props;
 
 export type OverlayProps = DialogPrimitive.OverlayProps;
