@@ -10,7 +10,6 @@ export default defineConfig({
 		environment: 'jsdom',
 		// in-source testing
 		includeSource: ['src/**/*.{js,ts,svelte}'],
-		setupFiles: ['./src/tests/setupTest.ts'],
 		coverage: {
 			exclude: ['setupTest.ts']
 		},
