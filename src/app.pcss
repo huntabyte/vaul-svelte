@@ -1,7 +1,12 @@
-/* Write your global styles here, in PostCSS syntax */
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+:root {
+	--vaul-overlay-background: 255, 255, 255;
+	--vaul-overlay-background-start: rgba(0, 0, 0, 0);
+	--vaul-overlay-background-end: rgba(0, 0, 0, 0.4);
+}
 
 html,
 body {
@@ -32,62 +37,4 @@ html {
 a {
 	text-decoration-thickness: 1px;
 	text-underline-offset: 2px;
-}
-
-[data-vaul-drawer] {
-	touch-action: none;
-	transform: translate3d(0, 100%, 0);
-	transition: transform 0.5s cubic-bezier(0.32, 0.72, 0, 1);
-}
-
-.vaul-dragging .vaul-scrollable {
-	overflow-y: hidden !important;
-}
-
-[data-vaul-drawer][data-vaul-drawer-visible='true'] {
-	transform: translate3d(0, var(--snap-point-height, 0), 0);
-}
-
-[data-vaul-overlay] {
-	opacity: 0;
-	transition: opacity 0.5s cubic-bezier(0.32, 0.72, 0, 1);
-}
-
-[data-vaul-overlay][data-vaul-drawer-visible='true'] {
-	opacity: 1;
-}
-
-[data-vaul-drawer]::after {
-	content: '';
-	position: absolute;
-	top: 100%;
-	background: inherit;
-	background-color: inherit;
-	left: 0;
-	right: 0;
-	height: 200%;
-}
-
-[data-vaul-overlay][data-vaul-snap-points='true']:not([data-vaul-snap-points-overlay='true']):not(
-		[data-state='closed']
-	) {
-	opacity: 0;
-}
-
-[data-vaul-overlay][data-vaul-snap-points-overlay='true']:not([data-vaul-drawer-visible='false']) {
-	opacity: 1;
-}
-
-/* This will allow us to not animate via animation, but still benefit from delaying unmount via Radix. */
-@keyframes fake-animation {
-	from {
-	}
-	to {
-	}
-}
-
-@media (hover: hover) and (pointer: fine) {
-	[data-vaul-drawer] {
-		user-select: none;
-	}
 }

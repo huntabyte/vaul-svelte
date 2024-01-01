@@ -104,3 +104,70 @@
 >
 	<slot />
 </DialogPrimitive.Root>
+
+<style>
+	:global([data-vaul-drawer]) {
+		touch-action: none;
+		transform: translate3d(0, 100%, 0);
+		transition: transform 0.5s cubic-bezier(0.32, 0.72, 0, 1);
+	}
+
+	:global(.vaul-dragging .vaul-scrollable) {
+		overflow-y: hidden !important;
+	}
+
+	:global([data-vaul-drawer][data-vaul-drawer-visible='true']) {
+		transform: translate3d(0, var(--snap-point-height, 0), 0);
+	}
+
+	:global([data-vaul-overlay]) {
+		opacity: 0;
+		transition: opacity 0.5s cubic-bezier(0.32, 0.72, 0, 1);
+	}
+
+	:global([data-vaul-overlay][data-vaul-drawer-visible='true']) {
+		opacity: 1;
+	}
+
+	:global([data-vaul-drawer]::after) {
+		content: '';
+		position: absolute;
+		top: 100%;
+		background: inherit;
+		background-color: inherit;
+		left: 0;
+		right: 0;
+		height: 200%;
+	}
+
+	:global(
+			[data-vaul-overlay][data-vaul-snap-points='true']:not(
+					[data-vaul-snap-points-overlay='true']
+				):not([data-state='closed'])
+		) {
+		opacity: 0;
+	}
+
+	:global(
+			[data-vaul-overlay][data-vaul-snap-points-overlay='true']:not(
+					[data-vaul-drawer-visible='false']
+				)
+		) {
+		opacity: 1;
+	}
+
+	/* This will allow us to not animate via animation, but still benefit from delaying
+	unmount via Bits */
+	@keyframes -global-fake-animation {
+		from {
+		}
+		to {
+		}
+	}
+
+	@media (hover: hover) and (pointer: fine) {
+		:global([data-vaul-drawer]) {
+			user-select: none;
+		}
+	}
+</style>

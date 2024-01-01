@@ -38,7 +38,8 @@ module.exports = {
 		'svelte/require-each-key': 'off',
 		'svelte/no-at-html-tags': 'off',
 		'svelte/no-unused-svelte-ignore': 'off',
-		'svelte/require-stores-init': 'off'
+		'svelte/require-stores-init': 'off',
+		'svelte/css-unused-selector': 'off'
 	},
 	overrides: [
 		{
