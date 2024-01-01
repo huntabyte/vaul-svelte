@@ -39,7 +39,7 @@
 	</svg>
 	<div class="mx-auto max-w-2xl pt-64 text-center">
 		<div class="relative flex flex-col">
-			<h1 class="relative mb-4 text-7xl font-semibold">Vaul-Svelte</h1>
+			<h1 class="relative mb-4 text-7xl font-semibold">Vaul Svelte</h1>
 			<p class="text-xl text-gray-600">Drawer component for Svelte.</p>
 		</div>
 		<div class="mt-6 flex justify-center gap-4">
