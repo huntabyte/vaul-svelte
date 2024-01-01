@@ -30,7 +30,14 @@ Use the drawer in your app.
 
 ## Examples
 
-(Coming soon)
+Play around with the examples on StackBlitz:
+
+- [With scaled background](https://stackblitz.com/edit/vaul-svelte-scaled?file=src%2Froutes%2F%2Bpage.svelte)
+- [Without scaled background](https://stackblitz.com/edit/vaul-svelte-without-scale?file=src%2Froutes%2F%2Bpage.svelte)
+- [With snap points](https://stackblitz.com/edit/vaul-svelte-snap-points?file=src%2Froutes%2F%2Bpage.svelte)
+- [Scrollable with inputs](https://stackblitz.com/edit/vaul-svelte-scrollable-with-inputs?file=src%2Froutes%2F%2Bpage.svelte)
+- [Nested drawers](https://stackblitz.com/edit/vaul-svelte-nested-drawers?file=src%2Froutes%2F%2Bpage.svelte)
+- [Non-dismissible](https://stackblitz.com/edit/vaul-svelte-non-dismissible?file=src%2Froutes%2F%2Bpage.svelte)
 
 ## API Reference
 
