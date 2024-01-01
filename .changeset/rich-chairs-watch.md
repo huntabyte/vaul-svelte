@@ -1,5 +1,5 @@
 ---
-"vaul-svelte": patch
+'vaul-svelte': patch
 ---
 
 initial release
