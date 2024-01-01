@@ -21,11 +21,12 @@
 	export let onRelease: $$Props['onRelease'] = undefined;
 	export let onDrag: $$Props['onDrag'] = undefined;
 	export let onClose: $$Props['onClose'] = undefined;
+	export let dismissible: $$Props['dismissible'] = undefined;
 
 	const {
 		states: { keyboardIsOpen, activeSnapPoint: localActiveSnapPoint, drawerId, openDrawerIds },
 		methods: { closeDrawer, openDrawer },
-		options: { dismissible },
+		options: { dismissible: localDismissible },
 		updateOption
 	} = setCtx({
 		defaultOpen: open,
@@ -60,7 +61,8 @@
 		onDrag,
 		onClose,
 		onRelease,
-		shouldScaleBackground
+		shouldScaleBackground,
+		dismissible
 	});
 
 	$: activeSnapPoint !== undefined && localActiveSnapPoint.set(activeSnapPoint);
@@ -71,6 +73,7 @@
 	$: updateOption('fadeFromIndex', fadeFromIndex);
 	$: updateOption('openFocus', openFocus);
 	$: updateOption('shouldScaleBackground', shouldScaleBackground);
+	$: updateOption('dismissible', dismissible);
 </script>
 
 <DialogPrimitive.Root
@@ -91,7 +94,7 @@
 			keyboardIsOpen.set(false);
 		}
 		e.preventDefault();
-		if (!$dismissible) {
+		if (!$localDismissible) {
 			return;
 		}
 		const $openDialogIds = get(openDrawerIds);
