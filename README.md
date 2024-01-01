@@ -1,58 +1,78 @@
-# create-svelte
+Vaul-Svelte is an unstyled drawer component for Svelte that can be used as a Dialog replacement on tablet and mobile devices. It uses [Bits' Dialog primitive](https://www.bits-ui.com/docs/components/dialog) under the hood and is inspired by [this tweet](https://twitter.com/devongovett/status/1674470185783402496).
 
-Everything you need to build a Svelte library, powered by [`create-svelte`](https://github.com/sveltejs/kit/tree/main/packages/create-svelte).
+This is a port of [Vaul](https://github.com/emilkowalski/vaul) for React, which was created by [Emil Kowalski](https://twitter.com/emilkowalski_).
 
-Read more about creating a library [in the docs](https://kit.svelte.dev/docs/packaging).
+## Usage
 
-## Creating a project
-
-If you're seeing this, you've probably already done this step. Congrats!
+To start using the library, install it in your project:
 
 ```bash
-# create a new project in the current directory
-npm create svelte@latest
-
-# create a new project in my-app
-npm create svelte@latest my-app
+npm install vaul-svelte
 ```
 
-## Developing
+Use the drawer in your app.
 
-Once you've created a project and installed dependencies with `npm install` (or `pnpm install` or `yarn`), start a development server:
+```svelte
+<script>
+	import { Drawer } from 'vaul-svelte';
+</script>
 
-```bash
-npm run dev
-
-# or start the server and open the app in a new browser tab
-npm run dev -- --open
+<Drawer.Root>
+	<Drawer.Trigger>Open</Drawer.Trigger>
+	<Drawer.Portal>
+		<Drawer.Content>
+			<p>Content</p>
+		</Drawer.Content>
+		<Drawer.Overlay />
+	</Drawer.Portal>
+</Drawer.Root>
 ```
 
-Everything inside `src/lib` is part of your library, everything inside `src/routes` can be used as a showcase or preview app.
+## Examples
 
-## Building
+(Coming soon)
 
-To build your library:
+## API Reference
 
-```bash
-npm run package
-```
+### Root
 
-To create a production version of your showcase app:
+Contains all parts of a dialog. Use `shouldScaleBackground` to enable background scaling, it requires an element with `[data-vaul-drawer-wrapper]` data attribute to scale its background.
+Can be controlled by binding to the `open` prop, or using the`onOpenChange` prop.
 
-```bash
-npm run build
-```
+Additional props:
 
-You can preview the production build with `npm run preview`.
+`closeThreshold`: Number between 0 and 1 that determines when the drawer should be closed. Example: threshold of 0.5 would close the drawer if the user swiped for 50% of the height of the drawer or more.
 
-> To deploy your app, you may need to install an [adapter](https://kit.svelte.dev/docs/adapters) for your target environment.
+`scrollLockTimeout`: Duration for which the drawer is not draggable after scrolling content inside of the drawer. Defaults to 500ms
 
-## Publishing
+`snapPoints`: Array of numbers from 0 to 100 that corresponds to % of the screen a given snap point should take up. Should go from least visible. Example `[0.2, 0.5, 0.8]`. You can also use px values, which doesn't take screen height into account.
 
-Go into the `package.json` and give your package the desired name through the `"name"` option. Also consider adding a `"license"` field and point it to a `LICENSE` file which you can create from a template (one popular option is the [MIT license](https://opensource.org/license/mit/)).
+`fadeFromIndex`: Index of a `snapPoint` from which the overlay fade should be applied. Defaults to the last snap point.
 
-To publish your library to [npm](https://www.npmjs.com):
+### Trigger
 
-```bash
-npm publish
-```
+The button that opens the dialog. [Props](https://www.bits-ui.com/docs/components/dialog#trigger).
+
+### Content
+
+Content that should be rendered in the drawer. [Props](https://www.bits-ui.com/docs/components/dialog#content).
+
+### Overlay
+
+A layer that covers the inert portion of the view when the dialog is open. [Props](https://www.bits-ui.com/docs/components/dialog#overlay).
+
+### Title
+
+An accessible title to be announced when the dialog is opened. [Props](https://www.bits-ui.com/docs/components/dialog#title).
+
+### Description
+
+An optional accessible description to be announced when the dialog is opened. [Props](https://www.bits-ui.com/docs/components/dialog#description).
+
+### Close
+
+The button that closes the dialog. [Props](https://www.bits-ui.com/docs/components/dialog#close).
+
+### Portal
+
+Portals your drawer into the body.
