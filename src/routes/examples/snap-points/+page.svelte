@@ -10,12 +10,13 @@
 	<Drawer.Root {snapPoints} bind:activeSnapPoint>
 		<Drawer.Trigger asChild let:builder>
 			<button
-						use:builder.action
-						{...builder}
-						type="button"
-						class="rounded-full bg-white px-4 py-2.5 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
-						Open SnapPoints Drawer
-					</button>
+				use:builder.action
+				{...builder}
+				type="button"
+				class="rounded-full bg-white px-4 py-2.5 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50"
+			>
+				Open SnapPoints Drawer
+			</button>
 		</Drawer.Trigger>
 		<Drawer.Overlay class="fixed inset-0 bg-black/40" />
 		<Drawer.Portal>
