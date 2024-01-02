@@ -93,6 +93,11 @@
 										this tweet.
 									</a>
 								</p>
+								<p class="mb-8 text-gray-600">
+									Here are
+									<a href="/examples" class="underline">some more examples</a>
+									of the component in action.
+								</p>
 							</div>
 						</div>
 						<div class="mt-auto border-t border-gray-200 bg-gray-100 p-4">
