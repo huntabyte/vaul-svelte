@@ -1,6 +1,6 @@
 <!-- Snap Points Drawer -->
 <script lang="ts">
-	import { Drawer } from '$lib/index.ts';
+	import { Drawer } from '$lib/index.js';
 	import { clsx } from 'clsx';
 
 	const snapPoints = ['148px', '355px', 1];

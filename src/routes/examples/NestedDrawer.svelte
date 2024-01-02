@@ -1,6 +1,6 @@
 <!-- Nested Drawer Example -->
 <script lang="ts">
-	import { Drawer } from '$lib/index.ts';
+	import { Drawer } from '$lib/index.js';
 </script>
 
 <Drawer.Root shouldScaleBackground>
