@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { Drawer } from '$lib/index.ts';
+	import { Drawer } from '$lib/index.js';
 </script>
 
 <div class="relative">
