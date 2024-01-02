@@ -219,10 +219,10 @@ export function createVaul(props: CreateVaulProps) {
 	});
 
 	// prevent scroll when the drawer is open
-	effect([isOpen, justReleased], ([$isOpen, $justReleased]) => {
+	effect([isOpen], ([$isOpen]) => {
 		let unsub = () => {};
 
-		if ($isOpen && !$justReleased) {
+		if ($isOpen) {
 			unsub = preventScroll();
 		}
 
