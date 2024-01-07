@@ -71,6 +71,6 @@
 	"types": "./dist/index.d.ts",
 	"type": "module",
 	"dependencies": {
-		"bits-ui": "^0.13.0"
+		"bits-ui": "^0.13.3"
 	}
 }
