@@ -110,6 +110,9 @@ export function createVaul(props: CreateVaulProps) {
 		)
 	);
 
+	// keep a reference to the trigger element so we can refocus when it closes via the keyboard
+	const triggerRef = writable<HTMLButtonElement | undefined>(undefined);
+
 	const { onDrag: onDragProp, onRelease: onReleaseProp, onClose, onOpenChange } = withDefaults;
 
 	const {
@@ -237,7 +240,7 @@ export function createVaul(props: CreateVaulProps) {
 
 		if ($drawerRef) {
 			unsub = handleEscapeKeydown($drawerRef, () => {
-				closeDrawer();
+				closeDrawer(true);
 			});
 		}
 
@@ -549,7 +552,7 @@ export function createVaul(props: CreateVaulProps) {
 		}
 	);
 
-	function closeDrawer() {
+	function closeDrawer(withKeyboard: boolean = false) {
 		if (isClosing) return;
 		const $drawerRef = get(drawerRef);
 		if (!$drawerRef) return;
@@ -572,6 +575,9 @@ export function createVaul(props: CreateVaulProps) {
 			visible.set(false);
 			isOpen.set(false);
 			isClosing = false;
+			if (withKeyboard) {
+				get(triggerRef)?.focus();
+			}
 		}, 300);
 
 		const $snapPoints = get(snapPoints);
@@ -818,7 +824,8 @@ export function createVaul(props: CreateVaulProps) {
 		},
 		refs: {
 			drawerRef,
-			overlayRef
+			overlayRef,
+			triggerRef
 		},
 		options
 	};
