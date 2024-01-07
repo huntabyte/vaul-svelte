@@ -3,8 +3,8 @@
 	// if someone uses `asChild` to modify it. Since it's only exposed as a slot prop
 	// we need something in between the `<DialogPrimitive.Trigger>` and the slot
 
-	import type { Builder } from '$lib/internal/types.js';
-	import { getCtx } from '../ctx.js';
+	import type { Builder } from "$lib/internal/types.js";
+	import { getCtx } from "../ctx.js";
 
 	export let meltBuilder: Builder;
 

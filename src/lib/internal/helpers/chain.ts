@@ -3,7 +3,7 @@ export function chain(...callbacks: any[]): (...args: any[]) => void {
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	return (...args: any[]) => {
 		for (const callback of callbacks) {
-			if (typeof callback === 'function') {
+			if (typeof callback === "function") {
 				callback(...args);
 			}
 		}

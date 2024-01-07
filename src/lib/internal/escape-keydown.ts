@@ -1,7 +1,7 @@
-import { readable } from 'svelte/store';
-import { addEventListener } from './helpers/event-listener.js';
-import { chain } from '$lib/internal/helpers/index.js';
-import { noop } from '$lib/internal/helpers/index.js';
+import { readable } from "svelte/store";
+import { addEventListener } from "./helpers/event-listener.js";
+import { chain } from "$lib/internal/helpers/index.js";
+import { noop } from "$lib/internal/helpers/index.js";
 
 /**
  * Creates a readable store that tracks the latest Escape Keydown that occurred on the document.
@@ -16,7 +16,7 @@ const documentEscapeKeyStore = readable<KeyboardEvent | undefined>(
 		 * Updates the store's value with the latest Escape Keydown event and then resets it to undefined.
 		 */
 		function keydown(event: KeyboardEvent | undefined) {
-			if (event && event.key === 'Escape') {
+			if (event && event.key === "Escape") {
 				set(event);
 			}
 
@@ -25,7 +25,7 @@ const documentEscapeKeyStore = readable<KeyboardEvent | undefined>(
 		}
 
 		// Adds a keydown event listener to the document, calling the keydown function when triggered.
-		const unsubscribe = addEventListener(document, 'keydown', keydown, {
+		const unsubscribe = addEventListener(document, "keydown", keydown, {
 			passive: false
 		});
 
@@ -46,7 +46,7 @@ export function handleEscapeKeydown(node: HTMLElement, handler: (e: KeyboardEven
 				if (!e) return;
 				const target = e.target;
 
-				if (!isHTMLElement(target) || target.closest('[data-escapee]') !== node) {
+				if (!isHTMLElement(target) || target.closest("[data-escapee]") !== node) {
 					return;
 				}
 
@@ -60,14 +60,14 @@ export function handleEscapeKeydown(node: HTMLElement, handler: (e: KeyboardEven
 		// to remain compatible with nested Bits/Melt components, we set a data
 		// attribute to indicate that this element is handling escape keydowns
 		// so we only handle the highest level escapee
-		node.setAttribute('data-escapee', '');
+		node.setAttribute("data-escapee", "");
 	}
 
 	update(handler);
 
 	return () => {
 		unsub();
-		node.removeAttribute('data-escapee');
+		node.removeAttribute("data-escapee");
 	};
 }
 

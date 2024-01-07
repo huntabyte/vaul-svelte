@@ -1,6 +1,6 @@
-import { derived, get, writable, type Readable } from 'svelte/store';
-import type { SvelteEvent } from './types.js';
-import { handleSnapPoints } from './snap-points.js';
+import { derived, get, writable, type Readable } from "svelte/store";
+import type { SvelteEvent } from "./types.js";
+import { handleSnapPoints } from "./snap-points.js";
 import {
 	overridable,
 	toWritableStores,
@@ -16,11 +16,11 @@ import {
 	sleep,
 	noop,
 	addEventListener
-} from '$lib/internal/helpers/index.js';
-import { isIOS, preventScroll } from './prevent-scroll.js';
-import { TRANSITIONS, VELOCITY_THRESHOLD } from './constants.js';
-import { handleEscapeKeydown } from './escape-keydown.js';
-import { handlePositionFixed } from './position-fixed.js';
+} from "$lib/internal/helpers/index.js";
+import { isIOS, preventScroll } from "./prevent-scroll.js";
+import { TRANSITIONS, VELOCITY_THRESHOLD } from "./constants.js";
+import { handleEscapeKeydown } from "./escape-keydown.js";
+import { handlePositionFixed } from "./position-fixed.js";
 
 const CLOSE_THRESHOLD = 0.25;
 
@@ -32,7 +32,7 @@ const NESTED_DISPLACEMENT = 16;
 
 const WINDOW_TOP_OFFSET = 26;
 
-const DRAG_CLASS = 'vaul-dragging';
+const DRAG_CLASS = "vaul-dragging";
 
 const openDrawerIds = writable<string[]>([]);
 
@@ -83,13 +83,13 @@ const defaultProps = {
 };
 
 const omittedOptions = [
-	'defaultOpen',
-	'onOpenChange',
-	'defaultActiveSnapPoint',
-	'onActiveSnapPointChange',
-	'onDrag',
-	'onRelease',
-	'onClose'
+	"defaultOpen",
+	"onOpenChange",
+	"defaultActiveSnapPoint",
+	"onActiveSnapPointChange",
+	"onDrag",
+	"onRelease",
+	"onClose"
 ] as const;
 
 export function createVaul(props: CreateVaulProps) {
@@ -174,10 +174,10 @@ export function createVaul(props: CreateVaulProps) {
 	const getContentStyle: Readable<(style?: string | null) => string> = derived(
 		[snapPointsOffset],
 		([$snapPointsOffset]) => {
-			return (style: string | null = '') => {
+			return (style: string | null = "") => {
 				if ($snapPointsOffset && $snapPointsOffset.length > 0) {
 					const styleProp = styleToString({
-						'--snap-point-height': `${$snapPointsOffset[0]}px`
+						"--snap-point-height": `${$snapPointsOffset[0]}px`
 					});
 					return style + styleProp;
 				}
@@ -214,7 +214,7 @@ export function createVaul(props: CreateVaulProps) {
 	effect([isOpen], ([$isOpen]) => {
 		if (!$isOpen && get(shouldScaleBackground)) {
 			const id = setTimeout(() => {
-				reset(document.body, 'background');
+				reset(document.body, "background");
 			}, 200);
 
 			return () => clearTimeout(id);
@@ -268,7 +268,7 @@ export function createVaul(props: CreateVaulProps) {
 
 		// iOS doesn't trigger mouseUp after scrolling so we need to listen to touched in order to disallow dragging
 		if (isIOS()) {
-			window.addEventListener('touchend', () => (isAllowedToDrag = false), { once: true });
+			window.addEventListener("touchend", () => (isAllowedToDrag = false), { once: true });
 		}
 		// Ensure we maintain correct pointer capture even when going outside of the drawer
 		(event.target as HTMLElement).setPointerCapture(event.pointerId);
@@ -328,7 +328,7 @@ export function createVaul(props: CreateVaulProps) {
 					return false;
 				}
 
-				if (element.getAttribute('role') === 'dialog') {
+				if (element.getAttribute("role") === "dialog") {
 					return true;
 				}
 			}
@@ -364,13 +364,13 @@ export function createVaul(props: CreateVaulProps) {
 		isAllowedToDrag = true;
 
 		set($drawerRef, {
-			transition: 'none'
+			transition: "none"
 		});
 
 		const $overlayRef = get(overlayRef);
 
 		set($overlayRef, {
-			transition: 'none'
+			transition: "none"
 		});
 
 		if ($snapPoints) {
@@ -389,7 +389,7 @@ export function createVaul(props: CreateVaulProps) {
 
 		// We need to capture last time when drag with scroll was triggered and have a timeout between
 		const absDraggedDistance = Math.abs(draggedDistance);
-		const wrapper = document.querySelector('[data-vaul-drawer-wrapper]');
+		const wrapper = document.querySelector("[data-vaul-drawer-wrapper]");
 		let percentageDragged = absDraggedDistance / drawerHeightRef;
 		const snapPointPercentageDragged = getSnapPointsPercentageDragged(
 			absDraggedDistance,
@@ -412,7 +412,7 @@ export function createVaul(props: CreateVaulProps) {
 				$overlayRef,
 				{
 					opacity: `${opacityValue}`,
-					transition: 'none'
+					transition: "none"
 				},
 				true
 			);
@@ -430,7 +430,7 @@ export function createVaul(props: CreateVaulProps) {
 				{
 					borderRadius: `${borderRadiusValue}px`,
 					transform: `scale(${scaleValue}) translate3d(0, ${translateYValue}px, 0)`,
-					transition: 'none'
+					transition: "none"
 				},
 				true
 			);
@@ -444,7 +444,7 @@ export function createVaul(props: CreateVaulProps) {
 	}
 
 	function scaleBackground(open: boolean) {
-		const wrapper = document.querySelector('[data-vaul-drawer-wrapper]');
+		const wrapper = document.querySelector("[data-vaul-drawer-wrapper]");
 
 		if (!wrapper || !get(shouldScaleBackground)) return;
 
@@ -452,29 +452,29 @@ export function createVaul(props: CreateVaulProps) {
 			set(
 				document.body,
 				{
-					background: 'black'
+					background: "black"
 				},
 				true
 			);
 
 			set(wrapper, {
 				borderRadius: `${BORDER_RADIUS}px`,
-				overflow: 'hidden',
+				overflow: "hidden",
 				transform: `scale(${getScale()}) translate3d(0, calc(env(safe-area-inset-top) + 14px), 0)`,
-				transformOrigin: 'top',
-				transitionProperty: 'transform, border-radius',
+				transformOrigin: "top",
+				transitionProperty: "transform, border-radius",
 				transitionDuration: `${TRANSITIONS.DURATION}s`,
-				transitionTimingFunction: `cubic-bezier(${TRANSITIONS.EASE.join(',')})`
+				transitionTimingFunction: `cubic-bezier(${TRANSITIONS.EASE.join(",")})`
 			});
 		} else {
 			// Exit
-			reset(wrapper, 'overflow');
-			reset(wrapper, 'transform');
-			reset(wrapper, 'borderRadius');
+			reset(wrapper, "overflow");
+			reset(wrapper, "transform");
+			reset(wrapper, "borderRadius");
 			set(wrapper, {
-				transitionProperty: 'transform, border-radius',
+				transitionProperty: "transform, border-radius",
 				transitionDuration: `${TRANSITIONS.DURATION}s`,
-				transitionTimingFunction: `cubic-bezier(${TRANSITIONS.EASE.join(',')})`
+				transitionTimingFunction: `cubic-bezier(${TRANSITIONS.EASE.join(",")})`
 			});
 		}
 	}
@@ -543,7 +543,7 @@ export function createVaul(props: CreateVaulProps) {
 			let removeListener = noop;
 
 			if (window.visualViewport) {
-				removeListener = addEventListener(window.visualViewport, 'resize', onVisualViewportChange);
+				removeListener = addEventListener(window.visualViewport, "resize", onVisualViewportChange);
 			}
 
 			return () => {
@@ -560,12 +560,12 @@ export function createVaul(props: CreateVaulProps) {
 		onClose?.();
 		set($drawerRef, {
 			transform: `translate3d(0, 100%, 0)`,
-			transition: `transform ${TRANSITIONS.DURATION}s cubic-bezier(${TRANSITIONS.EASE.join(',')})`
+			transition: `transform ${TRANSITIONS.DURATION}s cubic-bezier(${TRANSITIONS.EASE.join(",")})`
 		});
 
 		set(get(overlayRef), {
-			opacity: '0',
-			transition: `opacity ${TRANSITIONS.DURATION}s cubic-bezier(${TRANSITIONS.EASE.join(',')})`
+			opacity: "0",
+			transition: `opacity ${TRANSITIONS.DURATION}s cubic-bezier(${TRANSITIONS.EASE.join(",")})`
 		});
 
 		scaleBackground(false);
@@ -603,17 +603,17 @@ export function createVaul(props: CreateVaulProps) {
 		const $drawerRef = get(drawerRef);
 		if (!$drawerRef) return;
 		const $overlayRef = get(overlayRef);
-		const wrapper = document.querySelector('[data-vaul-drawer-wrapper]');
+		const wrapper = document.querySelector("[data-vaul-drawer-wrapper]");
 		const currentSwipeAmount = getTranslateY($drawerRef);
 
 		set($drawerRef, {
-			transform: 'translate3d(0, 0, 0)',
-			transition: `transform ${TRANSITIONS.DURATION}s cubic-bezier(${TRANSITIONS.EASE.join(',')})`
+			transform: "translate3d(0, 0, 0)",
+			transition: `transform ${TRANSITIONS.DURATION}s cubic-bezier(${TRANSITIONS.EASE.join(",")})`
 		});
 
 		set($overlayRef, {
-			transition: `opacity ${TRANSITIONS.DURATION}s cubic-bezier(${TRANSITIONS.EASE.join(',')})`,
-			opacity: '1'
+			transition: `opacity ${TRANSITIONS.DURATION}s cubic-bezier(${TRANSITIONS.EASE.join(",")})`,
+			opacity: "1"
 		});
 
 		const $shouldScaleBackground = get(shouldScaleBackground);
@@ -625,12 +625,12 @@ export function createVaul(props: CreateVaulProps) {
 				wrapper,
 				{
 					borderRadius: `${BORDER_RADIUS}px`,
-					overflow: 'hidden',
+					overflow: "hidden",
 					transform: `scale(${getScale()}) translate3d(0, calc(env(safe-area-inset-top) + 14px), 0)`,
-					transformOrigin: 'top',
-					transitionProperty: 'transform, border-radius',
+					transformOrigin: "top",
+					transitionProperty: "transform, border-radius",
 					transitionDuration: `${TRANSITIONS.DURATION}s`,
-					transitionTimingFunction: `cubic-bezier(${TRANSITIONS.EASE.join(',')})`
+					transitionTimingFunction: `cubic-bezier(${TRANSITIONS.EASE.join(",")})`
 				},
 				true
 			);
@@ -728,14 +728,14 @@ export function createVaul(props: CreateVaulProps) {
 		const $drawerRef = get(drawerRef);
 		if (!$drawerRef) return;
 
-		const children = $drawerRef.querySelectorAll('*');
+		const children = $drawerRef.querySelectorAll("*");
 		children.forEach((child: Element) => {
 			const htmlChild = child as HTMLElement;
 			if (
 				htmlChild.scrollHeight > htmlChild.clientHeight ||
 				htmlChild.scrollWidth > htmlChild.clientWidth
 			) {
-				htmlChild.classList.add('vaul-scrollable');
+				htmlChild.classList.add("vaul-scrollable");
 			}
 		});
 	});
@@ -750,14 +750,14 @@ export function createVaul(props: CreateVaulProps) {
 		}
 
 		set($drawerRef, {
-			transition: `transform ${TRANSITIONS.DURATION}s cubic-bezier(${TRANSITIONS.EASE.join(',')})`,
+			transition: `transform ${TRANSITIONS.DURATION}s cubic-bezier(${TRANSITIONS.EASE.join(",")})`,
 			transform: `scale(${scale}) translate3d(0, ${y}px, 0)`
 		});
 
 		if (!o && $drawerRef) {
 			nestedOpenChangeTimer = setTimeout(() => {
 				set($drawerRef, {
-					transition: 'none',
+					transition: "none",
 					transform: `translate3d(0, ${getTranslateY($drawerRef as HTMLElement)}px, 0)`
 				});
 			}, 500);
@@ -775,7 +775,7 @@ export function createVaul(props: CreateVaulProps) {
 
 		set(get(drawerRef), {
 			transform: `scale(${newScale}) translate3d(0, ${newY}px, 0)`,
-			transition: 'none'
+			transition: "none"
 		});
 	}
 
@@ -786,7 +786,7 @@ export function createVaul(props: CreateVaulProps) {
 		if (o) {
 			set(get(drawerRef), {
 				transition: `transform ${TRANSITIONS.DURATION}s cubic-bezier(${TRANSITIONS.EASE.join(
-					','
+					","
 				)})`,
 				transform: `scale(${scale}) translate3d(0, ${y}px, 0)`
 			});

@@ -1,6 +1,6 @@
-import { writable, get, type Writable } from 'svelte/store';
-import { effect, addEventListener } from './helpers/index.js';
-import { onMount } from 'svelte';
+import { writable, get, type Writable } from "svelte/store";
+import { effect, addEventListener } from "./helpers/index.js";
+import { onMount } from "svelte";
 
 let previousBodyPosition: Record<string, string> | null = null;
 
@@ -15,7 +15,7 @@ export function handlePositionFixed({
 	nested: Writable<boolean>;
 	hasBeenOpened: Writable<boolean>;
 }) {
-	const activeUrl = writable(typeof window !== 'undefined' ? window.location.href : '');
+	const activeUrl = writable(typeof window !== "undefined" ? window.location.href : "");
 	let scrollPos = 0;
 
 	function setPositionFixed(open: boolean) {
@@ -32,11 +32,11 @@ export function handlePositionFixed({
 		// Update the dom inside an animation frame
 		const { scrollX, innerHeight } = window;
 
-		document.body.style.setProperty('position', 'fixed', 'important');
+		document.body.style.setProperty("position", "fixed", "important");
 		document.body.style.top = `${-scrollPos}px`;
 		document.body.style.left = `${-scrollX}px`;
-		document.body.style.right = '0px';
-		document.body.style.height = 'auto';
+		document.body.style.right = "0px";
+		document.body.style.height = "auto";
 
 		setTimeout(
 			() =>
@@ -64,7 +64,7 @@ export function handlePositionFixed({
 		document.body.style.top = previousBodyPosition.top;
 		document.body.style.left = previousBodyPosition.left;
 		document.body.style.height = previousBodyPosition.height;
-		document.body.style.right = 'unset';
+		document.body.style.right = "unset";
 
 		requestAnimationFrame(() => {
 			if ($activeUrl !== window.location.href) {
@@ -85,7 +85,7 @@ export function handlePositionFixed({
 
 		onScroll();
 
-		const removeListener = addEventListener(window, 'scroll', onScroll);
+		const removeListener = addEventListener(window, "scroll", onScroll);
 
 		return () => {
 			removeListener;
@@ -93,7 +93,7 @@ export function handlePositionFixed({
 	});
 
 	effect([isOpen, activeUrl], ([$isOpen, _]) => {
-		if (typeof document === 'undefined') return;
+		if (typeof document === "undefined") return;
 		if (get(nested) || !get(hasBeenOpened)) return;
 		// This is needed to force Safari toolbar to show **before** the drawer starts animating to prevent a gnarly shift from happening
 		if ($isOpen) {

@@ -1,27 +1,27 @@
 <script lang="ts">
-	import { Dialog as DialogPrimitive } from 'bits-ui';
-	import { setCtx } from '../ctx.js';
-	import type { Props } from './types.js';
-	import { get } from 'svelte/store';
+	import { Dialog as DialogPrimitive } from "bits-ui";
+	import { setCtx } from "../ctx.js";
+	import type { Props } from "./types.js";
+	import { get } from "svelte/store";
 
 	type $$Props = Props;
 
 	export let open = false;
-	export let onOpenChange: $$Props['onOpenChange'] = undefined;
-	export let closeThreshold: $$Props['closeThreshold'] = undefined;
-	export let scrollLockTimeout: $$Props['scrollLockTimeout'] = undefined;
-	export let snapPoints: $$Props['snapPoints'] = undefined;
-	export let fadeFromIndex: $$Props['fadeFromIndex'] = undefined;
-	export let openFocus: $$Props['openFocus'] = undefined;
-	export let onOutsideClick: $$Props['onOutsideClick'] = undefined;
-	export let nested: $$Props['nested'] = false;
-	export let shouldScaleBackground: $$Props['shouldScaleBackground'] = false;
-	export let activeSnapPoint: $$Props['activeSnapPoint'] = undefined;
-	export let onActiveSnapPointChange: $$Props['onActiveSnapPointChange'] = undefined;
-	export let onRelease: $$Props['onRelease'] = undefined;
-	export let onDrag: $$Props['onDrag'] = undefined;
-	export let onClose: $$Props['onClose'] = undefined;
-	export let dismissible: $$Props['dismissible'] = undefined;
+	export let onOpenChange: $$Props["onOpenChange"] = undefined;
+	export let closeThreshold: $$Props["closeThreshold"] = undefined;
+	export let scrollLockTimeout: $$Props["scrollLockTimeout"] = undefined;
+	export let snapPoints: $$Props["snapPoints"] = undefined;
+	export let fadeFromIndex: $$Props["fadeFromIndex"] = undefined;
+	export let openFocus: $$Props["openFocus"] = undefined;
+	export let onOutsideClick: $$Props["onOutsideClick"] = undefined;
+	export let nested: $$Props["nested"] = false;
+	export let shouldScaleBackground: $$Props["shouldScaleBackground"] = false;
+	export let activeSnapPoint: $$Props["activeSnapPoint"] = undefined;
+	export let onActiveSnapPointChange: $$Props["onActiveSnapPointChange"] = undefined;
+	export let onRelease: $$Props["onRelease"] = undefined;
+	export let onDrag: $$Props["onDrag"] = undefined;
+	export let onClose: $$Props["onClose"] = undefined;
+	export let dismissible: $$Props["dismissible"] = undefined;
 
 	const {
 		states: { keyboardIsOpen, activeSnapPoint: localActiveSnapPoint, drawerId, openDrawerIds },
@@ -67,13 +67,13 @@
 
 	$: activeSnapPoint !== undefined && localActiveSnapPoint.set(activeSnapPoint);
 
-	$: updateOption('closeThreshold', closeThreshold);
-	$: updateOption('scrollLockTimeout', scrollLockTimeout);
-	$: updateOption('snapPoints', snapPoints);
-	$: updateOption('fadeFromIndex', fadeFromIndex);
-	$: updateOption('openFocus', openFocus);
-	$: updateOption('shouldScaleBackground', shouldScaleBackground);
-	$: updateOption('dismissible', dismissible);
+	$: updateOption("closeThreshold", closeThreshold);
+	$: updateOption("scrollLockTimeout", scrollLockTimeout);
+	$: updateOption("snapPoints", snapPoints);
+	$: updateOption("fadeFromIndex", fadeFromIndex);
+	$: updateOption("openFocus", openFocus);
+	$: updateOption("shouldScaleBackground", shouldScaleBackground);
+	$: updateOption("dismissible", dismissible);
 </script>
 
 <DialogPrimitive.Root
@@ -119,7 +119,7 @@
 		overflow-y: hidden !important;
 	}
 
-	:global([data-vaul-drawer][data-vaul-drawer-visible='true']) {
+	:global([data-vaul-drawer][data-vaul-drawer-visible="true"]) {
 		transform: translate3d(0, var(--snap-point-height, 0), 0);
 	}
 
@@ -128,12 +128,12 @@
 		transition: opacity 0.5s cubic-bezier(0.32, 0.72, 0, 1);
 	}
 
-	:global([data-vaul-overlay][data-vaul-drawer-visible='true']) {
+	:global([data-vaul-overlay][data-vaul-drawer-visible="true"]) {
 		opacity: 1;
 	}
 
 	:global([data-vaul-drawer]::after) {
-		content: '';
+		content: "";
 		position: absolute;
 		top: 100%;
 		background: inherit;
@@ -144,16 +144,16 @@
 	}
 
 	:global(
-			[data-vaul-overlay][data-vaul-snap-points='true']:not(
-					[data-vaul-snap-points-overlay='true']
-				):not([data-state='closed'])
+			[data-vaul-overlay][data-vaul-snap-points="true"]:not(
+					[data-vaul-snap-points-overlay="true"]
+				):not([data-state="closed"])
 		) {
 		opacity: 0;
 	}
 
 	:global(
-			[data-vaul-overlay][data-vaul-snap-points-overlay='true']:not(
-					[data-vaul-drawer-visible='false']
+			[data-vaul-overlay][data-vaul-snap-points-overlay="true"]:not(
+					[data-vaul-drawer-visible="false"]
 				)
 		) {
 		opacity: 1;

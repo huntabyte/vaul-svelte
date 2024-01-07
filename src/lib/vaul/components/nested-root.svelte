@@ -1,20 +1,20 @@
 <script lang="ts">
-	import Root from './root.svelte';
-	import { getCtx } from '../ctx.js';
-	import type { Props } from './types.js';
+	import Root from "./root.svelte";
+	import { getCtx } from "../ctx.js";
+	import type { Props } from "./types.js";
 
 	type $$Props = Props;
 
-	export let onDrag: $$Props['onDrag'] = undefined;
-	export let onOpenChange: $$Props['onOpenChange'] = undefined;
-	export let open: $$Props['open'] = undefined;
+	export let onDrag: $$Props["onDrag"] = undefined;
+	export let onOpenChange: $$Props["onOpenChange"] = undefined;
+	export let open: $$Props["open"] = undefined;
 
 	const {
 		methods: { onNestedDrag, onNestedRelease, onNestedOpenChange }
 	} = getCtx();
 
 	if (!onNestedDrag) {
-		throw new Error('NestedRoot must be a child of a Root');
+		throw new Error("NestedRoot must be a child of a Root");
 	}
 </script>
 

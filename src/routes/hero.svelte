@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { Drawer } from '$lib/index.js';
+	import { Drawer } from "$lib/index.js";
 </script>
 
 <div class="relative">
@@ -91,6 +91,11 @@
 									>
 										this tweet.
 									</a>
+								</p>
+								<p class="mb-8 text-gray-600">
+									Here are
+									<a href="/examples" class="underline">some more examples</a>
+									of the component in action.
 								</p>
 							</div>
 						</div>

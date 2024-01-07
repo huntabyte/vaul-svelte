@@ -1,6 +1,6 @@
-import type { Readable, Stores, StoresValues, Updater, Writable } from 'svelte/store';
-import { derived, writable } from 'svelte/store';
-import { onDestroy, onMount } from 'svelte';
+import type { Readable, Stores, StoresValues, Updater, Writable } from "svelte/store";
+import { derived, writable } from "svelte/store";
+import { onDestroy, onMount } from "svelte";
 
 /**
  * A utility function that creates an effect from a set of stores and a function.
@@ -15,7 +15,7 @@ export function effect<S extends Stores>(
 	stores: S,
 	fn: (values: StoresValues<S>) => (() => void) | void
 ): () => void {
-	if (typeof document === 'undefined') {
+	if (typeof document === "undefined") {
 		return () => {};
 	}
 	// Create a derived store that contains the stores object and an onUnsubscribe function

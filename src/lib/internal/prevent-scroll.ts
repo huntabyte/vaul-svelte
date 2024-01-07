@@ -1,6 +1,6 @@
 // This code comes from https://github.com/adobe/react-spectrum/blob/main/packages/%40react-aria/overlays/src/usePreventScroll.ts
 
-import { addEventListener, chain, isInput } from '$lib/internal/helpers/index.js';
+import { addEventListener, chain, isInput } from "$lib/internal/helpers/index.js";
 
 function isMac(): boolean | undefined {
 	return testPlatform(/^Mac/);
@@ -27,12 +27,12 @@ export function isIOS(): boolean | undefined {
 }
 
 function testPlatform(re: RegExp): boolean | undefined {
-	return typeof window !== 'undefined' && window.navigator != null
+	return typeof window !== "undefined" && window.navigator != null
 		? re.test(window.navigator.platform)
 		: undefined;
 }
 
-const visualViewport = typeof document !== 'undefined' && window.visualViewport;
+const visualViewport = typeof document !== "undefined" && window.visualViewport;
 
 export function isScrollable(node: Element): boolean {
 	const style = window.getComputedStyle(node);
@@ -61,7 +61,7 @@ let restore: () => void;
  * shift due to the scrollbars disappearing.
  */
 export function preventScroll() {
-	if (typeof document === 'undefined') return () => {};
+	if (typeof document === "undefined") return () => {};
 
 	preventScrollCount++;
 	if (preventScrollCount === 1) {
@@ -84,7 +84,7 @@ function getPaddingProperty(documentElement: HTMLElement) {
 	// RTL <body> scrollbar
 	const documentLeft = documentElement.getBoundingClientRect().left;
 	const scrollbarX = Math.round(documentLeft) + documentElement.scrollLeft;
-	return scrollbarX ? 'paddingLeft' : 'paddingRight';
+	return scrollbarX ? "paddingLeft" : "paddingRight";
 }
 
 function setCSSProperty(el: HTMLElement | null | undefined, property: string, value: string) {
@@ -103,20 +103,20 @@ function setCSSProperty(el: HTMLElement | null | undefined, property: string, va
 // For most browsers, all we need to do is set `overflow: hidden` on the root element, and
 // add some padding to prevent the page from shifting when the scrollbar is hidden.
 function preventScrollStandard() {
-	if (typeof document === 'undefined') return () => {};
+	if (typeof document === "undefined") return () => {};
 	const win = document.defaultView ?? window;
 
 	const { documentElement, body } = document;
 	const scrollbarWidth = win.innerWidth - documentElement.clientWidth;
 	const setScrollbarWidthProperty = () =>
-		setCSSProperty(documentElement, '--scrollbar-width', `${scrollbarWidth}px`);
+		setCSSProperty(documentElement, "--scrollbar-width", `${scrollbarWidth}px`);
 	const paddingProperty = getPaddingProperty(documentElement);
 	const scrollbarSidePadding = win.getComputedStyle(body)[paddingProperty];
 
 	return chain(
 		setScrollbarWidthProperty(),
 		setStyle(body, paddingProperty, `calc(${scrollbarSidePadding} + ${scrollbarWidth}px)`),
-		setStyle(body, 'overflow', 'hidden')
+		setStyle(body, "overflow", "hidden")
 	);
 }
 
@@ -192,10 +192,10 @@ function preventScrollMobileSafari() {
 		// Apply a transform to trick Safari into thinking the input is at the top of the page
 		// so it doesn't try to scroll it into view. When tapping on an input, this needs to
 		// be done before the "focus" event, so we have to focus the element ourselves.
-		target.style.transform = 'translateY(-2000px)';
+		target.style.transform = "translateY(-2000px)";
 		target.focus();
 		requestAnimationFrame(() => {
-			target.style.transform = '';
+			target.style.transform = "";
 		});
 	}
 
@@ -207,9 +207,9 @@ function preventScrollMobileSafari() {
 		// other than tapping on an input directly, e.g. the next/previous buttons in the
 		// software keyboard. In these cases, it seems applying the transform in the focus event
 		// is good enough, whereas when tapping an input, it must be done before the focus event. 🤷‍♂️
-		target.style.transform = 'translateY(-2000px)';
+		target.style.transform = "translateY(-2000px)";
 		requestAnimationFrame(() => {
-			target.style.transform = '';
+			target.style.transform = "";
 
 			// This will have prevented the browser from scrolling the focused element into view,
 			// so we need to do this ourselves in a way that doesn't cause the whole page to scroll.
@@ -223,7 +223,7 @@ function preventScrollMobileSafari() {
 				} else {
 					// Otherwise, wait for the visual viewport to resize before scrolling so we can
 					// measure the correct position to scroll to.
-					visualViewport.addEventListener('resize', () => scrollIntoView(target), { once: true });
+					visualViewport.addEventListener("resize", () => scrollIntoView(target), { once: true });
 				}
 			}
 		});
@@ -244,10 +244,10 @@ function preventScrollMobileSafari() {
 	const restoreStyles = chain(
 		setStyle(
 			documentElement,
-			'paddingRight',
+			"paddingRight",
 			`${window.innerWidth - documentElement.clientWidth}px`
 		),
-		setStyle(documentElement, 'overflow', 'hidden')
+		setStyle(documentElement, "overflow", "hidden")
 		// setStyle(document.body, 'marginTop', `-${scrollY}px`),
 	);
 
@@ -255,11 +255,11 @@ function preventScrollMobileSafari() {
 	window.scrollTo(0, 0);
 
 	const removeEvents = chain(
-		addEventListener(document, 'touchstart', onTouchStart, { passive: false, capture: true }),
-		addEventListener(document, 'touchmove', onTouchMove, { passive: false, capture: true }),
-		addEventListener(document, 'touchend', onTouchEnd, { passive: false, capture: true }),
-		addEventListener(document, 'focus', onFocus, true),
-		addEventListener(window, 'scroll', onWindowScroll)
+		addEventListener(document, "touchstart", onTouchStart, { passive: false, capture: true }),
+		addEventListener(document, "touchmove", onTouchMove, { passive: false, capture: true }),
+		addEventListener(document, "touchend", onTouchEnd, { passive: false, capture: true }),
+		addEventListener(document, "focus", onFocus, true),
+		addEventListener(window, "scroll", onWindowScroll)
 	);
 
 	return () => {
