@@ -1,5 +1,11 @@
 # vaul-svelte
 
+## 0.0.6
+
+### Patch Changes
+
+- fix: close asChild behavior ([#22](https://github.com/huntabyte/vaul-svelte/pull/22))
+
 ## 0.0.5
 
 ### Patch Changes
