@@ -1,4 +1,4 @@
-import type { Arrayable } from '$lib/internal/types.js';
+import type { Arrayable } from "$lib/internal/types.js";
 /**
  * A type alias for a general event listener function.
  *

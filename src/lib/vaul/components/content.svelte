@@ -1,8 +1,8 @@
 <script lang="ts">
-	import { Dialog as DialogPrimitive } from 'bits-ui';
-	import type { ContentProps } from './types.js';
-	import { getCtx } from '../ctx.js';
-	import Visible from './visible.svelte';
+	import { Dialog as DialogPrimitive } from "bits-ui";
+	import type { ContentProps } from "./types.js";
+	import { getCtx } from "../ctx.js";
+	import Visible from "./visible.svelte";
 
 	type $$Props = ContentProps;
 
@@ -13,7 +13,7 @@
 		methods: { onPress, onDrag, onRelease }
 	} = getCtx();
 
-	export let style: $$Props['style'] = '';
+	export let style: $$Props["style"] = "";
 </script>
 
 <DialogPrimitive.Content
@@ -23,7 +23,7 @@
 	on:pointerdown={onPress}
 	on:pointerup={onRelease}
 	data-vaul-drawer=""
-	data-vaul-drawer-visible={$visible ? 'true' : 'false'}
+	data-vaul-drawer-visible={$visible ? "true" : "false"}
 	{...$$restProps}
 >
 	<Visible />

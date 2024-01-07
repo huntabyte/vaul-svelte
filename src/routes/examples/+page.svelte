@@ -1,7 +1,7 @@
 <script lang="ts">
-	import NestedDrawer from './NestedDrawer.svelte';
-	import ScrollableDrawer from './ScrollableDrawer.svelte';
-	import SnapPointDrawer from './SnapPointDrawer.svelte';
+	import NestedDrawer from "./nested-drawer.svelte";
+	import ScrollableDrawer from "./scrollable-drawer.svelte";
+	import SnapPointDrawer from "./snap-point-drawer.svelte";
 </script>
 
 <div class="mx-auto max-w-2xl pt-64 text-center">

@@ -1,11 +1,11 @@
 <script lang="ts">
-	import { Dialog as DialogPrimitive } from 'bits-ui';
-	import type { CloseProps } from './types.js';
-	import { getCtx } from '../ctx.js';
+	import { Dialog as DialogPrimitive } from "bits-ui";
+	import type { CloseProps } from "./types.js";
+	import { getCtx } from "../ctx.js";
 
 	type $$Props = CloseProps;
 
-	export let el: $$Props['el'] = undefined;
+	export let el: $$Props["el"] = undefined;
 
 	const {
 		methods: { closeDrawer }
@@ -19,7 +19,7 @@
 		closeDrawer();
 	}}
 	on:keydown={(e) => {
-		if (e.detail.originalEvent.key === 'Enter' || e.detail.originalEvent.key === ' ') {
+		if (e.detail.originalEvent.key === "Enter" || e.detail.originalEvent.key === " ") {
 			e.preventDefault();
 			closeDrawer(true);
 		}

@@ -1,10 +1,9 @@
-<!-- Snap Points Drawer -->
 <script lang="ts">
-	import { Drawer } from '$lib/index.js';
-	import { clsx } from 'clsx';
+	import { Drawer } from "$lib/index.js";
+	import { clsx } from "clsx";
 
-	const snapPoints = ['148px', '355px', 1];
-	let activeSnapPoint: string | number | undefined | null = '148px';
+	const snapPoints = ["148px", "355px", 1];
+	let activeSnapPoint: string | number | undefined | null = "148px";
 </script>
 
 <Drawer.Root {snapPoints} bind:activeSnapPoint>
@@ -25,9 +24,9 @@
 			class="border-b-none fixed bottom-0 left-0 right-0 mx-[-1px] flex h-full max-h-[97%] flex-col rounded-t-[10px] border border-gray-200 bg-white"
 		>
 			<div
-				class={clsx('mx-auto flex w-full max-w-md flex-col p-4 pt-5', {
-					'overflow-y-auto': activeSnapPoint === 1,
-					'overflow-hidden': activeSnapPoint !== 1
+				class={clsx("mx-auto flex w-full max-w-md flex-col p-4 pt-5", {
+					"overflow-y-auto": activeSnapPoint === 1,
+					"overflow-hidden": activeSnapPoint !== 1
 				})}
 			>
 				<div class="flex items-center">

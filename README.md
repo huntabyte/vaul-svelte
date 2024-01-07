@@ -16,7 +16,7 @@ Use the drawer in your app.
 
 ```svelte
 <script>
-	import { Drawer } from 'vaul-svelte';
+	import { Drawer } from "vaul-svelte";
 </script>
 
 <Drawer.Root>

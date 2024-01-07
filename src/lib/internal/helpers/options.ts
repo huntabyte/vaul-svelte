@@ -1,4 +1,4 @@
-import type { StoresValues, Writable } from 'svelte/store';
+import type { StoresValues, Writable } from "svelte/store";
 
 type Options = Record<string, Writable<unknown>>;
 

@@ -1,7 +1,7 @@
-import { derived, get, type Writable } from 'svelte/store';
-import { TRANSITIONS, VELOCITY_THRESHOLD } from './constants.js';
-import { effect, set } from './helpers/index.js';
-import { tick } from 'svelte';
+import { derived, get, type Writable } from "svelte/store";
+import { TRANSITIONS, VELOCITY_THRESHOLD } from "./constants.js";
+import { effect, set } from "./helpers/index.js";
+import { tick } from "svelte";
 
 export function handleSnapPoints({
 	activeSnapPoint,
@@ -48,8 +48,8 @@ export function handleSnapPoints({
 	const snapPointsOffset = derived(snapPoints, ($snapPoints) => {
 		if ($snapPoints) {
 			return $snapPoints.map((snapPoint) => {
-				const hasWindow = typeof window !== 'undefined';
-				const isPx = typeof snapPoint === 'string';
+				const hasWindow = typeof window !== "undefined";
+				const isPx = typeof snapPoint === "string";
 				let snapPointAsNumber = 0;
 
 				if (isPx) {
@@ -80,7 +80,7 @@ export function handleSnapPoints({
 			const $snapPointsOffset = get(snapPointsOffset);
 			const newIndex =
 				$snapPoints?.findIndex((snapPoint) => snapPoint === $activeSnapPoint) ?? null;
-			if ($snapPointsOffset && newIndex && typeof $snapPointsOffset[newIndex] === 'number') {
+			if ($snapPointsOffset && newIndex && typeof $snapPointsOffset[newIndex] === "number") {
 				snapToPoint($snapPointsOffset[newIndex] as number);
 			}
 		}
@@ -98,7 +98,7 @@ export function handleSnapPoints({
 
 			set($drawerRef, {
 				transition: `transform ${TRANSITIONS.DURATION}s cubic-bezier(${TRANSITIONS.EASE.join(
-					','
+					","
 				)})`,
 				transform: `translate3d(0, ${height}px, 0)`
 			});
@@ -113,16 +113,16 @@ export function handleSnapPoints({
 			) {
 				set($overlayRef, {
 					transition: `opacity ${TRANSITIONS.DURATION}s cubic-bezier(${TRANSITIONS.EASE.join(
-						','
+						","
 					)})`,
-					opacity: '0'
+					opacity: "0"
 				});
 			} else {
 				set($overlayRef, {
 					transition: `opacity ${TRANSITIONS.DURATION}s cubic-bezier(${TRANSITIONS.EASE.join(
-						','
+						","
 					)})`,
-					opacity: '1'
+					opacity: "1"
 				});
 			}
 			activeSnapPoint.update(() => {
@@ -164,7 +164,7 @@ export function handleSnapPoints({
 
 		if (isOverlaySnapPoint) {
 			set($overlayRef, {
-				transition: `opacity ${TRANSITIONS.DURATION}s cubic-bezier(${TRANSITIONS.EASE.join(',')})`
+				transition: `opacity ${TRANSITIONS.DURATION}s cubic-bezier(${TRANSITIONS.EASE.join(",")})`
 			});
 		}
 
@@ -181,7 +181,7 @@ export function handleSnapPoints({
 
 		// Find the closest snap point to the current position
 		const closestSnapPoint = $snapPointsOffset?.reduce((prev, curr) => {
-			if (typeof prev !== 'number' || typeof curr !== 'number') return prev;
+			if (typeof prev !== "number" || typeof curr !== "number") return prev;
 
 			return Math.abs(curr - currentPosition) < Math.abs(prev - currentPosition) ? curr : prev;
 		});
@@ -226,7 +226,7 @@ export function handleSnapPoints({
 		const $fadeFromIndex = get(fadeFromIndex);
 		if (
 			!$snapPoints ||
-			typeof $activeSnapPointIndex !== 'number' ||
+			typeof $activeSnapPointIndex !== "number" ||
 			!$snapPointsOffset ||
 			$fadeFromIndex === undefined
 		)

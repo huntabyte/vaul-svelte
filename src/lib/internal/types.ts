@@ -1,4 +1,4 @@
-import type { Action } from 'svelte/action';
+import type { Action } from "svelte/action";
 
 export type SvelteEvent<T extends Event = Event, U extends EventTarget = EventTarget> = T & {
 	currentTarget: EventTarget & U;

@@ -1,21 +1,21 @@
 // HTML input types that do not cause the software keyboard to appear.
 const nonTextInputTypes = new Set([
-	'checkbox',
-	'radio',
-	'range',
-	'color',
-	'file',
-	'image',
-	'button',
-	'submit',
-	'reset'
+	"checkbox",
+	"radio",
+	"range",
+	"color",
+	"file",
+	"image",
+	"button",
+	"submit",
+	"reset"
 ]);
 
-export const isBrowser = typeof document !== 'undefined';
+export const isBrowser = typeof document !== "undefined";
 
 // eslint-disable-next-line @typescript-eslint/ban-types
 export function isFunction(v: unknown): v is Function {
-	return typeof v === 'function';
+	return typeof v === "function";
 }
 
 export function isInput(target: Element) {
