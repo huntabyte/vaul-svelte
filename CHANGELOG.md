@@ -1,5 +1,11 @@
 # vaul-svelte
 
+## 0.0.5
+
+### Patch Changes
+
+- fix: closing and focus restoration issues ([#18](https://github.com/huntabyte/vaul-svelte/pull/18))
+
 ## 0.0.4
 
 ### Patch Changes
