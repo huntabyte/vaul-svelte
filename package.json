@@ -1,6 +1,6 @@
 {
 	"name": "vaul-svelte",
-	"version": "0.0.6",
+	"version": "0.0.7",
 	"license": "MIT",
 	"repository": "github:huntabyte/vaul-svelte",
 	"scripts": {

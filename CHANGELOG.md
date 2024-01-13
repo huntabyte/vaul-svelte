@@ -1,5 +1,11 @@
 # vaul-svelte
 
+## 0.0.7
+
+### Patch Changes
+
+- fix: `closeOnOutsideClick` & `onOutsideClick` behavior ([#27](https://github.com/huntabyte/vaul-svelte/pull/27))
+
 ## 0.0.6
 
 ### Patch Changes
