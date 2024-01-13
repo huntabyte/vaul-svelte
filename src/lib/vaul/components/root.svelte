@@ -14,6 +14,7 @@
 	export let fadeFromIndex: $$Props["fadeFromIndex"] = undefined;
 	export let openFocus: $$Props["openFocus"] = undefined;
 	export let onOutsideClick: $$Props["onOutsideClick"] = undefined;
+	export let closeOnOutsideClick: $$Props["closeOnOutsideClick"] = true;
 	export let nested: $$Props["nested"] = false;
 	export let shouldScaleBackground: $$Props["shouldScaleBackground"] = false;
 	export let activeSnapPoint: $$Props["activeSnapPoint"] = undefined;
@@ -77,6 +78,7 @@
 </script>
 
 <DialogPrimitive.Root
+	{closeOnOutsideClick}
 	closeOnEscape={false}
 	bind:open
 	preventScroll={false}
@@ -89,7 +91,12 @@
 		}
 	}}
 	onOutsideClick={(e) => {
+		if (!closeOnOutsideClick) return;
+
 		onOutsideClick?.(e);
+
+		if (e?.defaultPrevented) return;
+
 		if ($keyboardIsOpen) {
 			keyboardIsOpen.set(false);
 		}
