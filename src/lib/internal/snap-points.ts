@@ -1,7 +1,7 @@
+import { tick } from "svelte";
 import { derived, get, type Writable } from "svelte/store";
 import { TRANSITIONS, VELOCITY_THRESHOLD } from "./constants.js";
 import { effect, set } from "./helpers/index.js";
-import { tick } from "svelte";
 
 export function handleSnapPoints({
 	activeSnapPoint,
