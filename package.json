@@ -5,7 +5,6 @@
 	"repository": "github:huntabyte/vaul-svelte",
 	"scripts": {
 		"dev": "vite dev",
-		"watch": "vite dev",
 		"build": "vite build && pnpm run package",
 		"preview": "vite preview",
 		"package": "svelte-kit sync && svelte-package && publint",
