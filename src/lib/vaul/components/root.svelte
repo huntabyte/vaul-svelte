@@ -91,7 +91,7 @@
 		}
 	}}
 	onOutsideClick={(e) => {
-		if (closeOnOutsideClick) return;
+		if (!closeOnOutsideClick) return;
 
 		onOutsideClick?.(e);
 
