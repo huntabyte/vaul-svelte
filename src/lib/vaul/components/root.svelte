@@ -25,7 +25,7 @@
 	export let dismissible: $$Props["dismissible"] = undefined;
 
 	const {
-		states: { keyboardIsOpen, activeSnapPoint: localActiveSnapPoint, drawerId, openDrawerIds },
+		states: { keyboardIsOpen, activeSnapPoint: localActiveSnapPoint, drawerId, openDrawerIds, isOpen },
 		methods: { closeDrawer, openDrawer },
 		options: { dismissible: localDismissible },
 		updateOption
@@ -75,6 +75,9 @@
 	$: updateOption("openFocus", openFocus);
 	$: updateOption("shouldScaleBackground", shouldScaleBackground);
 	$: updateOption("dismissible", dismissible);
+
+	$: open && !$isOpen && openDrawer()
+	$: !open && $isOpen && closeDrawer()
 </script>
 
 <DialogPrimitive.Root
