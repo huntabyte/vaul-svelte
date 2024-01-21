@@ -79,6 +79,13 @@ export type Props = {
 	shouldScaleBackground?: CreateVaulProps["shouldScaleBackground"] & {};
 
 	/**
+	 * The background color of the body when the drawer is open and `shouldScaleBackground` is true.
+	 *
+	 * @default "black"
+	 */
+	backgroundColor?: CreateVaulProps["backgroundColor"] & {};
+
+	/**
 	 * The active snap point of the drawer. You can bind to this value to
 	 * programatically change the active snap point.
 	 */

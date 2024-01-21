@@ -58,6 +58,8 @@ Additional props:
 
 `fadeFromIndex`: Index of a `snapPoint` from which the overlay fade should be applied. Defaults to the last snap point.
 
+`backgroundColor`: Background color of the body when the drawer is open and `shouldScaleBackground` is true. Defaults to black.
+
 ### Trigger
 
 The button that opens the dialog. [Props](https://www.bits-ui.com/docs/components/dialog#trigger).
