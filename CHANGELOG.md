@@ -1,5 +1,11 @@
 # vaul-svelte
 
+## 0.1.0
+
+### Minor Changes
+
+- feat: added `backgroundColor` prop to `<Drawer.Root />` that can be used to customize the body's background color when the drawer is open and `shouldScaleBackground` is `true` ([#34](https://github.com/huntabyte/vaul-svelte/pull/34))
+
 ## 0.0.7
 
 ### Patch Changes
