@@ -43,7 +43,7 @@
 			<p class="text-xl text-gray-600">Drawer component for Svelte.</p>
 		</div>
 		<div class="mt-6 flex justify-center gap-4">
-			<Drawer.Root shouldScaleBackground backgroundColor="blue">
+			<Drawer.Root shouldScaleBackground>
 				<Drawer.Trigger asChild let:builder>
 					<button
 						class="rounded-full bg-white px-4 py-2.5 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50"
