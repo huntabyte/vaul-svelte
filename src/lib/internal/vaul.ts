@@ -53,6 +53,7 @@ export type CreateVaulProps = {
 	onOpenChange?: ChangeFn<boolean>;
 	closeThreshold?: number;
 	shouldScaleBackground?: boolean;
+	backgroundColor?: string;
 	scrollLockTimeout?: number;
 	fixed?: boolean;
 	dismissible?: boolean;
@@ -443,7 +444,7 @@ export function createVaul(props: CreateVaulProps) {
 		}
 	}
 
-	function scaleBackground(open: boolean) {
+	function scaleBackground(open: boolean, backgroundColor: string | undefined = "black") {
 		const wrapper = document.querySelector("[data-vaul-drawer-wrapper]");
 
 		if (!wrapper || !get(shouldScaleBackground)) return;
@@ -452,7 +453,7 @@ export function createVaul(props: CreateVaulProps) {
 			set(
 				document.body,
 				{
-					background: "black"
+					background: backgroundColor
 				},
 				true
 			);
@@ -718,7 +719,7 @@ export function createVaul(props: CreateVaulProps) {
 		if (!$isOpen) return;
 
 		openTime.set(new Date());
-		scaleBackground(true);
+		scaleBackground(true, props.backgroundColor);
 	});
 
 	effect([visible], ([$visible]) => {
