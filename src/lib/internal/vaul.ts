@@ -772,7 +772,7 @@ export function createVaul(props: CreateVaulProps) {
 	}
 
 	function onNestedDrag(
-		_: SvelteEvent<PointerEvent | MouseEvent, HTMLElement>,
+		_: SvelteEvent<PointerEvent | MouseEvent | TouchEvent, HTMLElement>,
 		percentageDragged: number
 	) {
 		if (percentageDragged < 0) return;
@@ -786,7 +786,10 @@ export function createVaul(props: CreateVaulProps) {
 		});
 	}
 
-	function onNestedRelease(_: SvelteEvent<PointerEvent | MouseEvent, HTMLElement>, o: boolean) {
+	function onNestedRelease(
+		_: SvelteEvent<PointerEvent | MouseEvent | TouchEvent, HTMLElement>,
+		o: boolean
+	) {
 		const scale = o ? (window.innerWidth - NESTED_DISPLACEMENT) / window.innerWidth : 1;
 		const y = o ? -NESTED_DISPLACEMENT : 0;
 
