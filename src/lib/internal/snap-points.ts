@@ -211,8 +211,12 @@ export function handleSnapPoints({
 	function onDrag({ draggedDistance }: { draggedDistance: number }) {
 		const $drawerRef = get(drawerRef);
 		const $activeSnapPointOffset = get(activeSnapPointOffset);
+		const $snapPointsOffset = get(snapPointsOffset);
 		if ($activeSnapPointOffset === null) return;
 		const newYValue = $activeSnapPointOffset - draggedDistance;
+
+		// Don't do anything if we eceed the last (highest) snap point
+		if (newYValue < $snapPointsOffset[$snapPointsOffset.length - 1]) return;
 
 		set($drawerRef, {
 			transform: `translate3d(0, ${newYValue}px, 0)`
