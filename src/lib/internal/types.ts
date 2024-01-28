@@ -25,3 +25,5 @@ export type Builder<
 > = Record<string, any> & {
 	action: Action<Element, Param, Attributes>;
 };
+
+export type DrawerDirection = "left" | "right" | "top" | "bottom";

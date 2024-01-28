@@ -11,7 +11,8 @@
 		refs: { drawerRef },
 		states: { visible },
 		helpers: { getContentStyle },
-		methods: { onPress, onDrag, onRelease }
+		methods: { onPress, onDrag, onRelease },
+		options: { direction }
 	} = getCtx();
 
 	export let style: $$Props["style"] = "";
@@ -36,6 +37,7 @@
 		onDrag(e);
 	}}
 	data-vaul-drawer=""
+	data-vaul-drawer-direction={$direction}
 	data-vaul-drawer-visible={$visible ? "true" : "false"}
 	{...$$restProps}
 >

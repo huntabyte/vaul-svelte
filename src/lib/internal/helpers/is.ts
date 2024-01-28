@@ -1,3 +1,5 @@
+import type { DrawerDirection } from "../types.js";
+
 // HTML input types that do not cause the software keyboard to appear.
 const nonTextInputTypes = new Set([
 	"checkbox",
@@ -24,4 +26,9 @@ export function isInput(target: Element) {
 		target instanceof HTMLTextAreaElement ||
 		(target instanceof HTMLElement && target.isContentEditable)
 	);
+}
+
+export function isVertical(direction: DrawerDirection) {
+	if (direction === "top" || direction === "bottom") return true;
+	return false;
 }

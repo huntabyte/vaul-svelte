@@ -58,6 +58,8 @@ Additional props:
 
 `fadeFromIndex`: Index of a `snapPoint` from which the overlay fade should be applied. Defaults to the last snap point.
 
+`direction`: Direction of the drawer. Can be `top`, `bottom`, `left`, or `right`. Defaults to `bottom`.
+
 `backgroundColor`: Background color of the body when the drawer is open and `shouldScaleBackground` is true. Defaults to black.
 
 ### Trigger

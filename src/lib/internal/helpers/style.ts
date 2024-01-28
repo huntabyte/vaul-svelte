@@ -1,3 +1,6 @@
+import type { DrawerDirection } from "../types.js";
+import { isVertical } from "./index.js";
+
 interface Style {
 	[key: string]: string;
 }
@@ -45,15 +48,19 @@ export function reset(el: Element | HTMLElement | null, prop?: string) {
 	}
 }
 
-export function getTranslateY(element: HTMLElement): number | null {
+export function getTranslate(element: HTMLElement, direction: DrawerDirection): number | null {
 	const style = window.getComputedStyle(element);
 	const transform =
-		// @ts-expect-error - mozTransform is not recognized
+		// @ts-expect-error - vendor prefix
 		style.transform || style.webkitTransform || style.mozTransform;
 	let mat = transform.match(/^matrix3d\((.+)\)$/);
-	if (mat) return parseFloat(mat[1].split(", ")[13]);
+	if (mat) {
+		// https://developer.mozilla.org/en-US/docs/Web/CSS/transform-function/matrix3d
+		return parseFloat(mat[1].split(", ")[isVertical(direction) ? 13 : 12]);
+	}
+	// https://developer.mozilla.org/en-US/docs/Web/CSS/transform-function/matrix
 	mat = transform.match(/^matrix\((.+)\)$/);
-	return mat ? parseFloat(mat[1].split(", ")[5]) : null;
+	return mat ? parseFloat(mat[1].split(", ")[isVertical(direction) ? 5 : 4]) : null;
 }
 
 export function styleToString(style: Record<string, number | string | undefined>): string {

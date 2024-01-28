@@ -121,16 +121,56 @@
 <style>
 	:global([data-vaul-drawer]) {
 		touch-action: none;
-		transform: translate3d(0, 100%, 0);
 		transition: transform 0.5s cubic-bezier(0.32, 0.72, 0, 1);
 	}
 
-	:global(.vaul-dragging .vaul-scrollable) {
+	:global([data-vaul-drawer][data-vaul-drawer-direction="bottom"]) {
+		transform: translate3d(0, 100%, 0);
+	}
+
+	:global([data-vaul-drawer][data-vaul-drawer-direction="top"]) {
+		transform: translate3d(0, -100%, 0);
+	}
+
+	:global([data-vaul-drawer][data-vaul-drawer-direction="left"]) {
+		transform: translate3d(-100%, 0, 0);
+	}
+
+	:global([data-vaul-drawer][data-vaul-drawer-direction="right"]) {
+		transform: translate3d(100%, 0, 0);
+	}
+
+	:global(.vaul-dragging .vaul-scrollable [data-vaul-drawer-direction="top"]) {
 		overflow-y: hidden !important;
 	}
 
-	:global([data-vaul-drawer][data-vaul-drawer-visible="true"]) {
+	:global(.vaul-dragging .vaul-scrollable [data-vaul-drawer-direction="bottom"]) {
+		overflow-y: hidden !important;
+	}
+
+	:global(.vaul-dragging .vaul-scrollable [data-vaul-drawer-direction="left"]) {
+		overflow-x: hidden !important;
+	}
+	:global(.vaul-dragging .vaul-scrollable [data-vaul-drawer-direction="right"]) {
+		overflow-x: hidden !important;
+	}
+
+	:global([data-vaul-drawer][data-vaul-drawer-visible="true"][data-vaul-drawer-direction="top"]) {
 		transform: translate3d(0, var(--snap-point-height, 0), 0);
+	}
+
+	:global(
+			[data-vaul-drawer][data-vaul-drawer-visible="true"][data-vaul-drawer-direction="bottom"]
+		) {
+		transform: translate3d(0, var(--snap-point-height, 0), 0);
+	}
+
+	:global([data-vaul-drawer][data-vaul-drawer-visible="true"][data-vaul-drawer-direction="left"]) {
+		transform: translate3d(var(--snap-point-height, 0), 0, 0);
+	}
+
+	:global([data-vaul-drawer][data-vaul-drawer-visible="true"][data-vaul-drawer-direction="right"]) {
+		transform: translate3d(var(--snap-point-height, 0), 0, 0);
 	}
 
 	:global([data-vaul-overlay]) {
@@ -145,12 +185,40 @@
 	:global([data-vaul-drawer]::after) {
 		content: "";
 		position: absolute;
-		top: 100%;
 		background: inherit;
 		background-color: inherit;
+	}
+
+	:global([data-vaul-drawer][data-vaul-drawer-direction="top"]::after) {
+		top: initial;
+		bottom: 100%;
 		left: 0;
 		right: 0;
 		height: 200%;
+	}
+
+	:global([data-vaul-drawer][data-vaul-drawer-direction="bottom"]::after) {
+		top: 100%;
+		bottom: initial;
+		left: 0;
+		right: 0;
+		height: 200%;
+	}
+
+	:global([data-vaul-drawer][data-vaul-drawer-direction="left"]::after) {
+		left: initial;
+		right: 100%;
+		top: 0;
+		bottom: 0;
+		width: 200%;
+	}
+
+	:global([data-vaul-drawer][data-vaul-drawer-direction="right"]::after) {
+		left: 100%;
+		right: initial;
+		top: 0;
+		bottom: 0;
+		width: 200%;
 	}
 
 	:global(
