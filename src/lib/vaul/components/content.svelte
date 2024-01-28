@@ -5,6 +5,7 @@
 	import Visible from "./visible.svelte";
 
 	type $$Props = ContentProps;
+	type $$Events = DialogPrimitive.ContentEvents;
 
 	const {
 		refs: { drawerRef },
@@ -19,9 +20,21 @@
 <DialogPrimitive.Content
 	bind:el={$drawerRef}
 	style={$getContentStyle(style)}
-	on:pointermove={onDrag}
-	on:pointerdown={onPress}
-	on:pointerup={onRelease}
+	on:pointerdown={(e) => {
+		onPress(e);
+	}}
+	on:pointerup={(e) => {
+		onRelease(e);
+	}}
+	on:pointermove={(e) => {
+		onDrag(e);
+	}}
+	on:touchend={(e) => {
+		onRelease(e);
+	}}
+	on:touchmove={(e) => {
+		onDrag(e);
+	}}
 	data-vaul-drawer=""
 	data-vaul-drawer-visible={$visible ? "true" : "false"}
 	{...$$restProps}

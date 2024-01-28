@@ -57,8 +57,14 @@ export type CreateVaulProps = {
 	scrollLockTimeout?: number;
 	fixed?: boolean;
 	dismissible?: boolean;
-	onDrag?: (event: SvelteEvent<PointerEvent, HTMLElement>, percentageDragged: number) => void;
-	onRelease?: (event: SvelteEvent<PointerEvent | MouseEvent, HTMLElement>, open: boolean) => void;
+	onDrag?: (
+		event: SvelteEvent<PointerEvent | TouchEvent, HTMLElement>,
+		percentageDragged: number
+	) => void;
+	onRelease?: (
+		event: SvelteEvent<PointerEvent | MouseEvent | TouchEvent, HTMLElement>,
+		open: boolean
+	) => void;
 	modal?: boolean;
 	nested?: boolean;
 	onClose?: () => void;
@@ -342,10 +348,10 @@ export function createVaul(props: CreateVaulProps) {
 		return true;
 	}
 
-	function onDrag(event: SvelteEvent<PointerEvent, HTMLElement>) {
+	function onDrag(event: SvelteEvent<PointerEvent | TouchEvent, HTMLElement>) {
 		if (!isDragging) return;
 		// We need to know how much of the drawer has been dragged in percentages so that we can transform background accordingly
-		const draggedDistance = pointerStartY - event.screenY;
+		const draggedDistance = getDistanceMoved(pointerStartY, event);
 		const isDraggingDown = draggedDistance > 0;
 
 		const $activeSnapPointIndex = get(activeSnapPointIndex);
@@ -353,10 +359,8 @@ export function createVaul(props: CreateVaulProps) {
 
 		// Disallow dragging down to close when first snap point is the active one and dismissible prop is set to false.
 		if ($snapPoints && $activeSnapPointIndex === 0 && !get(dismissible)) return;
+		if (!isAllowedToDrag && !shouldDrag(event.target as HTMLElement, isDraggingDown)) return;
 
-		if (!isAllowedToDrag && !shouldDrag(event.target as HTMLElement, isDraggingDown)) {
-			return;
-		}
 		const $drawerRef = get(drawerRef);
 		if (!$drawerRef) return;
 
@@ -390,7 +394,7 @@ export function createVaul(props: CreateVaulProps) {
 
 		// We need to capture last time when drag with scroll was triggered and have a timeout between
 		const absDraggedDistance = Math.abs(draggedDistance);
-		const wrapper = document.querySelector("[data-vaul-drawer-wrapper]");
+
 		let percentageDragged = absDraggedDistance / drawerHeightRef;
 		const snapPointPercentageDragged = getSnapPointsPercentageDragged(
 			absDraggedDistance,
@@ -418,6 +422,7 @@ export function createVaul(props: CreateVaulProps) {
 				true
 			);
 		}
+		const wrapper = document.querySelector("[data-vaul-drawer-wrapper]");
 
 		if (wrapper && $overlayRef && get(shouldScaleBackground)) {
 			// Calculate percentageDragged as a fraction (0 to 1)
@@ -555,6 +560,7 @@ export function createVaul(props: CreateVaulProps) {
 
 	function closeDrawer(withKeyboard: boolean = false) {
 		if (isClosing) return;
+
 		const $drawerRef = get(drawerRef);
 		if (!$drawerRef) return;
 
@@ -638,7 +644,7 @@ export function createVaul(props: CreateVaulProps) {
 		}
 	}
 
-	function onRelease(event: SvelteEvent<PointerEvent | MouseEvent, HTMLElement>) {
+	function onRelease(event: SvelteEvent<PointerEvent | MouseEvent | TouchEvent, HTMLElement>) {
 		const $drawerRef = get(drawerRef);
 		if (!isDragging || !$drawerRef) return;
 
@@ -664,7 +670,7 @@ export function createVaul(props: CreateVaulProps) {
 		if (dragStartTime === null) return;
 
 		const timeTaken = dragEndTime.getTime() - dragStartTime.getTime();
-		const distMoved = pointerStartY - event.screenY;
+		const distMoved = getDistanceMoved(pointerStartY, event);
 		const velocity = Math.abs(distMoved) / timeTaken;
 
 		if (velocity > 0.05) {
@@ -838,4 +844,14 @@ export function dampenValue(v: number) {
 
 function getScale() {
 	return (window.innerWidth - WINDOW_TOP_OFFSET) / window.innerWidth;
+}
+
+function getDistanceMoved(
+	pointerStartY: number,
+	event: SvelteEvent<PointerEvent | MouseEvent | TouchEvent, HTMLElement>
+) {
+	if (event instanceof TouchEvent) {
+		return pointerStartY - event.changedTouches[0].screenY;
+	}
+	return pointerStartY - event.screenY;
 }
