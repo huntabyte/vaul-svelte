@@ -1,5 +1,11 @@
 # vaul-svelte
 
+## 0.1.1
+
+### Patch Changes
+
+- fix: dragging scrollable content on touch devices ([#38](https://github.com/huntabyte/vaul-svelte/pull/38))
+
 ## 0.1.0
 
 ### Minor Changes
