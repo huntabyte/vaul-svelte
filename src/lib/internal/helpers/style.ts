@@ -7,10 +7,6 @@ const cache = new WeakMap();
 export function set(el?: Element | HTMLElement | null, styles?: Style, ignoreCache = false) {
 	if (!el || !(el instanceof HTMLElement) || !styles) return;
 
-	// if (el.hasAttribute('data-vaul-drawer')) {
-	// 	console.log(styles);
-	// }
-
 	const originalStyles: Style = {};
 
 	Object.entries(styles).forEach(([key, value]: [string, string]) => {
