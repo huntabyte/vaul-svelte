@@ -1,5 +1,21 @@
 # vaul-svelte
 
+## 0.2.0
+
+### Minor Changes
+
+- feat: add support for directions "top", "left", "bottom", and "right" ([#40](https://github.com/huntabyte/vaul-svelte/pull/40))
+
+### Patch Changes
+
+- Fix scroll top with smooth scroll ([#40](https://github.com/huntabyte/vaul-svelte/pull/40))
+
+- fix: snapPoints onRelease position ([#40](https://github.com/huntabyte/vaul-svelte/pull/40))
+
+- allow snapping to first snap point ([#40](https://github.com/huntabyte/vaul-svelte/pull/40))
+
+- fix: prevent drawer from exceeding boundaries of last snap point while dragging ([#40](https://github.com/huntabyte/vaul-svelte/pull/40))
+
 ## 0.1.1
 
 ### Patch Changes
