@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { Drawer } from "$lib/index.js";
+	import CenteredContent from "./(components)/centered-content.svelte";
 </script>
 
 <div class="relative">
@@ -60,44 +61,13 @@
 					>
 						<div class="flex-1 rounded-t-[10px] bg-white p-4">
 							<div class="mx-auto mb-8 h-1.5 w-12 flex-shrink-0 rounded-full bg-gray-300" />
-							<div class="mx-auto max-w-md">
-								<Drawer.Title class="mb-4 font-medium">Drawer for Svelte.</Drawer.Title>
-								<p class="mb-2 text-gray-600">
-									This component can be used as a Dialog replacement on mobile and tablet devices.
-								</p>
-								<p class="mb-2 text-gray-600">
-									It comes unstyled, has gesture-driven animations, and was originally made by
-									<a href="https://emilkowal.ski/" class="underline" target="_blank">
-										Emil Kowalski
-									</a>
-									and ported to Svelte by
-									<a href="https://x.com/huntabyte" class="underline" target="_blank">Huntabyte</a>
-									.
-								</p>
-								<p class="mb-8 text-gray-600">
-									It uses
-									<a
-										href="https://www.bits-ui.com/docs/components/dialog"
-										class="underline"
-										target="_blank"
-									>
-										Bits' Dialog primitive
-									</a>
-									under the hood and is inspired by
-									<a
-										href="https://twitter.com/devongovett/status/1674470185783402496"
-										class="underline"
-										target="_blank"
-									>
-										this tweet.
-									</a>
-								</p>
+							<CenteredContent>
 								<p class="mb-8 text-gray-600">
 									Here are
 									<a href="/examples" class="underline">some more examples</a>
 									of the component in action.
 								</p>
-							</div>
+							</CenteredContent>
 						</div>
 						<div class="mt-auto border-t border-gray-200 bg-gray-100 p-4">
 							<div class="mx-auto flex max-w-md justify-end gap-6">

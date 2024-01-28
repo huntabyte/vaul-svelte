@@ -24,6 +24,7 @@
 	export let onDrag: $$Props["onDrag"] = undefined;
 	export let onClose: $$Props["onClose"] = undefined;
 	export let dismissible: $$Props["dismissible"] = undefined;
+	export let direction: $$Props["direction"] = "bottom";
 
 	const {
 		states: { keyboardIsOpen, activeSnapPoint: localActiveSnapPoint, drawerId, openDrawerIds },
@@ -65,7 +66,8 @@
 		onRelease,
 		shouldScaleBackground,
 		backgroundColor,
-		dismissible
+		dismissible,
+		direction
 	});
 
 	$: activeSnapPoint !== undefined && localActiveSnapPoint.set(activeSnapPoint);
@@ -78,6 +80,7 @@
 	$: updateOption("shouldScaleBackground", shouldScaleBackground);
 	$: updateOption("backgroundColor", backgroundColor);
 	$: updateOption("dismissible", dismissible);
+	$: updateOption("direction", direction);
 </script>
 
 <DialogPrimitive.Root
