@@ -1,7 +1,7 @@
 import { tick } from "svelte";
 import { derived, get, type Writable } from "svelte/store";
 import { TRANSITIONS, VELOCITY_THRESHOLD } from "./constants.js";
-import { effect, set, isVertical } from "./helpers/index.js";
+import { effect, set, isVertical, isBottomOrRight } from "./helpers/index.js";
 import type { DrawerDirection } from "./types.js";
 
 export function handleSnapPoints({
@@ -94,9 +94,8 @@ export function handleSnapPoints({
 		if ($activeSnapPoint && $drawerRef) {
 			const $snapPoints = get(snapPoints);
 			const $snapPointsOffset = get(snapPointsOffset);
-			const newIndex =
-				$snapPoints?.findIndex((snapPoint) => snapPoint === $activeSnapPoint) ?? null;
-			if ($snapPointsOffset && newIndex && typeof $snapPointsOffset[newIndex] === "number") {
+			const newIndex = $snapPoints?.findIndex((snapPoint) => snapPoint === $activeSnapPoint) ?? -1;
+			if ($snapPointsOffset && newIndex !== -1 && typeof $snapPointsOffset[newIndex] === "number") {
 				snapToPoint($snapPointsOffset[newIndex] as number);
 			}
 		}
@@ -174,8 +173,8 @@ export function handleSnapPoints({
 
 		const currentPosition =
 			$direction === "bottom" || $direction === "right"
-				? $activeSnapPointOffset ?? 0 - draggedDistance
-				: $activeSnapPointOffset ?? 0 + draggedDistance;
+				? ($activeSnapPointOffset ?? 0) - draggedDistance
+				: ($activeSnapPointOffset ?? 0) + draggedDistance;
 
 		const isOverlaySnapPoint = $activeSnapPointIndex === $fadeFromIndex - 1;
 		const isFirst = $activeSnapPointIndex === 0;
@@ -233,12 +232,24 @@ export function handleSnapPoints({
 		const $drawerRef = get(drawerRef);
 		const $activeSnapPointOffset = get(activeSnapPointOffset);
 		if ($activeSnapPointOffset === null) return;
+		const $snapPointsOffset = get(snapPointsOffset);
 		const $direction = get(direction);
 
 		const newValue =
 			$direction === "bottom" || $direction === "right"
 				? $activeSnapPointOffset - draggedDistance
 				: $activeSnapPointOffset + draggedDistance;
+
+		const lastSnapPoint = $snapPointsOffset[$snapPointsOffset.length - 1];
+
+		// Don't do anything if we exceed the last(biggest) snap point
+		if (isBottomOrRight($direction) && newValue < lastSnapPoint) {
+			return;
+		}
+
+		if (!isBottomOrRight($direction) && newValue > lastSnapPoint) {
+			return;
+		}
 
 		set($drawerRef, {
 			transform: isVertical($direction)

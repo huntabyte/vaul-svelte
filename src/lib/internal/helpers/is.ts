@@ -32,3 +32,8 @@ export function isVertical(direction: DrawerDirection) {
 	if (direction === "top" || direction === "bottom") return true;
 	return false;
 }
+
+export function isBottomOrRight(direction: DrawerDirection) {
+	if (direction === "bottom" || direction === "right") return true;
+	return false;
+}

@@ -16,7 +16,8 @@ import {
 	isInput,
 	sleep,
 	noop,
-	addEventListener
+	addEventListener,
+	isBrowser
 } from "$lib/internal/helpers/index.js";
 import { isIOS, preventScroll } from "./prevent-scroll.js";
 import { TRANSITIONS, VELOCITY_THRESHOLD } from "./constants.js";
@@ -366,7 +367,9 @@ export function createVaul(props: CreateVaulProps) {
 		// We need to know how much of the drawer has been dragged in percentages so that we can transform background accordingly
 		const $direction = get(direction);
 
-		const draggedDistance = getDistanceMoved(pointerStart, $direction, event);
+		const directionMultiplier = getDirectionMultiplier($direction);
+
+		const draggedDistance = getDistanceMoved(pointerStart, $direction, event) * directionMultiplier;
 		const isDraggingInDirection = draggedDistance > 0;
 
 		const $activeSnapPointIndex = get(activeSnapPointIndex);
@@ -374,7 +377,9 @@ export function createVaul(props: CreateVaulProps) {
 
 		// Disallow dragging down to close when first snap point is the active one and dismissible prop is set to false.
 		if ($snapPoints && $activeSnapPointIndex === 0 && !get(dismissible)) return;
-		if (!isAllowedToDrag && !shouldDrag(event.target as HTMLElement, isDraggingInDirection)) return;
+		if (!isAllowedToDrag && !shouldDrag(event.target as HTMLElement, isDraggingInDirection)) {
+			return;
+		}
 
 		$drawerRef.classList.add(DRAG_CLASS);
 		// If shouldDrag gave true once after pressing down on the drawer, we set isAllowedToDrag to true and it will remain true until we let go, there's no reason to disable dragging mid way, ever, and that's the solution to it
@@ -398,8 +403,7 @@ export function createVaul(props: CreateVaulProps) {
 		if (isDraggingInDirection && !$snapPoints) {
 			const dampenedDraggedDistance = dampenValue(draggedDistance);
 
-			const translateValue =
-				Math.min(dampenedDraggedDistance * -1, 0) * getDirectionMultiplier($direction);
+			const translateValue = Math.min(dampenedDraggedDistance * -1, 0) * directionMultiplier;
 
 			set($drawerRef, {
 				transform: isVertical($direction)
@@ -462,7 +466,7 @@ export function createVaul(props: CreateVaulProps) {
 		}
 
 		if (!$snapPoints) {
-			const translateValue = absDraggedDistance * getDirectionMultiplier($direction);
+			const translateValue = absDraggedDistance * directionMultiplier;
 			set($drawerRef, {
 				transform: isVertical($direction)
 					? `translate3d(0, ${translateValue}px, 0)`
@@ -623,6 +627,7 @@ export function createVaul(props: CreateVaulProps) {
 		const $snapPoints = get(snapPoints);
 
 		setTimeout(() => {
+			reset(document.documentElement, "scrollBehavior");
 			if ($snapPoints) {
 				activeSnapPoint.set($snapPoints[0]);
 			}
@@ -763,8 +768,13 @@ export function createVaul(props: CreateVaulProps) {
 	}
 
 	effect([isOpen], ([$isOpen]) => {
+		// Trigger enter animation without using CSS animation
 		if (!$isOpen) return;
-
+		if (isBrowser) {
+			set(document.documentElement, {
+				scrollBehavior: "auto"
+			});
+		}
 		openTime.set(new Date());
 		scaleBackground(true, props.backgroundColor);
 	});
@@ -906,11 +916,10 @@ function getDistanceMoved(
 	direction: DrawerDirection,
 	event: SvelteEvent<PointerEvent | MouseEvent | TouchEvent, HTMLElement>
 ) {
-	const directionMultiplier = getDirectionMultiplier(direction);
 	const screenY = event instanceof TouchEvent ? event.changedTouches[0].screenY : event.screenY;
 	const screenX = event instanceof TouchEvent ? event.changedTouches[0].screenX : event.screenX;
 
-	return (pointerStart - (isVertical(direction) ? screenY : screenX)) * directionMultiplier;
+	return pointerStart - (isVertical(direction) ? screenY : screenX);
 }
 
 function getDirectionMultiplier(direction: DrawerDirection) {
