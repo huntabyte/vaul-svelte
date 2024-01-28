@@ -1,6 +1,6 @@
 import type { Dialog as DialogPrimitive } from "bits-ui";
 import type { CreateVaulProps } from "$lib/internal/vaul.js";
-import type { OnChangeFn } from "$lib/internal/types.js";
+import type { DrawerDirection, OnChangeFn } from "$lib/internal/types.js";
 
 export type Props = {
 	/**
@@ -105,6 +105,14 @@ export type Props = {
 	 * @default true
 	 */
 	dismissible?: boolean;
+
+	/**
+	 * The direction from which the drawer should open.
+	 *
+	 * @default 'bottom'
+	 *
+	 */
+	direction?: DrawerDirection;
 } & DialogPrimitive.Props;
 
 export type OverlayProps = DialogPrimitive.OverlayProps;

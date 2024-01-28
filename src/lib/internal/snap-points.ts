@@ -1,7 +1,8 @@
 import { tick } from "svelte";
 import { derived, get, type Writable } from "svelte/store";
 import { TRANSITIONS, VELOCITY_THRESHOLD } from "./constants.js";
-import { effect, set } from "./helpers/index.js";
+import { effect, set, isVertical, isBottomOrRight } from "./helpers/index.js";
+import type { DrawerDirection } from "./types.js";
 
 export function handleSnapPoints({
 	activeSnapPoint,
@@ -9,7 +10,8 @@ export function handleSnapPoints({
 	drawerRef,
 	overlayRef,
 	fadeFromIndex,
-	openTime
+	openTime,
+	direction
 }: {
 	activeSnapPoint: Writable<number | string | null>;
 	snapPoints: Writable<(number | string)[] | undefined>;
@@ -17,6 +19,7 @@ export function handleSnapPoints({
 	drawerRef: Writable<HTMLDivElement | undefined>;
 	overlayRef: Writable<HTMLDivElement | undefined>;
 	openTime: Writable<Date | null>;
+	direction: Writable<DrawerDirection>;
 }) {
 	const isLastSnapPoint = derived(
 		[snapPoints, activeSnapPoint],
@@ -55,14 +58,27 @@ export function handleSnapPoints({
 				if (isPx) {
 					snapPointAsNumber = parseInt(snapPoint, 10);
 				}
+				const $direction = get(direction);
 
-				const height = isPx ? snapPointAsNumber : hasWindow ? snapPoint * window.innerHeight : 0;
+				if (isVertical($direction)) {
+					const height = isPx ? snapPointAsNumber : hasWindow ? snapPoint * window.innerHeight : 0;
 
-				if (hasWindow) {
-					return window.innerHeight - height;
+					if (hasWindow) {
+						return $direction === "bottom"
+							? window.innerHeight - height
+							: window.innerHeight + height;
+					}
+
+					return height;
 				}
 
-				return height;
+				const width = isPx ? snapPointAsNumber : hasWindow ? snapPoint * window.innerWidth : 0;
+
+				if (hasWindow) {
+					return $direction === "right" ? window.innerWidth - width : window.innerWidth + width;
+				}
+
+				return width;
 			});
 		}
 		return [];
@@ -78,21 +94,21 @@ export function handleSnapPoints({
 		if ($activeSnapPoint && $drawerRef) {
 			const $snapPoints = get(snapPoints);
 			const $snapPointsOffset = get(snapPointsOffset);
-			const newIndex =
-				$snapPoints?.findIndex((snapPoint) => snapPoint === $activeSnapPoint) ?? null;
-			if ($snapPointsOffset && newIndex && typeof $snapPointsOffset[newIndex] === "number") {
+			const newIndex = $snapPoints?.findIndex((snapPoint) => snapPoint === $activeSnapPoint) ?? -1;
+			if ($snapPointsOffset && newIndex !== -1 && typeof $snapPointsOffset[newIndex] === "number") {
 				snapToPoint($snapPointsOffset[newIndex] as number);
 			}
 		}
 	});
 
-	function snapToPoint(height: number) {
+	function snapToPoint(dimension: number) {
 		tick().then(() => {
 			const $snapPointsOffset = get(snapPointsOffset);
 			const newSnapPointIndex =
-				$snapPointsOffset?.findIndex((snapPointHeight) => snapPointHeight === height) ?? null;
+				$snapPointsOffset?.findIndex((snapPointDim) => snapPointDim === dimension) ?? null;
 
 			const $drawerRef = get(drawerRef);
+			const $direction = get(direction);
 
 			onSnapPointChange(newSnapPointIndex);
 
@@ -100,7 +116,9 @@ export function handleSnapPoints({
 				transition: `transform ${TRANSITIONS.DURATION}s cubic-bezier(${TRANSITIONS.EASE.join(
 					","
 				)})`,
-				transform: `translate3d(0, ${height}px, 0)`
+				transform: isVertical($direction)
+					? `translate3d(0, ${dimension}px, 0)`
+					: `translate3d(${dimension}px, 0, 0)`
 			});
 
 			const $fadeFromIndex = get(fadeFromIndex);
@@ -151,13 +169,13 @@ export function handleSnapPoints({
 		const $overlayRef = get(overlayRef);
 		const $snapPointsOffset = get(snapPointsOffset);
 		const $snapPoints = get(snapPoints);
+		const $direction = get(direction);
 
-		function getCurrPosition() {
-			const snapOffset = $activeSnapPointOffset ?? 0;
-			return snapOffset - draggedDistance;
-		}
+		const currentPosition =
+			$direction === "bottom" || $direction === "right"
+				? ($activeSnapPointOffset ?? 0) - draggedDistance
+				: ($activeSnapPointOffset ?? 0) + draggedDistance;
 
-		const currentPosition = getCurrPosition();
 		const isOverlaySnapPoint = $activeSnapPointIndex === $fadeFromIndex - 1;
 		const isFirst = $activeSnapPointIndex === 0;
 		const hasDraggedUp = draggedDistance > 0;
@@ -186,7 +204,9 @@ export function handleSnapPoints({
 			return Math.abs(curr - currentPosition) < Math.abs(prev - currentPosition) ? curr : prev;
 		});
 
-		if (velocity > VELOCITY_THRESHOLD && Math.abs(draggedDistance) < window.innerHeight * 0.4) {
+		const dim = isVertical($direction) ? window.innerHeight : window.innerWidth;
+
+		if (velocity > VELOCITY_THRESHOLD && Math.abs(draggedDistance) < dim * 0.4) {
 			const dragDirection = hasDraggedUp ? 1 : -1; // 1 = up, -1 = down
 
 			// Don't do anything if we swipe upwards while being on the last snap point
@@ -212,10 +232,29 @@ export function handleSnapPoints({
 		const $drawerRef = get(drawerRef);
 		const $activeSnapPointOffset = get(activeSnapPointOffset);
 		if ($activeSnapPointOffset === null) return;
-		const newYValue = $activeSnapPointOffset - draggedDistance;
+		const $snapPointsOffset = get(snapPointsOffset);
+		const $direction = get(direction);
+
+		const newValue =
+			$direction === "bottom" || $direction === "right"
+				? $activeSnapPointOffset - draggedDistance
+				: $activeSnapPointOffset + draggedDistance;
+
+		const lastSnapPoint = $snapPointsOffset[$snapPointsOffset.length - 1];
+
+		// Don't do anything if we exceed the last(biggest) snap point
+		if (isBottomOrRight($direction) && newValue < lastSnapPoint) {
+			return;
+		}
+
+		if (!isBottomOrRight($direction) && newValue > lastSnapPoint) {
+			return;
+		}
 
 		set($drawerRef, {
-			transform: `translate3d(0, ${newYValue}px, 0)`
+			transform: isVertical($direction)
+				? `translate3d(0, ${newValue}px, 0)`
+				: `translate3d(${newValue}px, 0, 0)`
 		});
 	}
 
