@@ -10,7 +10,7 @@ const nonTextInputTypes = new Set([
 	"image",
 	"button",
 	"submit",
-	"reset"
+	"reset",
 ]);
 
 export const isBrowser = typeof document !== "undefined";

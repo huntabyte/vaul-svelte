@@ -10,7 +10,7 @@
 	export let open: $$Props["open"] = undefined;
 
 	const {
-		methods: { onNestedDrag, onNestedRelease, onNestedOpenChange }
+		methods: { onNestedDrag, onNestedRelease, onNestedOpenChange },
 	} = getCtx();
 
 	if (!onNestedDrag) {

@@ -9,7 +9,7 @@
 	const {
 		refs: { overlayRef },
 		states: { isOpen, visible, snapPoints, shouldFade },
-		methods: { onRelease }
+		methods: { onRelease },
 	} = getCtx();
 
 	$: hasSnapPoints = $snapPoints && $snapPoints.length > 0;

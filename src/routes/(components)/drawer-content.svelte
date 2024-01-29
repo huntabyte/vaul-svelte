@@ -13,7 +13,7 @@
 		"bottom-0 left-0 right-0 h-[50%] flex-col rounded-t-[10px]": drawerDirection === "bottom",
 		"left-0 right-0 top-0 h-[50%] flex-col rounded-b-[10px]": drawerDirection === "top",
 		"bottom-0 left-0 top-0 w-[50%] flex-row rounded-r-[10px]": drawerDirection === "left",
-		"bottom-0 right-0 top-0 w-[50%] flex-row rounded-l-[10px]": drawerDirection === "right"
+		"bottom-0 right-0 top-0 w-[50%] flex-row rounded-l-[10px]": drawerDirection === "right",
 	})}
 >
 	<div
@@ -22,14 +22,14 @@
 			"flex-col": drawerDirection === "bottom",
 			"flex-col-reverse": drawerDirection === "top",
 			"flex-row-reverse": drawerDirection === "left",
-			"flex-row ": drawerDirection === "right"
+			"flex-row ": drawerDirection === "right",
 		})}
 	>
 		<div
 			class={clsx({
 				"rounded-full bg-zinc-300": true,
 				"mx-auto h-1.5 w-12": drawerDirection === "top" || drawerDirection === "bottom",
-				"my-auto h-12 w-1.5": drawerDirection === "left" || drawerDirection === "right"
+				"my-auto h-12 w-1.5": drawerDirection === "left" || drawerDirection === "right",
 			})}
 		/>
 		<div class="grid h-full w-full place-content-center">

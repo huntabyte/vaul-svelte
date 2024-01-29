@@ -8,7 +8,7 @@ export function handlePositionFixed({
 	isOpen,
 	modal,
 	nested,
-	hasBeenOpened
+	hasBeenOpened,
 }: {
 	isOpen: Writable<boolean>;
 	modal: Writable<boolean>;
@@ -26,7 +26,7 @@ export function handlePositionFixed({
 			position: document.body.style.position,
 			top: document.body.style.top,
 			left: document.body.style.left,
-			height: document.body.style.height
+			height: document.body.style.height,
 		};
 
 		// Update the dom inside an animation frame

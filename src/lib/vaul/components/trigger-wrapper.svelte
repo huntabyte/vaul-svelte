@@ -9,7 +9,7 @@
 	export let meltBuilder: Builder;
 
 	const {
-		refs: { triggerRef }
+		refs: { triggerRef },
 	} = getCtx();
 
 	$: ({ action, ...rest } = meltBuilder);
@@ -22,7 +22,7 @@
 	};
 
 	$: Object.assign(rest, {
-		action: wrappedAction
+		action: wrappedAction,
 	});
 </script>
 

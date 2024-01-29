@@ -26,7 +26,7 @@ const documentEscapeKeyStore = readable<KeyboardEvent | undefined>(
 
 		// Adds a keydown event listener to the document, calling the keydown function when triggered.
 		const unsubscribe = addEventListener(document, "keydown", keydown, {
-			passive: false
+			passive: false,
 		});
 
 		// Returns a function to unsubscribe from the event listener and stop tracking keydown events.

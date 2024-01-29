@@ -12,7 +12,7 @@ export function setCtx(props: CreateVaulProps = {}) {
 
 	return {
 		...vaul,
-		updateOption
+		updateOption,
 	};
 }
 

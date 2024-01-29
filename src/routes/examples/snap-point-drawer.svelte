@@ -21,7 +21,7 @@
 			<div
 				class={clsx("mx-auto flex w-full max-w-md flex-col p-4 pt-5", {
 					"overflow-y-auto": activeSnapPoint === 1,
-					"overflow-hidden": activeSnapPoint !== 1
+					"overflow-hidden": activeSnapPoint !== 1,
 				})}
 			>
 				<div class="flex items-center">
