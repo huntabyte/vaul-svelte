@@ -1,5 +1,11 @@
 # vaul-svelte
 
+## 0.2.1
+
+### Patch Changes
+
+- fix: forward `$restProps` to Bits UI dialog ([#42](https://github.com/huntabyte/vaul-svelte/pull/42))
+
 ## 0.2.0
 
 ### Minor Changes
