@@ -22,7 +22,7 @@ export function effect<S extends Stores>(
 	const unsub = derivedWithUnsubscribe(stores, (stores, onUnsubscribe) => {
 		return {
 			stores,
-			onUnsubscribe
+			onUnsubscribe,
 		};
 	}).subscribe(({ stores, onUnsubscribe }) => {
 		const returned = fn(stores);
@@ -80,7 +80,7 @@ export function derivedWithUnsubscribe<S extends Stores, T>(
 
 	return {
 		...derivedStore,
-		subscribe
+		subscribe,
 	};
 }
 
@@ -123,7 +123,7 @@ export const overridable = <T>(store: Writable<T>, onChange?: ChangeFn<T>) => {
 	return {
 		...store,
 		update,
-		set
+		set,
 	};
 };
 

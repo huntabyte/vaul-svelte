@@ -12,7 +12,7 @@
 		states: { visible },
 		helpers: { getContentStyle },
 		methods: { onPress, onDrag, onRelease },
-		options: { direction }
+		options: { direction },
 	} = getCtx();
 
 	export let style: $$Props["style"] = "";

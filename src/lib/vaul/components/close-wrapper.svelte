@@ -9,7 +9,7 @@
 	export let meltBuilder: Builder;
 
 	const {
-		methods: { closeDrawer }
+		methods: { closeDrawer },
 	} = getCtx();
 
 	$: ({ _, ...rest } = meltBuilder);
@@ -38,7 +38,7 @@
 	};
 
 	$: Object.assign(rest, {
-		action: wrappedAction
+		action: wrappedAction,
 	});
 </script>
 

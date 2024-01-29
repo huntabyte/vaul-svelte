@@ -7,7 +7,7 @@
 
 	const {
 		states: { visible },
-		methods: { scaleBackground, restorePositionSetting }
+		methods: { scaleBackground, restorePositionSetting },
 	} = getCtx();
 
 	onMount(() => {

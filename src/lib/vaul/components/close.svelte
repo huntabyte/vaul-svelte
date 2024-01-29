@@ -10,7 +10,7 @@
 	export let asChild = false;
 
 	const {
-		methods: { closeDrawer }
+		methods: { closeDrawer },
 	} = getCtx();
 </script>
 

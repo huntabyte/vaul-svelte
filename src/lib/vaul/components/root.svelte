@@ -30,7 +30,7 @@
 		states: { keyboardIsOpen, activeSnapPoint: localActiveSnapPoint, drawerId, openDrawerIds },
 		methods: { closeDrawer, openDrawer },
 		options: { dismissible: localDismissible },
-		updateOption
+		updateOption,
 	} = setCtx({
 		defaultOpen: open,
 		defaultActiveSnapPoint: activeSnapPoint,
@@ -67,7 +67,7 @@
 		shouldScaleBackground,
 		backgroundColor,
 		dismissible,
-		direction
+		direction,
 	});
 
 	$: activeSnapPoint !== undefined && localActiveSnapPoint.set(activeSnapPoint);
@@ -117,6 +117,7 @@
 			closeDrawer();
 		}
 	}}
+	{...$$restProps}
 >
 	<slot />
 </DialogPrimitive.Root>

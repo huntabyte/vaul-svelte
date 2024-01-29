@@ -17,7 +17,7 @@ import {
 	sleep,
 	noop,
 	addEventListener,
-	isBrowser
+	isBrowser,
 } from "$lib/internal/helpers/index.js";
 import { isIOS, preventScroll } from "./prevent-scroll.js";
 import { TRANSITIONS, VELOCITY_THRESHOLD } from "./constants.js";
@@ -90,7 +90,7 @@ const defaultProps = {
 	modal: true,
 	nested: false,
 	onClose: undefined,
-	direction: "bottom" as const
+	direction: "bottom" as const,
 };
 
 const omittedOptions = [
@@ -100,7 +100,7 @@ const omittedOptions = [
 	"onActiveSnapPointChange",
 	"onDrag",
 	"onRelease",
-	"onClose"
+	"onClose",
 ] as const;
 
 export function createVaul(props: CreateVaulProps) {
@@ -115,7 +115,7 @@ export function createVaul(props: CreateVaulProps) {
 			{
 				...withDefaults,
 				snapPoints: snapPointsProp,
-				fadeFromIndex: fadeFromIndexProp
+				fadeFromIndex: fadeFromIndexProp,
 			},
 			...omittedOptions
 		)
@@ -136,7 +136,7 @@ export function createVaul(props: CreateVaulProps) {
 		shouldScaleBackground,
 		scrollLockTimeout,
 		closeThreshold,
-		direction
+		direction,
 	} = options;
 
 	const openStore = writable(withDefaults.defaultOpen);
@@ -173,7 +173,7 @@ export function createVaul(props: CreateVaulProps) {
 		onDrag: onDragSnapPoints,
 		onRelease: onReleaseSnapPoints,
 		shouldFade,
-		snapPointsOffset
+		snapPointsOffset,
 	} = handleSnapPoints({
 		snapPoints,
 		activeSnapPoint,
@@ -181,7 +181,7 @@ export function createVaul(props: CreateVaulProps) {
 		fadeFromIndex,
 		overlayRef,
 		openTime,
-		direction
+		direction,
 	});
 
 	const getContentStyle: Readable<(style?: string | null) => string> = derived(
@@ -190,7 +190,7 @@ export function createVaul(props: CreateVaulProps) {
 			return (style: string | null = "") => {
 				if ($snapPointsOffset && $snapPointsOffset.length > 0) {
 					const styleProp = styleToString({
-						"--snap-point-height": `${$snapPointsOffset[0]}px`
+						"--snap-point-height": `${$snapPointsOffset[0]}px`,
 					});
 					return style + styleProp;
 				}
@@ -386,13 +386,13 @@ export function createVaul(props: CreateVaulProps) {
 		isAllowedToDrag = true;
 
 		set($drawerRef, {
-			transition: "none"
+			transition: "none",
 		});
 
 		const $overlayRef = get(overlayRef);
 
 		set($overlayRef, {
-			transition: "none"
+			transition: "none",
 		});
 
 		if ($snapPoints) {
@@ -408,7 +408,7 @@ export function createVaul(props: CreateVaulProps) {
 			set($drawerRef, {
 				transform: isVertical($direction)
 					? `translate3d(0, ${translateValue}px, 0)`
-					: `translate3d(${translateValue}px, 0, 0)`
+					: `translate3d(${translateValue}px, 0, 0)`,
 			});
 			return;
 		}
@@ -438,7 +438,7 @@ export function createVaul(props: CreateVaulProps) {
 				$overlayRef,
 				{
 					opacity: `${opacityValue}`,
-					transition: "none"
+					transition: "none",
 				},
 				true
 			);
@@ -459,7 +459,7 @@ export function createVaul(props: CreateVaulProps) {
 					transform: isVertical($direction)
 						? `scale(${scaleValue}) translate3d(0, ${translateValue}px, 0)`
 						: `scale(${scaleValue}) translate3d(${translateValue}px, 0, 0)`,
-					transition: "none"
+					transition: "none",
 				},
 				true
 			);
@@ -470,7 +470,7 @@ export function createVaul(props: CreateVaulProps) {
 			set($drawerRef, {
 				transform: isVertical($direction)
 					? `translate3d(0, ${translateValue}px, 0)`
-					: `translate3d(${translateValue}px, 0, 0)`
+					: `translate3d(${translateValue}px, 0, 0)`,
 			});
 		}
 	}
@@ -485,7 +485,7 @@ export function createVaul(props: CreateVaulProps) {
 			set(
 				document.body,
 				{
-					background: backgroundColor
+					background: backgroundColor,
 				},
 				true
 			);
@@ -496,15 +496,15 @@ export function createVaul(props: CreateVaulProps) {
 				...(isVertical($direction)
 					? {
 							transform: `scale(${getScale()}) translate3d(0, calc(env(safe-area-inset-top) + 14px), 0)`,
-							transformOrigin: "top"
+							transformOrigin: "top",
 						}
 					: {
 							transform: `scale(${getScale()}) translate3d(calc(env(safe-area-inset-top) + 14px), 0, 0)`,
-							transformOrigin: "left"
+							transformOrigin: "left",
 						}),
 				transitionProperty: "transform, border-radius",
 				transitionDuration: `${TRANSITIONS.DURATION}s`,
-				transitionTimingFunction: `cubic-bezier(${TRANSITIONS.EASE.join(",")})`
+				transitionTimingFunction: `cubic-bezier(${TRANSITIONS.EASE.join(",")})`,
 			});
 		} else {
 			// Exit
@@ -514,7 +514,7 @@ export function createVaul(props: CreateVaulProps) {
 			set(wrapper, {
 				transitionProperty: "transform, border-radius",
 				transitionDuration: `${TRANSITIONS.DURATION}s`,
-				transitionTimingFunction: `cubic-bezier(${TRANSITIONS.EASE.join(",")})`
+				transitionTimingFunction: `cubic-bezier(${TRANSITIONS.EASE.join(",")})`,
 			});
 		}
 	}
@@ -604,12 +604,12 @@ export function createVaul(props: CreateVaulProps) {
 			transform: isVertical($direction)
 				? `translate3d(0, ${$direction === "bottom" ? "100%" : "-100%"}, 0)`
 				: `translate3d(${$direction === "right" ? "100%" : "-100%"}, 0, 0)`,
-			transition: `transform ${TRANSITIONS.DURATION}s cubic-bezier(${TRANSITIONS.EASE.join(",")})`
+			transition: `transform ${TRANSITIONS.DURATION}s cubic-bezier(${TRANSITIONS.EASE.join(",")})`,
 		});
 
 		set(get(overlayRef), {
 			opacity: "0",
-			transition: `opacity ${TRANSITIONS.DURATION}s cubic-bezier(${TRANSITIONS.EASE.join(",")})`
+			transition: `opacity ${TRANSITIONS.DURATION}s cubic-bezier(${TRANSITIONS.EASE.join(",")})`,
 		});
 
 		scaleBackground(false);
@@ -654,12 +654,12 @@ export function createVaul(props: CreateVaulProps) {
 
 		set($drawerRef, {
 			transform: "translate3d(0, 0, 0)",
-			transition: `transform ${TRANSITIONS.DURATION}s cubic-bezier(${TRANSITIONS.EASE.join(",")})`
+			transition: `transform ${TRANSITIONS.DURATION}s cubic-bezier(${TRANSITIONS.EASE.join(",")})`,
 		});
 
 		set($overlayRef, {
 			transition: `opacity ${TRANSITIONS.DURATION}s cubic-bezier(${TRANSITIONS.EASE.join(",")})`,
-			opacity: "1"
+			opacity: "1",
 		});
 
 		const $shouldScaleBackground = get(shouldScaleBackground);
@@ -675,15 +675,15 @@ export function createVaul(props: CreateVaulProps) {
 					...(isVertical($direction)
 						? {
 								transform: `scale(${getScale()}) translate3d(0, calc(env(safe-area-inset-top) + 14px), 0)`,
-								transformOrigin: "top"
+								transformOrigin: "top",
 							}
 						: {
 								transform: `scale(${getScale()}) translate3d(calc(env(safe-area-inset-top) + 14px), 0, 0)`,
-								transformOrigin: "left"
+								transformOrigin: "left",
 							}),
 					transitionProperty: "transform, border-radius",
 					transitionDuration: `${TRANSITIONS.DURATION}s`,
-					transitionTimingFunction: `cubic-bezier(${TRANSITIONS.EASE.join(",")})`
+					transitionTimingFunction: `cubic-bezier(${TRANSITIONS.EASE.join(",")})`,
 				},
 				true
 			);
@@ -733,7 +733,7 @@ export function createVaul(props: CreateVaulProps) {
 				draggedDistance: distMoved * getDirectionMultiplier($direction),
 				closeDrawer,
 				velocity,
-				dismissible: get(dismissible)
+				dismissible: get(dismissible),
 			});
 			onReleaseProp?.(event, true);
 			return;
@@ -772,7 +772,7 @@ export function createVaul(props: CreateVaulProps) {
 		if (!$isOpen) return;
 		if (isBrowser) {
 			set(document.documentElement, {
-				scrollBehavior: "auto"
+				scrollBehavior: "auto",
 			});
 		}
 		openTime.set(new Date());
@@ -809,7 +809,7 @@ export function createVaul(props: CreateVaulProps) {
 
 		set($drawerRef, {
 			transition: `transform ${TRANSITIONS.DURATION}s cubic-bezier(${TRANSITIONS.EASE.join(",")})`,
-			transform: `scale(${scale}) translate3d(0, ${y}px, 0)`
+			transform: `scale(${scale}) translate3d(0, ${y}px, 0)`,
 		});
 
 		if (!o && $drawerRef) {
@@ -820,7 +820,7 @@ export function createVaul(props: CreateVaulProps) {
 					transition: "none",
 					transform: isVertical($direction)
 						? `translate3d(0, ${translateValue}px, 0)`
-						: `translate3d(${translateValue}px, 0, 0)`
+						: `translate3d(${translateValue}px, 0, 0)`,
 				});
 			}, 500);
 		}
@@ -840,7 +840,7 @@ export function createVaul(props: CreateVaulProps) {
 			transform: isVertical($direction)
 				? `scale(${newScale}) translate3d(0, ${newTranslate}px, 0)`
 				: `scale(${newScale}) translate3d(${newTranslate}px, 0, 0)`,
-			transition: "none"
+			transition: "none",
 		});
 	}
 
@@ -860,7 +860,7 @@ export function createVaul(props: CreateVaulProps) {
 				)})`,
 				transform: isVertical($direction)
 					? `scale(${scale}) translate3d(0, ${translate}px, 0)`
-					: `scale(${scale}) translate3d(${translate}px, 0, 0)`
+					: `scale(${scale}) translate3d(${translate}px, 0, 0)`,
 			});
 		}
 	}
@@ -876,10 +876,10 @@ export function createVaul(props: CreateVaulProps) {
 			shouldFade,
 			visible,
 			drawerId,
-			openDrawerIds
+			openDrawerIds,
 		},
 		helpers: {
-			getContentStyle
+			getContentStyle,
 		},
 		methods: {
 			closeDrawer,
@@ -892,14 +892,14 @@ export function createVaul(props: CreateVaulProps) {
 			onNestedOpenChange,
 			onNestedRelease,
 			restorePositionSetting,
-			openDrawer
+			openDrawer,
 		},
 		refs: {
 			drawerRef,
 			overlayRef,
-			triggerRef
+			triggerRef,
 		},
-		options
+		options,
 	};
 }
 

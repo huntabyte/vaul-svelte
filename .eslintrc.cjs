@@ -5,19 +5,19 @@ module.exports = {
 		"eslint:recommended",
 		"plugin:@typescript-eslint/recommended",
 		"plugin:svelte/recommended",
-		"prettier"
+		"prettier",
 	],
 	parser: "@typescript-eslint/parser",
 	plugins: ["@typescript-eslint"],
 	parserOptions: {
 		sourceType: "module",
 		ecmaVersion: "latest",
-		extraFileExtensions: [".svelte"]
+		extraFileExtensions: [".svelte"],
 	},
 	env: {
 		browser: true,
 		es2024: true,
-		node: true
+		node: true,
 	},
 	globals: { $$Generic: "readable", NodeJS: true },
 	rules: {
@@ -26,8 +26,8 @@ module.exports = {
 			"warn",
 			{
 				argsIgnorePattern: "^_",
-				varsIgnorePattern: "^_"
-			}
+				varsIgnorePattern: "^_",
+			},
 		],
 		"svelte/no-target-blank": "off",
 		"svelte/no-immutable-reactive-statements": "error",
@@ -39,24 +39,24 @@ module.exports = {
 		"svelte/no-at-html-tags": "off",
 		"svelte/no-unused-svelte-ignore": "off",
 		"svelte/require-stores-init": "off",
-		"svelte/css-unused-selector": "off"
+		"svelte/css-unused-selector": "off",
 	},
 	overrides: [
 		{
 			files: ["*.svelte"],
 			parser: "svelte-eslint-parser",
 			parserOptions: {
-				parser: "@typescript-eslint/parser"
+				parser: "@typescript-eslint/parser",
 			},
 			rules: {
 				"@typescript-eslint/no-unused-vars": [
 					"warn",
 					{
 						argsIgnorePattern: "^_",
-						varsIgnorePattern: "^(\\$\\$(Props|Events|Slots|Generic)|_*)$"
-					}
-				]
-			}
+						varsIgnorePattern: "^(\\$\\$(Props|Events|Slots|Generic)|_*)$",
+					},
+				],
+			},
 		},
 		{
 			files: ["*.ts"],
@@ -67,11 +67,11 @@ module.exports = {
 					{
 						extendDefaults: true,
 						types: {
-							"{}": false
-						}
-					}
-				]
-			}
-		}
-	]
+							"{}": false,
+						},
+					},
+				],
+			},
+		},
+	],
 };

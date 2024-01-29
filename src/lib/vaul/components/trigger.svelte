@@ -7,7 +7,7 @@
 	type $$Events = DialogPrimitive.TriggerEvents;
 
 	const {
-		refs: { triggerRef }
+		refs: { triggerRef },
 	} = getCtx();
 
 	export let el: HTMLButtonElement | undefined = undefined;

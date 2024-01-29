@@ -5,9 +5,9 @@ export const siteConfig = {
 	ogImage: "https://www.vaul-svelte.com/og.jpg",
 	links: {
 		twitter: "https://twitter.com/huntabyte",
-		github: "https://github.com/huntabyte/vaul-svelte"
+		github: "https://github.com/huntabyte/vaul-svelte",
 	},
-	keywords: `Svelte,SvelteKit,Svelte Components,Headless Svelte Components,Headless UI Svelte,Drawer for Svelte,SvelteKit Drawer,Svelte Drawer,Vaul Svelte`
+	keywords: `Svelte,SvelteKit,Svelte Components,Headless Svelte Components,Headless UI Svelte,Drawer for Svelte,SvelteKit Drawer,Svelte Drawer,Vaul Svelte`,
 };
 
 export type SiteConfig = typeof siteConfig;

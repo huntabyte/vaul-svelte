@@ -11,7 +11,7 @@ export function handleSnapPoints({
 	overlayRef,
 	fadeFromIndex,
 	openTime,
-	direction
+	direction,
 }: {
 	activeSnapPoint: Writable<number | string | null>;
 	snapPoints: Writable<(number | string)[] | undefined>;
@@ -118,7 +118,7 @@ export function handleSnapPoints({
 				)})`,
 				transform: isVertical($direction)
 					? `translate3d(0, ${dimension}px, 0)`
-					: `translate3d(${dimension}px, 0, 0)`
+					: `translate3d(${dimension}px, 0, 0)`,
 			});
 
 			const $fadeFromIndex = get(fadeFromIndex);
@@ -133,14 +133,14 @@ export function handleSnapPoints({
 					transition: `opacity ${TRANSITIONS.DURATION}s cubic-bezier(${TRANSITIONS.EASE.join(
 						","
 					)})`,
-					opacity: "0"
+					opacity: "0",
 				});
 			} else {
 				set($overlayRef, {
 					transition: `opacity ${TRANSITIONS.DURATION}s cubic-bezier(${TRANSITIONS.EASE.join(
 						","
 					)})`,
-					opacity: "1"
+					opacity: "1",
 				});
 			}
 			activeSnapPoint.update(() => {
@@ -155,7 +155,7 @@ export function handleSnapPoints({
 		draggedDistance,
 		closeDrawer,
 		velocity,
-		dismissible
+		dismissible,
 	}: {
 		draggedDistance: number;
 		closeDrawer: () => void;
@@ -182,7 +182,7 @@ export function handleSnapPoints({
 
 		if (isOverlaySnapPoint) {
 			set($overlayRef, {
-				transition: `opacity ${TRANSITIONS.DURATION}s cubic-bezier(${TRANSITIONS.EASE.join(",")})`
+				transition: `opacity ${TRANSITIONS.DURATION}s cubic-bezier(${TRANSITIONS.EASE.join(",")})`,
 			});
 		}
 
@@ -254,7 +254,7 @@ export function handleSnapPoints({
 		set($drawerRef, {
 			transform: isVertical($direction)
 				? `translate3d(0, ${newValue}px, 0)`
-				: `translate3d(${newValue}px, 0, 0)`
+				: `translate3d(${newValue}px, 0, 0)`,
 		});
 	}
 
@@ -318,6 +318,6 @@ export function handleSnapPoints({
 		activeSnapPointIndex,
 		onRelease,
 		onDrag,
-		snapPointsOffset
+		snapPointsOffset,
 	};
 }
