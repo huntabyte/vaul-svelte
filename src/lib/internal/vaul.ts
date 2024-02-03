@@ -926,7 +926,7 @@ function getDistanceMoved(
 function getDistanceMovedForPointer(
 	pointerStart: number,
 	direction: DrawerDirection,
-	event: PointerEvent
+	event: PointerEvent | MouseEvent
 ) {
 	return pointerStart - (isVertical(direction) ? event.screenY : event.screenX);
 }
