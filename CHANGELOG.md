@@ -1,5 +1,11 @@
 # vaul-svelte
 
+## 0.2.2
+
+### Patch Changes
+
+- fix bug preventing drawer from dragging on Safari ([#46](https://github.com/huntabyte/vaul-svelte/pull/46))
+
 ## 0.2.1
 
 ### Patch Changes
