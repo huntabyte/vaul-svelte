@@ -916,10 +916,30 @@ function getDistanceMoved(
 	direction: DrawerDirection,
 	event: SvelteEvent<PointerEvent | MouseEvent | TouchEvent, HTMLElement>
 ) {
-	const screenY = event instanceof TouchEvent ? event.changedTouches[0].screenY : event.screenY;
-	const screenX = event instanceof TouchEvent ? event.changedTouches[0].screenX : event.screenX;
+	if (event.type.startsWith("touch")) {
+		return getDistanceMovedForTouch(pointerStart, direction, event as TouchEvent);
+	} else {
+		return getDistanceMovedForPointer(pointerStart, direction, event as PointerEvent);
+	}
+}
 
-	return pointerStart - (isVertical(direction) ? screenY : screenX);
+function getDistanceMovedForPointer(
+	pointerStart: number,
+	direction: DrawerDirection,
+	event: PointerEvent
+) {
+	return pointerStart - (isVertical(direction) ? event.screenY : event.screenX);
+}
+
+function getDistanceMovedForTouch(
+	pointerStart: number,
+	direction: DrawerDirection,
+	event: TouchEvent
+) {
+	return (
+		pointerStart -
+		(isVertical(direction) ? event.changedTouches[0].screenY : event.changedTouches[0].screenX)
+	);
 }
 
 function getDirectionMultiplier(direction: DrawerDirection) {
