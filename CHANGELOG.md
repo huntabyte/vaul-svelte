@@ -1,5 +1,11 @@
 # vaul-svelte
 
+## 0.2.3
+
+### Patch Changes
+
+- fix: controlled animation issues ([#49](https://github.com/huntabyte/vaul-svelte/pull/49))
+
 ## 0.2.2
 
 ### Patch Changes
