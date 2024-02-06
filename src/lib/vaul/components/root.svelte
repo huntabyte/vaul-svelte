@@ -27,7 +27,13 @@
 	export let direction: $$Props["direction"] = "bottom";
 
 	const {
-		states: { keyboardIsOpen, activeSnapPoint: localActiveSnapPoint, drawerId, openDrawerIds },
+		states: {
+			keyboardIsOpen,
+			activeSnapPoint: localActiveSnapPoint,
+			drawerId,
+			openDrawerIds,
+			isOpen,
+		},
 		methods: { closeDrawer, openDrawer },
 		options: { dismissible: localDismissible },
 		updateOption,
@@ -81,6 +87,9 @@
 	$: updateOption("backgroundColor", backgroundColor);
 	$: updateOption("dismissible", dismissible);
 	$: updateOption("direction", direction);
+
+	$: open && !$isOpen && openDrawer();
+	$: !open && $isOpen && closeDrawer();
 </script>
 
 <DialogPrimitive.Root
