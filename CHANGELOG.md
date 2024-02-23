@@ -1,5 +1,11 @@
 # vaul-svelte
 
+## 0.2.4
+
+### Patch Changes
+
+- fix: reset background color on close ([#57](https://github.com/huntabyte/vaul-svelte/pull/57))
+
 ## 0.2.3
 
 ### Patch Changes
