@@ -1,6 +1,7 @@
 <script lang="ts">
 	import DirectionDrawer from "../(components)/direction-drawer.svelte";
 	import NestedDrawer from "./nested-drawer.svelte";
+	import NonDraggableDrawer from "./non-draggable-drawer.svelte";
 	import ScrollableDrawer from "./scrollable-drawer.svelte";
 	import SnapPointDrawer from "./snap-point-drawer.svelte";
 
@@ -24,5 +25,8 @@
 				<DirectionDrawer {direction} />
 			</div>
 		{/each}
+		<div>
+			<NonDraggableDrawer />
+		</div>
 	</div>
 </div>

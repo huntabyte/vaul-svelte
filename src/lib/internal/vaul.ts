@@ -297,6 +297,11 @@ export function createVaul(props: CreateVaulProps) {
 		const swipeAmount = $drawerRef ? getTranslate($drawerRef, $direction) : null;
 		const date = new Date();
 
+		// Don't drag if the element has the `data-vaul-no-drag` attribute
+		if (element.hasAttribute("data-vaul-no-drag") || element.closest("[data-vaul-no-drag]")) {
+			return false;
+		}
+
 		// Allow scrolling when animating
 		const $openTime = get(openTime);
 
