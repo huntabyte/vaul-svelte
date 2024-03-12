@@ -1,5 +1,11 @@
 # vaul-svelte
 
+## 0.3.0
+
+### Minor Changes
+
+- feat: add non-draggable drawer functionality ([#64](https://github.com/huntabyte/vaul-svelte/pull/64))
+
 ## 0.2.4
 
 ### Patch Changes
