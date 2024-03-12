@@ -70,6 +70,8 @@ Additional props:
 
 `backgroundColor`: Background color of the body when the drawer is open and `shouldScaleBackground` is true. Defaults to black.
 
+`[data-vaul-no-drag]`: When interacting with an element with this data attribute, the drawer won't be dragged.
+
 ### Trigger
 
 The button that opens the dialog. [Props](https://www.bits-ui.com/docs/components/dialog#trigger).
