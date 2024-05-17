@@ -1,5 +1,13 @@
 # vaul-svelte
 
+## 0.3.1
+
+### Patch Changes
+
+- chore: update bits ([#79](https://github.com/huntabyte/vaul-svelte/pull/79))
+
+- chore: update bits-ui dependency to version 0.21.7 ([#78](https://github.com/huntabyte/vaul-svelte/pull/78))
+
 ## 0.3.0
 
 ### Minor Changes
