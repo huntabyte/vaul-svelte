@@ -1,5 +1,11 @@
 # vaul-svelte
 
+## 0.3.2
+
+### Patch Changes
+
+- chore: add svelte 5 to peer deps ([#84](https://github.com/huntabyte/vaul-svelte/pull/84))
+
 ## 0.3.1
 
 ### Patch Changes
