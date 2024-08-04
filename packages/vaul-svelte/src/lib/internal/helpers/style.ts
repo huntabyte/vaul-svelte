@@ -7,7 +7,7 @@ interface Style {
 
 const cache = new WeakMap();
 
-export function set(el?: Element | HTMLElement | null, styles?: Style, ignoreCache = false) {
+export function setStyles(el?: Element | HTMLElement | null, styles?: Style, ignoreCache = false) {
 	if (!el || !(el instanceof HTMLElement) || !styles) return;
 
 	const originalStyles: Style = {};
@@ -29,7 +29,7 @@ export function set(el?: Element | HTMLElement | null, styles?: Style, ignoreCac
 	cache.set(el, originalStyles);
 }
 
-export function reset(el: Element | HTMLElement | null, prop?: string) {
+export function resetStyles(el: Element | HTMLElement | null, prop?: string) {
 	if (!el || !(el instanceof HTMLElement)) return;
 	const originalStyles = cache.get(el);
 
@@ -66,6 +66,6 @@ export function getTranslate(element: HTMLElement, direction: DrawerDirection): 
 export function styleToString(style: Record<string, number | string | undefined>): string {
 	return Object.keys(style).reduce((str, key) => {
 		if (style[key] === undefined) return str;
-		return `${str  }${key}:${style[key]};`;
+		return `${str}${key}:${style[key]};`;
 	}, "");
 }

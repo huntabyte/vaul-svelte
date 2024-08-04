@@ -17,8 +17,8 @@ import {
 	omit,
 	overridable,
 	removeUndefined,
-	reset,
-	set,
+	resetStyles,
+	setStyles,
 	sleep,
 	styleToString,
 	toWritableStores,
@@ -227,7 +227,7 @@ export function createVaul(props: CreateVaulProps) {
 	effect([isOpen], ([$isOpen]) => {
 		if (!$isOpen && get(shouldScaleBackground)) {
 			const id = setTimeout(() => {
-				reset(document.body, "background");
+				resetStyles(document.body, "background");
 			}, 200);
 
 			return () => clearTimeout(id);
@@ -245,7 +245,12 @@ export function createVaul(props: CreateVaulProps) {
 		return unsub;
 	});
 
-	const { restorePositionSetting } = handlePositionFixed({ isOpen, modal, nested, hasBeenOpened });
+	const { restorePositionSetting } = handlePositionFixed({
+		isOpen,
+		modal,
+		nested,
+		hasBeenOpened,
+	});
 
 	// Close the drawer on escape keydown
 	effect([drawerRef], ([$drawerRef]) => {
@@ -310,7 +315,11 @@ export function createVaul(props: CreateVaulProps) {
 		}
 
 		if (swipeAmount !== null) {
-			if ($direction === "bottom" || $direction === "right" ? swipeAmount > 0 : swipeAmount < 0) {
+			if (
+				$direction === "bottom" || $direction === "right"
+					? swipeAmount > 0
+					: swipeAmount < 0
+			) {
 				return true;
 			}
 		}
@@ -374,7 +383,8 @@ export function createVaul(props: CreateVaulProps) {
 
 		const directionMultiplier = getDirectionMultiplier($direction);
 
-		const draggedDistance = getDistanceMoved(pointerStart, $direction, event) * directionMultiplier;
+		const draggedDistance =
+			getDistanceMoved(pointerStart, $direction, event) * directionMultiplier;
 		const isDraggingInDirection = draggedDistance > 0;
 
 		const $activeSnapPointIndex = get(activeSnapPointIndex);
@@ -390,13 +400,13 @@ export function createVaul(props: CreateVaulProps) {
 		// If shouldDrag gave true once after pressing down on the drawer, we set isAllowedToDrag to true and it will remain true until we let go, there's no reason to disable dragging mid way, ever, and that's the solution to it
 		isAllowedToDrag = true;
 
-		set($drawerRef, {
+		setStyles($drawerRef, {
 			transition: "none",
 		});
 
 		const $overlayRef = get(overlayRef);
 
-		set($overlayRef, {
+		setStyles($overlayRef, {
 			transition: "none",
 		});
 
@@ -410,7 +420,7 @@ export function createVaul(props: CreateVaulProps) {
 
 			const translateValue = Math.min(dampenedDraggedDistance * -1, 0) * directionMultiplier;
 
-			set($drawerRef, {
+			setStyles($drawerRef, {
 				transform: isVertical($direction)
 					? `translate3d(0, ${translateValue}px, 0)`
 					: `translate3d(${translateValue}px, 0, 0)`,
@@ -439,7 +449,7 @@ export function createVaul(props: CreateVaulProps) {
 		if ($shouldFade || ($fadeFromIndex && $activeSnapPointIndex === $fadeFromIndex - 1)) {
 			onDragProp?.(event, percentageDragged);
 
-			set(
+			setStyles(
 				$overlayRef,
 				{
 					opacity: `${opacityValue}`,
@@ -457,7 +467,7 @@ export function createVaul(props: CreateVaulProps) {
 
 			const translateValue = Math.max(0, 14 - percentageDragged * 14);
 
-			set(
+			setStyles(
 				wrapper,
 				{
 					borderRadius: `${borderRadiusValue}px`,
@@ -472,7 +482,7 @@ export function createVaul(props: CreateVaulProps) {
 
 		if (!$snapPoints) {
 			const translateValue = absDraggedDistance * directionMultiplier;
-			set($drawerRef, {
+			setStyles($drawerRef, {
 				transform: isVertical($direction)
 					? `translate3d(0, ${translateValue}px, 0)`
 					: `translate3d(${translateValue}px, 0, 0)`,
@@ -488,12 +498,12 @@ export function createVaul(props: CreateVaulProps) {
 
 		if (open) {
 			// setting original styles initially
-			set(document.body, {
+			setStyles(document.body, {
 				background: document.body.style.backgroundColor || document.body.style.background,
 			});
 
 			// setting body styles, with cache ignored, so that we can get correct original styles in reset
-			set(
+			setStyles(
 				document.body,
 				{
 					background: backgroundColor,
@@ -501,7 +511,7 @@ export function createVaul(props: CreateVaulProps) {
 				true
 			);
 
-			set(wrapper, {
+			setStyles(wrapper, {
 				borderRadius: `${BORDER_RADIUS}px`,
 				overflow: "hidden",
 				...(isVertical($direction)
@@ -519,10 +529,10 @@ export function createVaul(props: CreateVaulProps) {
 			});
 		} else {
 			// Exit
-			reset(wrapper, "overflow");
-			reset(wrapper, "transform");
-			reset(wrapper, "borderRadius");
-			set(wrapper, {
+			resetStyles(wrapper, "overflow");
+			resetStyles(wrapper, "transform");
+			resetStyles(wrapper, "borderRadius");
+			setStyles(wrapper, {
 				transitionProperty: "transform, border-radius",
 				transitionDuration: `${TRANSITIONS.DURATION}s`,
 				transitionTimingFunction: `cubic-bezier(${TRANSITIONS.EASE.join(",")})`,
@@ -554,7 +564,12 @@ export function createVaul(props: CreateVaulProps) {
 						keyboardIsOpen.set(!$keyboardIsOpen);
 					}
 
-					if ($snapPoints && $snapPoints.length > 0 && $snapPointsOffset && $activeSnapPointIndex) {
+					if (
+						$snapPoints &&
+						$snapPoints.length > 0 &&
+						$snapPointsOffset &&
+						$activeSnapPointIndex
+					) {
 						const activeSnapPointHeight = $snapPointsOffset[$activeSnapPointIndex] || 0;
 						diffFromInitial += activeSnapPointHeight;
 					}
@@ -594,7 +609,11 @@ export function createVaul(props: CreateVaulProps) {
 			let removeListener = noop;
 
 			if (window.visualViewport) {
-				removeListener = addEventListener(window.visualViewport, "resize", onVisualViewportChange);
+				removeListener = addEventListener(
+					window.visualViewport,
+					"resize",
+					onVisualViewportChange
+				);
 			}
 
 			return () => {
@@ -611,14 +630,14 @@ export function createVaul(props: CreateVaulProps) {
 		const $direction = get(direction);
 
 		onClose?.();
-		set($drawerRef, {
+		setStyles($drawerRef, {
 			transform: isVertical($direction)
 				? `translate3d(0, ${$direction === "bottom" ? "100%" : "-100%"}, 0)`
 				: `translate3d(${$direction === "right" ? "100%" : "-100%"}, 0, 0)`,
 			transition: `transform ${TRANSITIONS.DURATION}s cubic-bezier(${TRANSITIONS.EASE.join(",")})`,
 		});
 
-		set(get(overlayRef), {
+		setStyles(get(overlayRef), {
 			opacity: "0",
 			transition: `opacity ${TRANSITIONS.DURATION}s cubic-bezier(${TRANSITIONS.EASE.join(",")})`,
 		});
@@ -638,7 +657,7 @@ export function createVaul(props: CreateVaulProps) {
 		const $snapPoints = get(snapPoints);
 
 		setTimeout(() => {
-			reset(document.documentElement, "scrollBehavior");
+			resetStyles(document.documentElement, "scrollBehavior");
 			if ($snapPoints) {
 				activeSnapPoint.set($snapPoints[0]);
 			}
@@ -663,12 +682,12 @@ export function createVaul(props: CreateVaulProps) {
 		const $direction = get(direction);
 		const currentSwipeAmount = getTranslate($drawerRef, $direction);
 
-		set($drawerRef, {
+		setStyles($drawerRef, {
 			transform: "translate3d(0, 0, 0)",
 			transition: `transform ${TRANSITIONS.DURATION}s cubic-bezier(${TRANSITIONS.EASE.join(",")})`,
 		});
 
-		set($overlayRef, {
+		setStyles($overlayRef, {
 			transition: `opacity ${TRANSITIONS.DURATION}s cubic-bezier(${TRANSITIONS.EASE.join(",")})`,
 			opacity: "1",
 		});
@@ -678,7 +697,7 @@ export function createVaul(props: CreateVaulProps) {
 
 		// Don't reset background if swiped upwards
 		if ($shouldScaleBackground && currentSwipeAmount && currentSwipeAmount > 0 && $isOpen) {
-			set(
+			setStyles(
 				wrapper,
 				{
 					borderRadius: `${BORDER_RADIUS}px`,
@@ -782,7 +801,7 @@ export function createVaul(props: CreateVaulProps) {
 		// Trigger enter animation without using CSS animation
 		if (!$isOpen) return;
 		if (isBrowser) {
-			set(document.documentElement, {
+			setStyles(document.documentElement, {
 				scrollBehavior: "auto",
 			});
 		}
@@ -818,7 +837,7 @@ export function createVaul(props: CreateVaulProps) {
 			window.clearTimeout(nestedOpenChangeTimer);
 		}
 
-		set($drawerRef, {
+		setStyles($drawerRef, {
 			transition: `transform ${TRANSITIONS.DURATION}s cubic-bezier(${TRANSITIONS.EASE.join(",")})`,
 			transform: `scale(${scale}) translate3d(0, ${y}px, 0)`,
 		});
@@ -827,7 +846,7 @@ export function createVaul(props: CreateVaulProps) {
 			nestedOpenChangeTimer = setTimeout(() => {
 				const $direction = get(direction);
 				const translateValue = getTranslate($drawerRef, $direction);
-				set($drawerRef, {
+				setStyles($drawerRef, {
 					transition: "none",
 					transform: isVertical($direction)
 						? `translate3d(0, ${translateValue}px, 0)`
@@ -847,7 +866,7 @@ export function createVaul(props: CreateVaulProps) {
 		const newTranslate = -NESTED_DISPLACEMENT + percentageDragged * NESTED_DISPLACEMENT;
 		const $direction = get(direction);
 
-		set(get(drawerRef), {
+		setStyles(get(drawerRef), {
 			transform: isVertical($direction)
 				? `scale(${newScale}) translate3d(0, ${newTranslate}px, 0)`
 				: `scale(${newScale}) translate3d(${newTranslate}px, 0, 0)`,
@@ -865,7 +884,7 @@ export function createVaul(props: CreateVaulProps) {
 		const translate = o ? -NESTED_DISPLACEMENT : 0;
 
 		if (o) {
-			set(get(drawerRef), {
+			setStyles(get(drawerRef), {
 				transition: `transform ${TRANSITIONS.DURATION}s cubic-bezier(${TRANSITIONS.EASE.join(
 					","
 				)})`,
