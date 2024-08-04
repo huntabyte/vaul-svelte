@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { Drawer } from "$lib/index.js";
+	import { Drawer } from "vaul-svelte";
 </script>
 
 <Drawer.Root shouldScaleBackground>
@@ -14,7 +14,7 @@
 			class="fixed bottom-0 left-0 right-0 mt-24 flex h-full max-h-[96%] flex-col rounded-t-[10px] bg-gray-100"
 		>
 			<div class="flex-1 rounded-t-[10px] bg-white p-4">
-				<div class="mx-auto mb-8 h-1.5 w-12 flex-shrink-0 rounded-full bg-gray-300" />
+				<div class="mx-auto mb-8 h-1.5 w-12 flex-shrink-0 rounded-full bg-gray-300"></div>
 				<div class="mx-auto max-w-md">
 					<Drawer.Title class="mb-4 font-medium">Drawer for Svelte.</Drawer.Title>
 					<p class="mb-2 text-gray-600">
@@ -51,7 +51,7 @@
 								class="fixed bottom-0 left-0 right-0 mt-24 flex h-full max-h-[94%] flex-col rounded-t-[10px] bg-gray-100"
 							>
 								<div class="flex-1 rounded-t-[10px] bg-white p-4">
-									<div class="mx-auto mb-8 h-1.5 w-12 flex-shrink-0 rounded-full bg-gray-300" />
+									<div class="mx-auto mb-8 h-1.5 w-12 flex-shrink-0 rounded-full bg-gray-300"></div>
 									<div class="mx-auto max-w-md">
 										<Drawer.Title class="mb-4 font-medium">This drawer is nested.</Drawer.Title>
 										<p class="mb-2 text-gray-600">

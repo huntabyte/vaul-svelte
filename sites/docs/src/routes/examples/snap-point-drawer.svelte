@@ -1,6 +1,6 @@
 <script lang="ts">
-	import { Drawer } from "$lib/index.js";
 	import { clsx } from "clsx";
+	import { Drawer } from "vaul-svelte";
 
 	const snapPoints = ["148px", "355px", 1];
 	let activeSnapPoint: string | number | undefined | null = "148px";

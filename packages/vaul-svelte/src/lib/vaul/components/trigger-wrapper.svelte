@@ -3,8 +3,8 @@
 	// if someone uses `asChild` to modify it. Since it's only exposed as a slot prop
 	// we need something in between the `<DialogPrimitive.Trigger>` and the slot
 
-	import type { Builder } from "$lib/internal/types.js";
 	import { getCtx } from "../ctx.js";
+	import type { Builder } from "$lib/internal/types.js";
 
 	export let meltBuilder: Builder;
 
@@ -16,10 +16,10 @@
 
 	// We're wrapping the melt action so we can set the triggerRef
 	// even if a user is using `asChild`
-	const wrappedAction = (node: HTMLElement) => {
+	function wrappedAction(node: HTMLElement) {
 		triggerRef.set(node as HTMLButtonElement);
 		return action(node);
-	};
+	}
 
 	$: Object.assign(rest, {
 		action: wrappedAction,

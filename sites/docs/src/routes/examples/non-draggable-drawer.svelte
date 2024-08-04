@@ -1,6 +1,6 @@
 <script lang="ts">
-	import { Drawer } from "$lib/index.js";
-	import CenteredContent from "../(components)/centered-content.svelte";
+	import { Drawer } from "vaul-svelte";
+	import CenteredContent from "$lib/components/centered-content.svelte";
 </script>
 
 <Drawer.Root>
@@ -15,7 +15,7 @@
 			class="fixed bottom-0 left-0 right-0 mt-24 flex h-full max-h-[96%] flex-col rounded-t-[10px] bg-gray-100"
 		>
 			<div class="flex-1 rounded-t-[10px] bg-white p-4">
-				<div class="mx-auto mb-8 h-1.5 w-12 flex-shrink-0 rounded-full bg-gray-300" />
+				<div class="mx-auto mb-8 h-1.5 w-12 flex-shrink-0 rounded-full bg-gray-300"></div>
 				<CenteredContent>
 					<p class="mb-8 text-gray-600">
 						Here are

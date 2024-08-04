@@ -2,7 +2,7 @@
 	import { Dialog as DialogPrimitive } from "bits-ui";
 	import { getCtx } from "../ctx.js";
 	import type { ContentProps } from "./types.js";
-	import Visible from "./visible.svelte";
+	import Visible from "./visible.svelte.js";
 
 	type $$Props = ContentProps;
 	type $$Events = DialogPrimitive.ContentEvents;

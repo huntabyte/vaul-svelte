@@ -1,8 +1,8 @@
 <script lang="ts">
 	import { Dialog as DialogPrimitive } from "bits-ui";
+	import { get } from "svelte/store";
 	import { setCtx } from "../ctx.js";
 	import type { Props } from "./types.js";
-	import { get } from "svelte/store";
 
 	type $$Props = Props;
 
@@ -63,7 +63,6 @@
 		},
 		closeThreshold,
 		scrollLockTimeout,
-		// eslint-disable-next-line @typescript-eslint/no-explicit-any
 		snapPoints: snapPoints as any,
 		fadeFromIndex,
 		nested,
@@ -178,11 +177,15 @@
 		transform: translate3d(0, var(--snap-point-height, 0), 0);
 	}
 
-	:global([data-vaul-drawer][data-vaul-drawer-visible="true"][data-vaul-drawer-direction="left"]) {
+	:global(
+			[data-vaul-drawer][data-vaul-drawer-visible="true"][data-vaul-drawer-direction="left"]
+		) {
 		transform: translate3d(var(--snap-point-height, 0), 0, 0);
 	}
 
-	:global([data-vaul-drawer][data-vaul-drawer-visible="true"][data-vaul-drawer-direction="right"]) {
+	:global(
+			[data-vaul-drawer][data-vaul-drawer-visible="true"][data-vaul-drawer-direction="right"]
+		) {
 		transform: translate3d(var(--snap-point-height, 0), 0, 0);
 	}
 
