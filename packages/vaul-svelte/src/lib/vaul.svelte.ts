@@ -1,4 +1,4 @@
-import { onMount, tick, untrack } from "svelte";
+import { tick, untrack } from "svelte";
 import {
 	type ReadableBoxedValues,
 	type WithRefProps,
@@ -8,7 +8,7 @@ import {
 	useRefById,
 } from "svelte-toolbelt";
 import { isBottomOrRight, isInput, isVertical } from "./internal/helpers/is.js";
-import { getTranslate, resetStyles, setStyles, styleToString } from "./internal/helpers/style.js";
+import { getTranslate, resetStyles, setStyles } from "./internal/helpers/style.js";
 import { TRANSITIONS, VELOCITY_THRESHOLD } from "./internal/constants.js";
 import { isIOS, preventScroll } from "./internal/prevent-scroll.js";
 import { PositionFixed } from "./position-fixed.svelte.js";
@@ -1133,6 +1133,10 @@ class DrawerRootState {
 	createOverlayState = (props: DrawerOverlayStateProps) => {
 		return new DrawerOverlayState(props, this);
 	};
+
+	createHandleState = (props: DrawerHandleStateProps) => {
+		return new DrawerHandleState(props, this);
+	};
 }
 
 type DrawerContentStateProps = WithRefProps;
@@ -1452,7 +1456,8 @@ class DrawerHandleState {
 // CONTEXT
 ////////////////////////////////////
 
-const [setDrawerRootContext, getDrawerRootContext] = createContext<DrawerRootState>("Drawer.Root");
+export const [setDrawerRootContext, getDrawerRootContext] =
+	createContext<DrawerRootState>("Drawer.Root");
 
 export function useDrawerRoot(props: DrawerRootStateProps) {
 	return setDrawerRootContext(new DrawerRootState(props));
@@ -1464,6 +1469,10 @@ export function useDrawerContent(props: DrawerContentStateProps) {
 
 export function useDrawerOverlay(props: DrawerOverlayStateProps) {
 	return getDrawerRootContext().createOverlayState(props);
+}
+
+export function useDrawerHandle(props: DrawerHandleStateProps) {
+	return getDrawerRootContext().createHandleState(props);
 }
 
 ////////////////////////////////////

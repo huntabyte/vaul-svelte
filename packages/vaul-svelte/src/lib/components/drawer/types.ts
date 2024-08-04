@@ -5,6 +5,8 @@ import type {
 	DialogOverlayPropsWithoutHTML,
 	Dialog as DialogPrimitive,
 	DialogTitlePropsWithoutHTML,
+	PrimitiveDivAttributes,
+	WithChild,
 } from "bits-ui";
 import type { WithChildren, Without } from "svelte-toolbelt";
 import type { DrawerDirection, OnChangeFn } from "$lib/types.js";
@@ -176,3 +178,18 @@ export type DrawerCloseProps = DialogPrimitive.CloseProps;
 export type DrawerContentPropsWithoutHTML = DialogContentPropsWithoutHTML;
 
 export type DrawerContentProps = DialogPrimitive.ContentProps;
+
+export type DrawerHandlePropsWithoutHTML = Omit<
+	WithChild<{
+		/**
+		 * Whether to prevent cycling the snap points when the handle is pressed.
+		 *
+		 * @default false
+		 */
+		preventCycle?: boolean;
+	}>,
+	"child"
+>;
+
+export type DrawerHandleProps = DrawerHandlePropsWithoutHTML &
+	Without<PrimitiveDivAttributes, DrawerHandlePropsWithoutHTML>;
