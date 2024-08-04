@@ -1,4 +1,4 @@
-name: "🐛 Bug report"
+name: 🐛 Bug report
 description: Report an issue with vaul-svelte
 labels: ["type: bug"]
 body:
@@ -26,7 +26,7 @@ body:
     id: logs
     attributes:
       label: Logs
-      description: "Please include browser console and server logs around the time this bug occurred. Optional if provided reproduction. Please try not to insert an image but copy paste the log text."
+      description: Please include browser console and server logs around the time this bug occurred. Optional if provided reproduction. Please try not to insert an image but copy paste the log text.
       render: bash
   - type: textarea
     id: system-info
