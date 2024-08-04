@@ -18,9 +18,12 @@
 				<div class="mx-auto max-w-md">
 					<Drawer.Title class="mb-4 font-medium">Drawer for Svelte.</Drawer.Title>
 					<p class="mb-2 text-gray-600">
-						This component can be used as a Dialog replacement on mobile and tablet devices.
+						This component can be used as a Dialog replacement on mobile and tablet
+						devices.
 					</p>
-					<p class="mb-2 text-gray-600">It comes unstyled and has gesture-driven animations.</p>
+					<p class="mb-2 text-gray-600">
+						It comes unstyled and has gesture-driven animations.
+					</p>
 					<p class="mb-6 text-gray-600">
 						It uses
 						<a
@@ -51,13 +54,20 @@
 								class="fixed bottom-0 left-0 right-0 mt-24 flex h-full max-h-[94%] flex-col rounded-t-[10px] bg-gray-100"
 							>
 								<div class="flex-1 rounded-t-[10px] bg-white p-4">
-									<div class="mx-auto mb-8 h-1.5 w-12 flex-shrink-0 rounded-full bg-gray-300"></div>
+									<div
+										class="mx-auto mb-8 h-1.5 w-12 flex-shrink-0 rounded-full bg-gray-300"
+									></div>
 									<div class="mx-auto max-w-md">
-										<Drawer.Title class="mb-4 font-medium">This drawer is nested.</Drawer.Title>
+										<Drawer.Title class="mb-4 font-medium"
+											>This drawer is nested.</Drawer.Title
+										>
 										<p class="mb-2 text-gray-600">
 											Place a
-											<span class="font-mono text-[15px] font-semibold"> `Drawer.NestedRoot` </span>
-											inside another drawer and it will be nested automatically for you.
+											<span class="font-mono text-[15px] font-semibold">
+												`Drawer.NestedRoot`
+											</span>
+											inside another drawer and it will be nested automatically
+											for you.
 										</p>
 										<p class="mb-2 text-gray-600">
 											You can view more examples
@@ -92,7 +102,9 @@
 												aria-hidden="true"
 												class="ml-1 h-3 w-3"
 											>
-												<path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6"></path>
+												<path
+													d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6"
+												></path>
 												<path d="M15 3h6v6"></path>
 												<path d="M10 14L21 3"></path>
 											</svg>
@@ -115,7 +127,9 @@
 												aria-hidden="true"
 												class="ml-1 h-3 w-3"
 											>
-												<path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6"></path>
+												<path
+													d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6"
+												></path>
 												<path d="M15 3h6v6"></path>
 												<path d="M10 14L21 3"></path>
 											</svg>

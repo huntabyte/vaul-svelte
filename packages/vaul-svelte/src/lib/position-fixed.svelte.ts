@@ -30,7 +30,7 @@ export class PositionFixed {
 	#preventScrollRestoration: PositionFixedProps["preventScrollRestoration"];
 	#noBodyStyles: PositionFixedProps["noBodyStyles"];
 	#activeUrl = $state(getActiveUrl());
-	#scrollPos = 0;
+	#scrollPos = $state(0);
 
 	constructor(props: PositionFixedProps) {
 		this.#open = props.open;

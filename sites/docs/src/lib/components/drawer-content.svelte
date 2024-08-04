@@ -1,9 +1,11 @@
 <script lang="ts">
 	import { Drawer, type DrawerDirection } from "vaul-svelte";
 	import { clsx } from "clsx";
+	import type { Snippet } from "svelte";
 	import CenteredContent from "./centered-content.svelte";
 
-	export let drawerDirection: DrawerDirection;
+	let { drawerDirection, children }: { drawerDirection: DrawerDirection; children?: Snippet } =
+		$props();
 </script>
 
 <Drawer.Content
@@ -34,7 +36,7 @@
 		></div>
 		<div class="grid h-full w-full place-content-center">
 			<CenteredContent>
-				<slot />
+				{@render children?.()}
 			</CenteredContent>
 		</div>
 	</div>

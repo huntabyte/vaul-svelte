@@ -45,14 +45,10 @@
 		</div>
 		<div class="mt-6 flex justify-center gap-4">
 			<Drawer.Root shouldScaleBackground>
-				<Drawer.Trigger asChild let:builder>
-					<button
-						class="rounded-full bg-white px-4 py-2.5 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50"
-						use:builder.action
-						{...builder}
-					>
-						Open Drawer
-					</button>
+				<Drawer.Trigger
+					class="rounded-full bg-white px-4 py-2.5 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50"
+				>
+					Open Drawer
 				</Drawer.Trigger>
 				<Drawer.Portal>
 					<Drawer.Overlay class="fixed inset-0 bg-black/40" />
@@ -60,7 +56,9 @@
 						class="fixed bottom-0 left-0 right-0 mt-24 flex h-full max-h-[96%] flex-col rounded-t-[10px] bg-gray-100"
 					>
 						<div class="flex-1 rounded-t-[10px] bg-white p-4">
-							<div class="mx-auto mb-8 h-1.5 w-12 flex-shrink-0 rounded-full bg-gray-300"></div>
+							<div
+								class="mx-auto mb-8 h-1.5 w-12 flex-shrink-0 rounded-full bg-gray-300"
+							></div>
 							<CenteredContent>
 								<p class="mb-8 text-gray-600">
 									Here are
@@ -89,7 +87,9 @@
 										aria-hidden="true"
 										class="ml-1 h-3 w-3"
 									>
-										<path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6"></path>
+										<path
+											d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6"
+										></path>
 										<path d="M15 3h6v6"></path>
 										<path d="M10 14L21 3"></path>
 									</svg>
@@ -112,7 +112,9 @@
 										aria-hidden="true"
 										class="ml-1 h-3 w-3"
 									>
-										<path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6"></path>
+										<path
+											d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6"
+										></path>
 										<path d="M15 3h6v6"></path>
 										<path d="M10 14L21 3"></path>
 									</svg>

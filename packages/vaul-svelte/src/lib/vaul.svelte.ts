@@ -7,13 +7,14 @@ import {
 	box,
 	useRefById,
 } from "svelte-toolbelt";
-import { isBottomOrRight, isInput, isVertical } from "./internal/helpers/is.js";
+import { isInput, isVertical } from "./internal/helpers/is.js";
 import { getTranslate, resetStyles, setStyles } from "./internal/helpers/style.js";
 import { TRANSITIONS, VELOCITY_THRESHOLD } from "./internal/constants.js";
-import { isIOS, preventScroll } from "./internal/prevent-scroll.js";
+import { isIOS } from "./internal/prevent-scroll.js";
 import { PositionFixed } from "./position-fixed.svelte.js";
 import { createContext } from "./internal/createContext.js";
 import { noop } from "./internal/helpers/noop.js";
+import { SnapPoints } from "./snap-points.svelte.js";
 
 export const DEFAULT_CLOSE_THRESHOLD = 0.25;
 export const DEFAULT_SCROLL_LOCK_TIMEOUT = 100;
@@ -33,8 +34,8 @@ type DrawerRootStateProps = ReadableBoxedValues<{
 	closeThreshold: number;
 	shouldScaleBackground: boolean;
 	scrollLockTimeout: number;
-	snapPoints: (string | number)[] | undefined;
-	fadeFromIndex: number | undefined;
+	snapPoints: (string | number)[];
+	fadeFromIndex: number;
 	fixed: boolean;
 	dismissible: boolean;
 	direction: DrawerDirection;
@@ -47,10 +48,11 @@ type DrawerRootStateProps = ReadableBoxedValues<{
 	handleOnly: boolean;
 	noBodyStyles: boolean;
 	preventScrollRestoration: boolean;
+	setBackgroundColorOnScale: boolean;
 }> &
 	WritableBoxedValues<{
 		open: boolean;
-		activeSnapPoint: number | string | null | undefined;
+		activeSnapPoint: number | string | null;
 	}>;
 
 class DrawerRootState {
@@ -73,108 +75,29 @@ class DrawerRootState {
 	noBodyStyles: DrawerRootStateProps["noBodyStyles"];
 	preventScrollRestoration: DrawerRootStateProps["preventScrollRestoration"];
 	handleOnly: DrawerRootStateProps["handleOnly"];
-	triggerNode = $state<HTMLElement | null>(null);
-	overlayNode = $state<HTMLElement | null>(null);
+	setBackgroundColorOnScale: DrawerRootStateProps["setBackgroundColorOnScale"];
 	hasBeenOpened = $state(false);
 	visible = $state(false);
 	justReleased = $state(false);
+	isDragging = $state(false);
+	triggerNode = $state<HTMLElement | null>(null);
+	overlayNode = $state<HTMLElement | null>(null);
 	openTime = $state<Date | null>(null);
+	dragStartTime = $state<Date | null>(null);
+	dragEndTime = $state<Date | null>(null);
+	lastTimeDragPrevented = $state<Date | null>(null);
+	isAllowedToDrag = $state(false);
+	nestedOpenChangeTimer = $state<ReturnType<typeof setTimeout> | null>(null);
+	pointerStart = $state(0);
 	keyboardIsOpen = $state(false);
+	previousDiffFromInitial = $state(0);
 	drawerNode = $state<HTMLElement | null>(null);
+	drawerHeight = $state(0);
+	initialDrawerHeight = $state(0);
 	drawerId = $state<string | null>(null);
-	isDragging = false;
-	dragStartTime: Date | null = null;
-	isClosing = false;
-	pointerStart = 0;
-	dragEndTime: Date | null = null;
-	lastTimeDragPrevented: Date | null = null;
-	isAllowedToDrag = false;
-	drawerHeight = 0;
-	previousDiffFromInitial = 0;
-	initialDrawerHeight = 0;
-	nestedOpenChangeTimer: ReturnType<typeof setTimeout> | null = null;
 
-	isLastSnapPoint = $derived.by(() => {
-		const activeSnapPoint = this.activeSnapPoint.current;
-		const snapPoints = this.snapPoints.current;
-		return activeSnapPoint === snapPoints?.[snapPoints.length - 1];
-	});
-
-	shouldFade = $derived.by(() => {
-		const snapPoints = this.snapPoints.current;
-		const fadeFromIndex = this.fadeFromIndex.current;
-		const activeSnapPoint = this.activeSnapPoint.current;
-		return (
-			(snapPoints &&
-				snapPoints.length > 0 &&
-				(fadeFromIndex || fadeFromIndex === 0) &&
-				!Number.isNaN(fadeFromIndex) &&
-				snapPoints[fadeFromIndex] === activeSnapPoint) ||
-			!snapPoints
-		);
-	});
-
-	activeSnapPointIndex = $derived.by(() => {
-		const snapPoints = this.snapPoints.current;
-		const activeSnapPoint = this.activeSnapPoint.current;
-		return snapPoints?.findIndex((snapPoint) => snapPoint === activeSnapPoint) ?? null;
-	});
-
-	snapPointsOffset = $derived.by(() => {
-		const snapPoints = this.snapPoints.current;
-		if (snapPoints) {
-			return snapPoints.map((snapPoint) => {
-				const hasWindow = typeof window !== "undefined";
-				const isPx = typeof snapPoint === "string";
-				let snapPointAsNumber = 0;
-
-				if (isPx) {
-					snapPointAsNumber = Number.parseInt(snapPoint, 10);
-				}
-				const direction = this.direction.current;
-
-				if (isVertical(direction)) {
-					const height = isPx
-						? snapPointAsNumber
-						: hasWindow
-							? snapPoint * window.innerHeight
-							: 0;
-
-					if (hasWindow) {
-						return direction === "bottom"
-							? window.innerHeight - height
-							: window.innerHeight + height;
-					}
-
-					return height;
-				}
-
-				const width = isPx
-					? snapPointAsNumber
-					: hasWindow
-						? snapPoint * window.innerWidth
-						: 0;
-
-				if (hasWindow) {
-					return direction === "right"
-						? window.innerWidth - width
-						: window.innerWidth + width;
-				}
-
-				return width;
-			});
-		}
-		return [];
-	});
-
-	activeSnapPointOffset = $derived.by(() => {
-		const snapPointsOffset = this.snapPointsOffset;
-		const activeSnapPointIndex = this.activeSnapPointIndex;
-		return activeSnapPointIndex !== null ? snapPointsOffset?.[activeSnapPointIndex] : null;
-	});
-
-	activeUrl = $state(typeof window !== "undefined" ? window.location.href : "");
-	positionFixed: PositionFixed;
+	positionFixedState: PositionFixed;
+	snapPointState: SnapPoints;
 
 	constructor(props: DrawerRootStateProps) {
 		this.open = props.open;
@@ -196,8 +119,9 @@ class DrawerRootState {
 		this.handleOnly = props.handleOnly;
 		this.noBodyStyles = props.noBodyStyles;
 		this.preventScrollRestoration = props.preventScrollRestoration;
+		this.setBackgroundColorOnScale = props.setBackgroundColorOnScale;
 
-		this.positionFixed = new PositionFixed({
+		this.positionFixedState = new PositionFixed({
 			hasBeenOpened: box.with(() => this.hasBeenOpened),
 			open: this.open,
 			modal: this.modal,
@@ -206,103 +130,28 @@ class DrawerRootState {
 			preventScrollRestoration: this.preventScrollRestoration,
 		});
 
-		$effect(() => {
-			const activeSnapPoint = this.activeSnapPoint.current;
-			const drawerNode = this.drawerNode;
-			if (activeSnapPoint && drawerNode) {
-				const snapPoints = untrack(() => this.snapPoints.current);
-				const snapPointsOffset = untrack(() => this.snapPointsOffset);
-				const newIndex =
-					snapPoints?.findIndex((snapPoint) => snapPoint === activeSnapPoint) ?? -1;
-				if (
-					snapPointsOffset &&
-					newIndex !== -1 &&
-					typeof snapPointsOffset[newIndex] === "number"
-				) {
-					untrack(() => {
-						this.snapToPoint(snapPointsOffset[newIndex] as number);
-					});
-				}
-			}
+		this.snapPointState = new SnapPoints({
+			activeSnapPoint: this.activeSnapPoint,
+			snapPoints: this.snapPoints,
+			fadeFromIndex: this.fadeFromIndex,
+			drawerRef: box.with(() => this.drawerNode),
+			overlayRef: box.with(() => this.overlayNode),
+			direction: this.direction,
+			onSnapPointChange: this.onSnapPointChange,
+			setActiveSnapPoint: this.setActiveSnapPoint,
 		});
 
 		$effect(() => {
-			const open = this.open.current;
-			untrack(() => {
-				if (!open && this.shouldScaleBackground.current) {
-					const id = setTimeout(() => {
-						resetStyles(document.body, "background");
-					}, 200);
-					return () => clearTimeout(id);
-				}
-			});
-		});
-
-		// prevent scroll when the drawer is open
-		$effect(() => {
-			const open = this.open.current;
-			let unsub = () => {};
-			if (open) {
-				unsub = preventScroll();
-			}
-			return unsub;
+			return () => {
+				this.scaleBackground(false);
+				this.positionFixedState.restorePositionSetting();
+			};
 		});
 
 		$effect(() => {
-			const open = this.open.current;
-			if (!open) return;
-			untrack(() => {
-				setStyles(document.documentElement, {
-					scrollBehavior: "auto",
-				});
-				this.openTime = new Date();
-				this.scaleBackground(true, this.backgroundColor.current);
-			});
-		});
-
-		$effect(() => {
-			const visible = this.visible;
-			if (!visible) return;
-			untrack(() => {
-				const drawerNode = this.drawerNode;
-				if (!drawerNode) return;
-				const children = drawerNode.querySelectorAll("*");
-				for (const child of children) {
-					const htmlChild = child as HTMLElement;
-					if (
-						htmlChild.scrollHeight > htmlChild.clientHeight ||
-						htmlChild.scrollWidth > htmlChild.clientWidth
-					) {
-						htmlChild.classList.add("vaul-scrollable");
-					}
-				}
-			});
-		});
-
-		$effect(() => {
-			const activeSnapPoint = this.activeSnapPoint.current;
-			const drawerNode = this.drawerNode;
-			if (!activeSnapPoint || !drawerNode) return;
-
-			untrack(() => {
-				const snapPoints = this.snapPoints.current;
-				const snapPointsOffset = this.snapPointsOffset;
-				const newIndex =
-					snapPoints?.findIndex((snapPoint) => snapPoint === activeSnapPoint) ?? -1;
-				if (
-					snapPointsOffset &&
-					newIndex !== -1 &&
-					typeof snapPointsOffset[newIndex] === "number"
-				) {
-					this.snapToPoint(snapPointsOffset[newIndex]);
-				}
-			});
-		});
-
-		$effect(() => {
-			const activeSnapPointIndex = this.activeSnapPointIndex;
+			const activeSnapPointIndex = this.snapPointState.activeSnapPointIndex;
 			const snapPoints = this.snapPoints.current;
-			const snapPointsOffset = this.snapPointsOffset;
+			const snapPointsOffset = this.snapPointState.snapPointsOffset;
 			let removeListener = noop;
 
 			untrack(() => {
@@ -381,6 +230,53 @@ class DrawerRootState {
 			});
 			return removeListener;
 		});
+
+		$effect(() => {
+			const open = this.open.current;
+			const shouldScaleBackground = this.shouldScaleBackground.current;
+
+			if (!open && shouldScaleBackground) {
+				const id = setTimeout(() => {
+					resetStyles(document.body, "background");
+				}, 200);
+				return () => clearTimeout(id);
+			}
+		});
+
+		// Trigger enter animation without using CSS animation
+		$effect(() => {
+			const open = this.open.current;
+			if (!open) return;
+			untrack(() => {
+				setStyles(document.documentElement, {
+					scrollBehavior: "auto",
+				});
+
+				this.openTime = new Date();
+				this.scaleBackground(true);
+			});
+		});
+
+		// Find all scrollable elements inside our drawer and assign a class to it so that we can disable overflow when dragging to prevent pointermove not being captured
+
+		$effect(() => {
+			const visible = this.visible;
+			const drawerNode = untrack(() => this.drawerNode);
+			if (!(drawerNode && visible)) return;
+
+			untrack(() => {
+				const children = drawerNode.querySelectorAll("*");
+				for (const child of children) {
+					const htmlChild = child as HTMLElement;
+					if (
+						htmlChild.scrollHeight > htmlChild.clientHeight ||
+						htmlChild.scrollWidth > htmlChild.clientWidth
+					) {
+						htmlChild.classList.add("vaul-scrollable");
+					}
+				}
+			});
+		});
 	}
 
 	setActiveSnapPoint = (newValue: number | string | null) => {
@@ -396,9 +292,10 @@ class DrawerRootState {
 	};
 
 	getContentStyle = () => {
-		if (this.snapPointsOffset && this.snapPointsOffset.length > 0) {
+		const snapPointsOffset = this.snapPointState.snapPointsOffset;
+		if (snapPointsOffset && snapPointsOffset.length > 0) {
 			return {
-				"--snap-point-height": `${this.snapPointsOffset[0]}px`,
+				"--snap-point-height": `${snapPointsOffset[0]}px`,
 			};
 		}
 	};
@@ -406,393 +303,65 @@ class DrawerRootState {
 	onSnapPointChange = (activeSnapPointIdx: number) => {
 		// change openTime when we reach the last snap point to prevent dragging for 500ms incase it's scrollable.
 		const snapPoints = this.snapPoints.current;
-		const snapPointsOffset = this.snapPointsOffset;
+		const snapPointsOffset = this.snapPointState.snapPointsOffset;
 		if (snapPoints && activeSnapPointIdx === snapPointsOffset.length - 1) {
 			this.openTime = new Date();
 		}
 	};
 
-	snapToPoint = (dimension: number) => {
-		tick().then(() => {
-			const snapPointsOffset = this.snapPointsOffset;
-			const newSnapPointIndex =
-				snapPointsOffset?.findIndex((snapPointDim) => snapPointDim === dimension) ?? null;
-
-			const drawerNode = this.drawerNode;
-			const direction = this.direction.current;
-
-			this.onSnapPointChange(newSnapPointIndex);
-
-			setStyles(drawerNode, {
-				transition: `transform ${TRANSITIONS.DURATION}s cubic-bezier(${TRANSITIONS.EASE.join(
-					","
-				)})`,
-				transform: isVertical(direction)
-					? `translate3d(0, ${dimension}px, 0)`
-					: `translate3d(${dimension}px, 0, 0)`,
-			});
-
-			const fadeFromIndex = this.fadeFromIndex.current;
-			const overlayNode = this.overlayNode;
-
-			if (
-				snapPointsOffset &&
-				newSnapPointIndex !== snapPointsOffset.length - 1 &&
-				newSnapPointIndex !== fadeFromIndex
-			) {
-				setStyles(overlayNode, {
-					transition: `opacity ${TRANSITIONS.DURATION}s cubic-bezier(${TRANSITIONS.EASE.join(
-						","
-					)})`,
-					opacity: "0",
-				});
-			} else {
-				setStyles(overlayNode, {
-					transition: `opacity ${TRANSITIONS.DURATION}s cubic-bezier(${TRANSITIONS.EASE.join(
-						","
-					)})`,
-					opacity: "1",
-				});
-			}
-
-			const snapPoints = this.snapPoints.current;
-			if (newSnapPointIndex === null || !snapPoints) {
-				this.setActiveSnapPoint(null);
-			} else {
-				this.setActiveSnapPoint(snapPoints[newSnapPointIndex]);
-			}
-		});
-	};
-
-	onReleaseSnapPoints = ({
-		draggedDistance,
-		closeDrawer,
-		velocity,
-		dismissible,
-	}: {
-		draggedDistance: number;
-		closeDrawer: () => void;
-		velocity: number;
-		dismissible: boolean;
-	}) => {
-		const fadeFromIndex = this.fadeFromIndex.current;
-		if (fadeFromIndex === undefined) return;
-		const activeSnapPointOffset = this.activeSnapPointOffset;
-		const activeSnapPointIndex = this.activeSnapPointIndex;
-		const overlayNode = this.overlayNode;
-		const snapPointsOffset = this.snapPointsOffset;
-		const snapPoints = this.snapPoints.current;
-		const direction = this.direction.current;
-
-		const currentPosition =
-			direction === "bottom" || direction === "right"
-				? (activeSnapPointOffset ?? 0) - draggedDistance
-				: (activeSnapPointOffset ?? 0) + draggedDistance;
-
-		const isOverlaySnapPoint = activeSnapPointIndex === fadeFromIndex - 1;
-		const isFirst = activeSnapPointIndex === 0;
-		const hasDraggedUp = draggedDistance > 0;
-
-		if (isOverlaySnapPoint) {
-			setStyles(overlayNode, {
-				transition: `opacity ${TRANSITIONS.DURATION}s cubic-bezier(${TRANSITIONS.EASE.join(
-					","
-				)})`,
-			});
-		}
-
-		if (velocity > 2 && !hasDraggedUp) {
-			if (dismissible) closeDrawer();
-			else this.snapToPoint(snapPointsOffset[0]); // snap to initial point
-			return;
-		}
-
-		if (velocity > 2 && hasDraggedUp && snapPointsOffset && snapPoints) {
-			this.snapToPoint(snapPointsOffset[snapPoints.length - 1] as number);
-			return;
-		}
-
-		const closestSnapPoint = snapPointsOffset?.reduce((prev, curr) => {
-			if (typeof prev !== "number" || typeof curr !== "number") return prev;
-
-			return Math.abs(curr - currentPosition) < Math.abs(prev - currentPosition)
-				? curr
-				: prev;
-		});
-
-		const dim = isVertical(direction) ? window.innerHeight : window.innerWidth;
-
-		if (velocity > VELOCITY_THRESHOLD && Math.abs(draggedDistance) < dim * 0.4) {
-			const dragDirection = hasDraggedUp ? 1 : -1; // 1 = up, -1 = down
-
-			if (dragDirection > 0 && this.isLastSnapPoint && snapPoints) {
-				this.snapToPoint(snapPointsOffset[snapPoints.length - 1]);
-				return;
-			}
-
-			if (isFirst && dragDirection < 0 && dismissible) {
-				closeDrawer();
-			}
-
-			if (activeSnapPointIndex === null) return;
-
-			this.snapToPoint(snapPointsOffset[activeSnapPointIndex + dragDirection]);
-			return;
-		}
-
-		this.snapToPoint(closestSnapPoint);
-	};
-
-	onDragSnapPoints = ({ draggedDistance }: { draggedDistance: number }) => {
-		const drawerNode = this.drawerNode;
-		const activeSnapPointOffset = this.activeSnapPointOffset;
-		if (activeSnapPointOffset === null) return;
-		const snapPointsOffset = this.snapPointsOffset;
-		const direction = this.direction.current;
-
-		const newValue =
-			direction === "bottom" || direction === "right"
-				? activeSnapPointOffset - draggedDistance
-				: activeSnapPointOffset + draggedDistance;
-
-		const lastSnapPoint = snapPointsOffset[snapPointsOffset.length - 1];
-
-		// dont do anything if we exceed the last(biggest) snap point
-		if (isBottomOrRight(direction) && newValue < lastSnapPoint) {
-			return;
-		}
-
-		if (!isBottomOrRight(direction) && newValue > lastSnapPoint) {
-			return;
-		}
-
-		setStyles(drawerNode, {
-			transform: isVertical(direction)
-				? `translate3d(0, ${newValue}px, 0)`
-				: `translate3d(${newValue}px, 0, 0)`,
-		});
-	};
-
-	getSnapPointsPercentageDragged = (absDraggedDistance: number, isDraggingDown: boolean) => {
-		const activeSnapPointIndex = this.activeSnapPointIndex;
-		const snapPointsOffset = this.snapPointsOffset;
-		const snapPoints = this.snapPoints.current;
-		const fadeFromIndex = this.fadeFromIndex.current;
-		if (
-			!snapPoints ||
-			typeof activeSnapPointIndex !== "number" ||
-			!snapPointsOffset ||
-			fadeFromIndex === undefined
-		) {
-			return null;
-		}
-
-		const isOverlaySnapPoint = activeSnapPointIndex === fadeFromIndex - 1;
-		const isOverlaySnapPointOrHigher = activeSnapPointIndex >= fadeFromIndex;
-
-		if (isOverlaySnapPointOrHigher && isDraggingDown) {
-			return 0;
-		}
-
-		// Don't animate if we are at the last snap point (highest one)
-		if (isOverlaySnapPoint && !isDraggingDown) return 1;
-		if (!this.shouldFade && !isOverlaySnapPoint) return null;
-
-		// Either fadeFrom index or the one before
-		const targetSnapPointIndex = isOverlaySnapPoint
-			? activeSnapPointIndex + 1
-			: activeSnapPointIndex - 1;
-
-		// Get the distance from overlaySnapPoint to the one before or vice-versa to calculate the opacity percentage accordingly
-		const snapPointDistance = isOverlaySnapPoint
-			? snapPointsOffset[targetSnapPointIndex] - snapPointsOffset[targetSnapPointIndex - 1]
-			: snapPointsOffset[targetSnapPointIndex + 1] - snapPointsOffset[targetSnapPointIndex];
-
-		const percentageDragged = absDraggedDistance / Math.abs(snapPointDistance);
-
-		if (isOverlaySnapPoint) {
-			return 1 - percentageDragged;
-		} else {
-			return percentageDragged;
-		}
-	};
-
-	scaleBackground = (open: boolean, backgroundColor: string | undefined = "black") => {
-		const wrapper = document.querySelector("[data-vaul-drawer-wrapper]");
-
-		if (!wrapper || !this.shouldScaleBackground.current) return;
-		const direction = this.direction.current;
-
-		if (open) {
-			// setting original styles initially
-			setStyles(document.body, {
-				background: document.body.style.backgroundColor || document.body.style.background,
-			});
-
-			// setting body styles, with cache ignored, so that we can get correct original styles in reset
-			setStyles(
-				document.body,
-				{
-					background: backgroundColor,
-				},
-				true
-			);
-
-			setStyles(wrapper, {
-				borderRadius: `${BORDER_RADIUS}px`,
-				overflow: "hidden",
-				...(isVertical(direction)
-					? {
-							transform: `scale(${getScale()}) translate3d(0, calc(env(safe-area-inset-top) + 14px), 0)`,
-							transformOrigin: "top",
-						}
-					: {
-							transform: `scale(${getScale()}) translate3d(calc(env(safe-area-inset-top) + 14px), 0, 0)`,
-							transformOrigin: "left",
-						}),
-				transitionProperty: "transform, border-radius",
-				transitionDuration: `${TRANSITIONS.DURATION}s`,
-				transitionTimingFunction: `cubic-bezier(${TRANSITIONS.EASE.join(",")})`,
-			});
-		} else {
-			// Exit
-			resetStyles(wrapper, "overflow");
-			resetStyles(wrapper, "transform");
-			resetStyles(wrapper, "borderRadius");
-			setStyles(wrapper, {
-				transitionProperty: "transform, border-radius",
-				transitionDuration: `${TRANSITIONS.DURATION}s`,
-				transitionTimingFunction: `cubic-bezier(${TRANSITIONS.EASE.join(",")})`,
-			});
-		}
-	};
-
 	openDrawer = () => {
-		if (this.isClosing) return;
 		this.setHasBeenOpened(true);
 		this.setOpen(true);
 	};
 
-	closeDrawer = (withKeyboard: boolean = false) => {
-		if (this.isClosing) return;
-
-		const drawerNode = this.drawerNode;
-		if (!drawerNode) return;
-		const direction = this.direction.current;
-
-		this.onCloseProp.current();
-
-		setStyles(drawerNode, {
-			transform: isVertical(direction)
-				? `translate3d(0, ${direction === "bottom" ? "100%" : "-100%"}, 0)`
-				: `translate3d(${direction === "right" ? "100%" : "-100%"}, 0, 0)`,
-			transition: `transform ${TRANSITIONS.DURATION}s cubic-bezier(${TRANSITIONS.EASE.join(",")})`,
-		});
-
-		setStyles(this.overlayNode, {
-			opacity: "0",
-			transition: `opacity ${TRANSITIONS.DURATION}s cubic-bezier(${TRANSITIONS.EASE.join(",")})`,
-		});
-
-		this.scaleBackground(false);
-
-		this.isClosing = true;
-
-		setTimeout(() => {
-			this.visible = false;
-			this.setOpen(false);
-			this.isClosing = false;
-			if (withKeyboard) {
-				this.triggerNode?.focus();
-			}
-		}, 300);
-
+	onPress = (e: PointerEvent) => {
+		const dismissible = this.dismissible.current;
 		const snapPoints = this.snapPoints.current;
-
-		setTimeout(() => {
-			resetStyles(document.documentElement, "scrollBehavior");
-			if (snapPoints) {
-				this.setActiveSnapPoint(snapPoints[0]);
-			}
-		}, TRANSITIONS.DURATION * 1000); // seconds to ms
-	};
-
-	resetDrawer = () => {
 		const drawerNode = this.drawerNode;
-		if (!drawerNode) return;
-		const overlayNode = this.overlayNode;
-		const wrapper = document.querySelector("[data-vaul-drawer-wrapper]");
-		const direction = this.direction.current;
-		const currentSwipeAmount = getTranslate(drawerNode, direction);
+		if (!dismissible && !snapPoints) return;
+		if (drawerNode && !drawerNode.contains(e.target as Node)) return;
+		this.drawerHeight = drawerNode?.getBoundingClientRect().height || 0;
+		this.isDragging = true;
+		this.dragStartTime = new Date();
 
-		setStyles(drawerNode, {
-			transform: "translate3d(0, 0, 0)",
-			transition: `transform ${TRANSITIONS.DURATION}s cubic-bezier(${TRANSITIONS.EASE.join(",")})`,
-		});
-
-		setStyles(overlayNode, {
-			transition: `opacity ${TRANSITIONS.DURATION}s cubic-bezier(${TRANSITIONS.EASE.join(",")})`,
-			opacity: "1",
-		});
-
-		const shouldScaleBackground = this.shouldScaleBackground.current;
-		const isOpen = this.open.current;
-
-		// Don't reset background if swiped upwards
-		if (shouldScaleBackground && currentSwipeAmount && currentSwipeAmount > 0 && isOpen) {
-			setStyles(
-				wrapper,
-				{
-					borderRadius: `${BORDER_RADIUS}px`,
-					overflow: "hidden",
-					...(isVertical(direction)
-						? {
-								transform: `scale(${getScale()}) translate3d(0, calc(env(safe-area-inset-top) + 14px), 0)`,
-								transformOrigin: "top",
-							}
-						: {
-								transform: `scale(${getScale()}) translate3d(calc(env(safe-area-inset-top) + 14px), 0, 0)`,
-								transformOrigin: "left",
-							}),
-					transitionProperty: "transform, border-radius",
-					transitionDuration: `${TRANSITIONS.DURATION}s`,
-					transitionTimingFunction: `cubic-bezier(${TRANSITIONS.EASE.join(",")})`,
-				},
-				true
-			);
+		// iOS doesn't trigger mouseUp after scrolling so we need to listen to touched in order to disallow dragging
+		if (isIOS()) {
+			window.addEventListener("touchend", () => (this.isAllowedToDrag = false), {
+				once: true,
+			});
 		}
+		// Ensure we maintain correct pointer capture even when going outside of the drawer
+		(e.target as HTMLElement).setPointerCapture(e.pointerId);
+		const direction = this.direction.current;
+
+		this.pointerStart = isVertical(direction) ? e.clientY : e.clientX;
 	};
 
-	shouldDrag = (node: HTMLElement, isDraggingInDirection: boolean) => {
-		const drawerNode = this.drawerNode;
+	shouldDrag = (node: EventTarget, isDraggingInDirection: boolean) => {
 		let element = node as HTMLElement;
 		const highlightedText = window.getSelection()?.toString();
+		const drawerNode = this.drawerNode;
 		const direction = this.direction.current;
 		const swipeAmount = drawerNode ? getTranslate(drawerNode, direction) : null;
 		const date = new Date();
 
-		// dont drag if the element has the `data-vaul-no-drag` attribute
 		if (element.hasAttribute("data-vaul-no-drag") || element.closest("[data-vaul-no-drag]")) {
 			return false;
 		}
 
-		// Allow scrolling when animating
-		const openTime = this.openTime;
+		if (direction === "right" || direction === "left") {
+			return true;
+		}
 
-		if (openTime && date.getTime() - openTime.getTime() < 500) {
+		// Allow scrolling when animating
+		if (this.openTime && date.getTime() - this.openTime.getTime() < 500) {
 			return false;
 		}
 
 		if (swipeAmount !== null) {
-			if (
-				direction === "bottom" || direction === "right" ? swipeAmount > 0 : swipeAmount < 0
-			) {
+			if (direction === "bottom" ? swipeAmount > 0 : swipeAmount < 0) {
 				return true;
 			}
-		}
-
-		if (swipeAmount !== null && swipeAmount > 0) {
-			return true;
 		}
 
 		// Don't drag if there's highlighted text
@@ -800,11 +369,11 @@ class DrawerRootState {
 			return false;
 		}
 
-		const scrollLockTimeout = this.scrollLockTimeout.current;
 		// Disallow dragging if drawer was scrolled within `scrollLockTimeout`
 		if (
 			this.lastTimeDragPrevented &&
-			date.getTime() - this.lastTimeDragPrevented.getTime() < scrollLockTimeout &&
+			date.getTime() - this.lastTimeDragPrevented.getTime() <
+				this.scrollLockTimeout.current &&
 			swipeAmount === 0
 		) {
 			this.lastTimeDragPrevented = date;
@@ -842,57 +411,237 @@ class DrawerRootState {
 		return true;
 	};
 
-	onPress = (e: PointerEvent) => {
+	onDrag = (e: PointerEvent) => {
 		const drawerNode = this.drawerNode;
-		if (!this.dismissible.current && !this.snapPoints.current) return;
-		if (drawerNode && !drawerNode.contains(e.target as Node)) return;
-		this.drawerHeight = drawerNode?.getBoundingClientRect().height || 0;
-
-		this.isDragging = true;
-
-		this.dragStartTime = new Date();
-
-		// iOS doesn't trigger mouseUp after scrolling so we need to listen to touched in order to disallow dragging
-		if (isIOS()) {
-			window.addEventListener("touchend", () => (this.isAllowedToDrag = false), {
-				once: true,
-			});
-		}
-		// Ensure we maintain correct pointer capture even when going outside of the drawer
-		(e.target as HTMLElement).setPointerCapture(e.pointerId);
-
-		this.pointerStart = isVertical(this.direction.current) ? e.screenY : e.screenX;
-	};
-
-	onRelease = (e: OnReleaseEvent) => {
-		const drawerNode = this.drawerNode;
-		if (!this.isDragging || !drawerNode) return;
-		if (this.isAllowedToDrag && isInput(e.target as HTMLElement)) {
-			// If we were just dragging, prevent focusing on inputs etc. on release
-			(e.target as HTMLInputElement).blur();
-		}
-
-		drawerNode.classList.remove(DRAG_CLASS);
-		this.isAllowedToDrag = false;
-		this.isDragging = false;
-
-		this.dragEndTime = new Date();
-
+		if (!drawerNode) return;
+		// We need to know how much of the drawer has been dragged in percentages so that we can transform background accordingly
+		if (!this.isDragging) return;
 		const direction = this.direction.current;
-		const swipeAmount = getTranslate(drawerNode, direction);
+		const directionMultiplier = direction === "bottom" || direction === "right" ? 1 : -1;
+		const draggedDistance =
+			(this.pointerStart - (isVertical(direction) ? e.clientY : e.clientX)) *
+			directionMultiplier;
+
+		const isDraggingInDirection = draggedDistance > 0;
+
+		// Pre condition for disallowing dragging in the close direction.
+		const snapPoints = this.snapPoints.current;
+		const dismissible = this.dismissible.current;
+		const noCloseSnapPointsPreCondition = snapPoints && !dismissible && !isDraggingInDirection;
+		const activeSnapPointIndex = this.snapPointState.activeSnapPointIndex;
+
+		// Disallow dragging down to close when first snap point is the active one and dismissible prop is set to false.
+		if (noCloseSnapPointsPreCondition && activeSnapPointIndex === 0) return;
+
+		// We need to capture last time when drag with scroll was triggered and have a timeout between
+		const absDraggedDistance = Math.abs(draggedDistance);
+		const wrapper = document.querySelector("[vaul-drawer-wrapper]");
+
+		// Calculate the percentage dragged, where 1 is the closed position
+		let percentageDragged = absDraggedDistance / this.drawerHeight;
+		const snapPointPercentageDragged = this.snapPointState.getPercentageDragged(
+			absDraggedDistance,
+			isDraggingInDirection
+		);
+
+		if (snapPointPercentageDragged !== null) {
+			percentageDragged = snapPointPercentageDragged;
+		}
+
+		// Disallow close dragging beyond the smallest snap point.
+		if (noCloseSnapPointsPreCondition && percentageDragged >= 1) {
+			return;
+		}
+
+		if (!this.isAllowedToDrag && !this.shouldDrag(e.target!, isDraggingInDirection)) return;
+		drawerNode.classList.add(DRAG_CLASS);
+		// If shouldDrag gave true once after pressing down on the drawer, we set isAllowedToDrag to true and it will remain true until we let go, there's no reason to disable dragging mid way, ever, and that's the solution to it
+		this.isAllowedToDrag = true;
+		setStyles(drawerNode, {
+			transition: "none",
+		});
+
+		setStyles(this.overlayNode, {
+			transition: "none",
+		});
+
+		if (snapPoints) {
+			this.snapPointState.onDragSnapPoints({ draggedDistance });
+		}
+
+		// Run this only if snapPoints are not defined or if we are at the last snap point (highest one)
+		if (isDraggingInDirection && !snapPoints) {
+			const dampenedDraggedDistance = dampenValue(draggedDistance);
+
+			const translateValue = Math.min(dampenedDraggedDistance * -1, 0) * directionMultiplier;
+			setStyles(drawerNode, {
+				transform: isVertical(direction)
+					? `translate3d(0, ${translateValue}px, 0)`
+					: `translate3d(${translateValue}px, 0, 0)`,
+			});
+			return;
+		}
+
+		const opacityValue = 1 - percentageDragged;
 
 		if (
-			(e.target && !this.shouldDrag(e.target as HTMLElement, false)) ||
-			!swipeAmount ||
-			Number.isNaN(swipeAmount)
+			this.snapPointState.shouldFade ||
+			(this.fadeFromIndex.current && activeSnapPointIndex === this.fadeFromIndex.current - 1)
+		) {
+			this.onDragProp?.current(e, percentageDragged);
+
+			setStyles(
+				this.overlayNode,
+				{
+					opacity: `${opacityValue}`,
+					transition: "none",
+				},
+				true
+			);
+		}
+
+		if (wrapper && this.overlayNode && this.shouldScaleBackground.current) {
+			// Calculate percentageDragged as a fraction (0 to 1)
+			const scaleValue = Math.min(getScale() + percentageDragged * (1 - getScale()), 1);
+			const borderRadiusValue = 8 - percentageDragged * 8;
+
+			const translateValue = Math.max(0, 14 - percentageDragged * 14);
+
+			setStyles(
+				wrapper,
+				{
+					borderRadius: `${borderRadiusValue}px`,
+					transform: isVertical(direction)
+						? `scale(${scaleValue}) translate3d(0, ${translateValue}px, 0)`
+						: `scale(${scaleValue}) translate3d(${translateValue}px, 0, 0)`,
+					transition: "none",
+				},
+				true
+			);
+		}
+
+		if (!snapPoints) {
+			const translateValue = absDraggedDistance * directionMultiplier;
+
+			setStyles(drawerNode, {
+				transform: isVertical(direction)
+					? `translate3d(0, ${translateValue}px, 0)`
+					: `translate3d(${translateValue}px, 0, 0)`,
+			});
+		}
+	};
+
+	closeDrawer = () => {
+		const drawerNode = this.drawerNode;
+		if (!drawerNode) return;
+
+		this.cancelDrag();
+		this.onCloseProp.current();
+		const direction = this.direction.current;
+
+		setStyles(drawerNode, {
+			transform: isVertical(direction)
+				? `translate3d(0, ${direction === "bottom" ? "100%" : "-100%"}, 0)`
+				: `translate3d(${direction === "right" ? "100%" : "-100%"}, 0, 0)`,
+			transition: `transform ${TRANSITIONS.DURATION}s cubic-bezier(${TRANSITIONS.EASE.join(",")})`,
+		});
+
+		setStyles(this.overlayNode, {
+			opacity: "0",
+			transition: `opacity ${TRANSITIONS.DURATION}s cubic-bezier(${TRANSITIONS.EASE.join(",")})`,
+		});
+
+		this.scaleBackground(false);
+
+		window.setTimeout(() => {
+			this.visible = false;
+			this.open.current = false;
+		}, 300);
+
+		window.setTimeout(() => {
+			if (this.snapPoints.current) {
+				this.setActiveSnapPoint(this.snapPoints.current[0]);
+			}
+		}, TRANSITIONS.DURATION * 1000); // seconds to ms
+	};
+
+	resetDrawer = () => {
+		const drawerNode = this.drawerNode;
+		if (!drawerNode) return;
+		const wrapper = document.querySelector("[data-vaul-drawer-wrapper]");
+		const direction = this.direction.current;
+		const currentSwipeAmount = getTranslate(drawerNode, direction);
+
+		setStyles(drawerNode, {
+			transform: "translate3d(0, 0, 0)",
+			transition: `transform ${TRANSITIONS.DURATION}s cubic-bezier(${TRANSITIONS.EASE.join(",")})`,
+		});
+
+		setStyles(this.overlayNode, {
+			transition: `opacity ${TRANSITIONS.DURATION}s cubic-bezier(${TRANSITIONS.EASE.join(",")})`,
+			opacity: "1",
+		});
+		// Don't reset background if swiped upwards
+		if (
+			!(
+				this.shouldScaleBackground.current &&
+				currentSwipeAmount &&
+				currentSwipeAmount > 0 &&
+				this.open.current
+			)
 		) {
 			return;
 		}
 
+		setStyles(
+			wrapper,
+			{
+				borderRadius: `${BORDER_RADIUS}px`,
+				overflow: "hidden",
+				...(isVertical(direction)
+					? {
+							transform: `scale(${getScale()}) translate3d(0, calc(env(safe-area-inset-top) + 14px), 0)`,
+							transformOrigin: "top",
+						}
+					: {
+							transform: `scale(${getScale()}) translate3d(calc(env(safe-area-inset-top) + 14px), 0, 0)`,
+							transformOrigin: "left",
+						}),
+				transitionProperty: "transform, border-radius",
+				transitionDuration: `${TRANSITIONS.DURATION}s`,
+				transitionTimingFunction: `cubic-bezier(${TRANSITIONS.EASE.join(",")})`,
+			},
+			true
+		);
+	};
+
+	cancelDrag = () => {
+		const drawerNode = this.drawerNode;
+		if (!this.isDragging || !drawerNode) return;
+
+		drawerNode.classList.remove(DRAG_CLASS);
+		this.isAllowedToDrag = false;
+		this.isDragging = false;
+		this.dragEndTime = new Date();
+	};
+
+	onRelease = (e: PointerEvent | MouseEvent) => {
+		const drawerNode = this.drawerNode;
+		if (!this.isDragging || !drawerNode) return;
+
+		drawerNode.classList.remove(DRAG_CLASS);
+		this.isAllowedToDrag = false;
+		this.isDragging = false;
+		this.dragEndTime = new Date();
+		const direction = this.direction.current;
+		const swipeAmount = getTranslate(drawerNode, direction);
+
+		if (!this.shouldDrag(e.target!, false) || !swipeAmount || Number.isNaN(swipeAmount)) return;
+
 		if (this.dragStartTime === null) return;
 
 		const timeTaken = this.dragEndTime.getTime() - this.dragStartTime.getTime();
-		const distMoved = getDistanceMoved(this.pointerStart, direction, e);
+		const distMoved = this.pointerStart - (isVertical(direction) ? e.clientY : e.clientX);
 		const velocity = Math.abs(distMoved) / timeTaken;
 
 		if (velocity > 0.05) {
@@ -905,184 +654,116 @@ class DrawerRootState {
 		}
 
 		if (this.snapPoints) {
-			this.onReleaseSnapPoints({
-				draggedDistance: distMoved * getDirectionMultiplier(direction),
+			const directionMultiplier = direction === "bottom" || direction === "right" ? 1 : -1;
+			this.snapPointState.onReleaseSnapPoints({
+				draggedDistance: distMoved * directionMultiplier,
 				closeDrawer: this.closeDrawer,
 				velocity,
 				dismissible: this.dismissible.current,
 			});
-
-			this.onReleaseProp?.current(e, true);
+			this.onReleaseProp.current(e, true);
+			return;
 		}
 
+		// Moved upwards, don't do anything
 		if (direction === "bottom" || direction === "right" ? distMoved > 0 : distMoved < 0) {
 			this.resetDrawer();
-			this.onReleaseProp?.current(e, false);
+			this.onReleaseProp.current(e, true);
 			return;
 		}
 
 		if (velocity > VELOCITY_THRESHOLD) {
 			this.closeDrawer();
-			this.onReleaseProp?.current(e, false);
+			this.onReleaseProp.current(e, false);
 			return;
 		}
 
 		const visibleDrawerHeight = Math.min(
-			this.drawerNode?.getBoundingClientRect().height ?? 0,
+			drawerNode.getBoundingClientRect().height ?? 0,
 			window.innerHeight
 		);
 
 		if (swipeAmount >= visibleDrawerHeight * this.closeThreshold.current) {
 			this.closeDrawer();
-			this.onReleaseProp?.current(e, false);
+			this.onReleaseProp.current(e, false);
 			return;
 		}
 
-		this.onReleaseProp?.current(e, true);
+		this.onReleaseProp.current(e, true);
 		this.resetDrawer();
 	};
 
-	onDrag = (e: PointerEvent) => {
-		const drawerNode = this.drawerNode;
-		if (!drawerNode) return;
-		// We need to know how much of the drawer has been dragged in percentages so that we can transform background accordingly
-		if (this.isDragging) {
-			const direction = this.direction.current;
-			const directionMultiplier = direction === "bottom" || direction === "right" ? 1 : -1;
-			const draggedDistance =
-				(this.pointerStart - (isVertical(direction) ? e.clientY : e.clientX)) *
-				directionMultiplier;
-			const isDraggingInDirection = draggedDistance > 0;
+	scaleBackground = (open: boolean) => {
+		const wrapper = document.querySelector("[vaul-drawer-wrapper]");
 
-			// Pre condition for disallowing dragging in the close direction.
-			const noCloseSnapPointsPreCondition =
-				this.snapPoints.current && !this.dismissible.current && !isDraggingInDirection;
+		if (!wrapper || !this.shouldScaleBackground.current) return;
 
-			// Disallow dragging down to close when first snap point is the active one and dismissible prop is set to false.
-			if (noCloseSnapPointsPreCondition && this.activeSnapPointIndex === 0) return;
-
-			// We need to capture last time when drag with scroll was triggered and have a timeout between
-			const absDraggedDistance = Math.abs(draggedDistance);
-			const wrapper = document.querySelector("[vaul-drawer-wrapper]");
-
-			// Calculate the percentage dragged, where 1 is the closed position
-			let percentageDragged = absDraggedDistance / this.drawerHeight;
-			const snapPointPercentageDragged = this.getSnapPointsPercentageDragged(
-				absDraggedDistance,
-				isDraggingInDirection
-			);
-
-			if (snapPointPercentageDragged !== null) {
-				percentageDragged = snapPointPercentageDragged;
+		if (open) {
+			if (this.setBackgroundColorOnScale.current) {
+				if (!this.noBodyStyles.current) {
+					// setting original styles initially
+					setStyles(document.body, {
+						background:
+							document.body.style.backgroundColor || document.body.style.background,
+					});
+					// setting body styles, with cache ignored, so that we can get correct original styles in reset
+					setStyles(
+						document.body,
+						{
+							background: "black",
+						},
+						true
+					);
+				}
 			}
 
-			// Disallow close dragging beyond the smallest snap point.
-			if (noCloseSnapPointsPreCondition && percentageDragged >= 1) {
-				return;
-			}
-
-			if (
-				!this.isAllowedToDrag &&
-				!this.shouldDrag(e.target as HTMLElement, isDraggingInDirection)
-			)
-				return;
-			drawerNode.classList.add(DRAG_CLASS);
-			// If shouldDrag gave true once after pressing down on the drawer, we set isAllowedToDrag to true and it will remain true until we let go, there's no reason to disable dragging mid way, ever, and that's the solution to it
-			this.isAllowedToDrag = true;
-			setStyles(drawerNode, {
-				transition: "none",
+			setStyles(wrapper, {
+				borderRadius: `${BORDER_RADIUS}px`,
+				overflow: "hidden",
+				...(isVertical(this.direction.current)
+					? {
+							transform: `scale(${getScale()}) translate3d(0, calc(env(safe-area-inset-top) + 14px), 0)`,
+							transformOrigin: "top",
+						}
+					: {
+							transform: `scale(${getScale()}) translate3d(calc(env(safe-area-inset-top) + 14px), 0, 0)`,
+							transformOrigin: "left",
+						}),
+				transitionProperty: "transform, border-radius",
+				transitionDuration: `${TRANSITIONS.DURATION}s`,
+				transitionTimingFunction: `cubic-bezier(${TRANSITIONS.EASE.join(",")})`,
 			});
-
-			setStyles(this.overlayNode, {
-				transition: "none",
+		} else {
+			// Exit
+			resetStyles(wrapper, "overflow");
+			resetStyles(wrapper, "transform");
+			resetStyles(wrapper, "borderRadius");
+			setStyles(wrapper, {
+				transitionProperty: "transform, border-radius",
+				transitionDuration: `${TRANSITIONS.DURATION}s`,
+				transitionTimingFunction: `cubic-bezier(${TRANSITIONS.EASE.join(",")})`,
 			});
-
-			if (this.snapPoints.current) {
-				this.onDragSnapPoints({ draggedDistance });
-			}
-
-			// Run this only if snapPoints are not defined or if we are at the last snap point (highest one)
-			if (isDraggingInDirection && !this.snapPoints.current) {
-				const dampenedDraggedDistance = dampenValue(draggedDistance);
-
-				const translateValue =
-					Math.min(dampenedDraggedDistance * -1, 0) * directionMultiplier;
-				setStyles(drawerNode, {
-					transform: isVertical(direction)
-						? `translate3d(0, ${translateValue}px, 0)`
-						: `translate3d(${translateValue}px, 0, 0)`,
-				});
-				return;
-			}
-
-			const opacityValue = 1 - percentageDragged;
-
-			if (
-				this.shouldFade ||
-				(this.fadeFromIndex.current &&
-					this.activeSnapPointIndex === this.fadeFromIndex.current - 1)
-			) {
-				this.onDragProp?.current(e, percentageDragged);
-
-				setStyles(
-					this.overlayNode,
-					{
-						opacity: `${opacityValue}`,
-						transition: "none",
-					},
-					true
-				);
-			}
-
-			if (wrapper && this.overlayNode && this.shouldScaleBackground.current) {
-				// Calculate percentageDragged as a fraction (0 to 1)
-				const scaleValue = Math.min(getScale() + percentageDragged * (1 - getScale()), 1);
-				const borderRadiusValue = 8 - percentageDragged * 8;
-
-				const translateValue = Math.max(0, 14 - percentageDragged * 14);
-
-				setStyles(
-					wrapper,
-					{
-						borderRadius: `${borderRadiusValue}px`,
-						transform: isVertical(direction)
-							? `scale(${scaleValue}) translate3d(0, ${translateValue}px, 0)`
-							: `scale(${scaleValue}) translate3d(${translateValue}px, 0, 0)`,
-						transition: "none",
-					},
-					true
-				);
-			}
-
-			if (!this.snapPoints.current) {
-				const translateValue = absDraggedDistance * directionMultiplier;
-
-				setStyles(this.drawerNode, {
-					transform: isVertical(direction)
-						? `translate3d(0, ${translateValue}px, 0)`
-						: `translate3d(${translateValue}px, 0, 0)`,
-				});
-			}
 		}
 	};
 
 	onNestedOpenChange = (o: boolean) => {
-		const drawerNode = this.drawerNode;
 		const scale = o ? (window.innerWidth - NESTED_DISPLACEMENT) / window.innerWidth : 1;
 		const y = o ? -NESTED_DISPLACEMENT : 0;
+
 		if (this.nestedOpenChangeTimer) {
 			window.clearTimeout(this.nestedOpenChangeTimer);
 		}
+		const drawerNode = this.drawerNode;
 
 		setStyles(drawerNode, {
 			transition: `transform ${TRANSITIONS.DURATION}s cubic-bezier(${TRANSITIONS.EASE.join(",")})`,
 			transform: `scale(${scale}) translate3d(0, ${y}px, 0)`,
 		});
+		const direction = this.direction.current;
 
 		if (!o && drawerNode) {
 			this.nestedOpenChangeTimer = setTimeout(() => {
-				const direction = this.direction.current;
-				const translateValue = getTranslate(drawerNode, direction);
+				const translateValue = getTranslate(drawerNode as HTMLElement, direction);
 				setStyles(drawerNode, {
 					transition: "none",
 					transform: isVertical(direction)
@@ -1093,12 +774,13 @@ class DrawerRootState {
 		}
 	};
 
-	onNestedDrag = (_: PointerEvent | MouseEvent | TouchEvent, percentageDragged: number) => {
+	onNestedDrag = (_: PointerEvent, percentageDragged: number) => {
 		if (percentageDragged < 0) return;
-		const initialScale = (window.innerWidth - NESTED_DISPLACEMENT) / window.innerWidth;
+		const direction = this.direction.current;
+		const initialDim = isVertical(direction) ? window.innerHeight : window.innerWidth;
+		const initialScale = (initialDim - NESTED_DISPLACEMENT) / initialDim;
 		const newScale = initialScale + percentageDragged * (1 - initialScale);
 		const newTranslate = -NESTED_DISPLACEMENT + percentageDragged * NESTED_DISPLACEMENT;
-		const direction = this.direction.current;
 
 		setStyles(this.drawerNode, {
 			transform: isVertical(direction)
@@ -1108,22 +790,20 @@ class DrawerRootState {
 		});
 	};
 
-	onNestedRelease = (_: PointerEvent | MouseEvent | TouchEvent, o: boolean) => {
+	onNestedRelease = (_: PointerEvent, o: boolean) => {
 		const direction = this.direction.current;
 		const dim = isVertical(direction) ? window.innerHeight : window.innerWidth;
 		const scale = o ? (dim - NESTED_DISPLACEMENT) / dim : 1;
 		const translate = o ? -NESTED_DISPLACEMENT : 0;
 
-		if (!o) return;
-
-		setStyles(this.drawerNode, {
-			transition: `transform ${TRANSITIONS.DURATION}s cubic-bezier(${TRANSITIONS.EASE.join(
-				","
-			)})`,
-			transform: isVertical(direction)
-				? `scale(${scale}) translate3d(0, ${translate}px, 0)`
-				: `scale(${scale}) translate3d(${translate}px, 0, 0)`,
-		});
+		if (o) {
+			setStyles(this.drawerNode, {
+				transition: `transform ${TRANSITIONS.DURATION}s cubic-bezier(${TRANSITIONS.EASE.join(",")})`,
+				transform: isVertical(direction)
+					? `scale(${scale}) translate3d(0, ${translate}px, 0)`
+					: `scale(${scale}) translate3d(${translate}px, 0, 0)`,
+			});
+		}
 	};
 
 	createContentState = (props: DrawerContentStateProps) => {
@@ -1308,7 +988,9 @@ class DrawerOverlayState {
 				"vaul-snap-points":
 					this.root.open.current && this.#hasSnapPoints ? "true" : "false",
 				"vaul-snap-points-overlay":
-					this.root.open.current && this.root.shouldFade ? "true" : "false",
+					this.root.open.current && this.root.snapPointState.shouldFade
+						? "true"
+						: "false",
 				onmouseup: this.#onmouseup,
 			}) as const
 	);

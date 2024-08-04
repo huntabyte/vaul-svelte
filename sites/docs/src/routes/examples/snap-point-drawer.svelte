@@ -3,7 +3,7 @@
 	import { Drawer } from "vaul-svelte";
 
 	const snapPoints = ["148px", "355px", 1];
-	let activeSnapPoint: string | number | undefined | null = "148px";
+	let activeSnapPoint: string | number | undefined | null = $state("148px");
 </script>
 
 <Drawer.Root {snapPoints} bind:activeSnapPoint>
@@ -89,11 +89,13 @@
 				<h1 class="mt-2 text-2xl font-medium">The Hidden Details</h1>
 				<p class="mb-6 mt-1 text-sm text-gray-600">2 modules, 27 hours of video</p>
 				<p class="text-gray-600">
-					The world of user interface design is an intricate landscape filled with hidden details
-					and nuance. In this course, you will learn something cool. To the untrained eye, a
-					beautifully designed UI.
+					The world of user interface design is an intricate landscape filled with hidden
+					details and nuance. In this course, you will learn something cool. To the
+					untrained eye, a beautifully designed UI.
 				</p>
-				<button class="mt-8 h-[48px] flex-shrink-0 rounded-md bg-black font-medium text-gray-50">
+				<button
+					class="mt-8 h-[48px] flex-shrink-0 rounded-md bg-black font-medium text-gray-50"
+				>
 					Buy for $199
 				</button>
 				<div class="mt-12">
@@ -101,7 +103,9 @@
 					<div class="mt-4 space-y-4">
 						<div>
 							<span class="block">Layers of UI</span>
-							<span class="text-gray-600">A basic introduction to Layers of Design.</span>
+							<span class="text-gray-600"
+								>A basic introduction to Layers of Design.</span
+							>
 						</div>
 						<div>
 							<span class="block">Typography</span>
@@ -109,18 +113,23 @@
 						</div>
 						<div>
 							<span class="block">UI Animations</span>
-							<span class="text-gray-600">Going through the right easings and durations.</span>
+							<span class="text-gray-600"
+								>Going through the right easings and durations.</span
+							>
 						</div>
 					</div>
 				</div>
 				<div class="mt-12">
 					<figure>
 						<blockquote class="font-serif">
-							“I especially loved the hidden details video. That was so useful, learned a lot by
-							just reading it. Can&rsquo;t wait for more course content!”
+							“I especially loved the hidden details video. That was so useful,
+							learned a lot by just reading it. Can&rsquo;t wait for more course
+							content!”
 						</blockquote>
 						<figcaption>
-							<span class="mt-2 block text-sm text-gray-600">Yvonne Ray, Frontend Developer</span>
+							<span class="mt-2 block text-sm text-gray-600"
+								>Yvonne Ray, Frontend Developer</span
+							>
 						</figcaption>
 					</figure>
 				</div>
@@ -133,7 +142,9 @@
 						</div>
 						<div>
 							<span class="block">User Insight</span>
-							<span class="text-gray-600">Find out what users think and fine-tune.</span>
+							<span class="text-gray-600"
+								>Find out what users think and fine-tune.</span
+							>
 						</div>
 						<div>
 							<span class="block">Putting it all together</span>

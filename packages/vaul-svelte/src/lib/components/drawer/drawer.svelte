@@ -14,8 +14,8 @@
 		onOpenChange = noop,
 		closeThreshold = DEFAULT_CLOSE_THRESHOLD,
 		scrollLockTimeout = DEFAULT_SCROLL_LOCK_TIMEOUT,
-		snapPoints,
-		fadeFromIndex,
+		snapPoints = [],
+		fadeFromIndex = snapPoints && snapPoints.length - 1,
 		backgroundColor = "black",
 		nested = false,
 		shouldScaleBackground = false,
@@ -202,6 +202,37 @@
 				)
 		) {
 		opacity: 1;
+	}
+
+	:global([vaul-handle]) {
+		display: block;
+		position: relative;
+		opacity: 0.8;
+		margin-left: auto;
+		margin-right: auto;
+		height: 5px;
+		width: 56px;
+		border-radius: 1rem;
+		touch-action: pan-y;
+		cursor: grab;
+	}
+
+	:global([vaul-handle]:hover, [vaul-handle]:active) {
+		opacity: 1;
+	}
+
+	:global([vaul-handle]:active) {
+		cursor: grabbing;
+	}
+
+	:global([vaul-handle-hitarea]) {
+		position: absolute;
+		left: 50%;
+		top: 50%;
+		transform: translate(-50%, -50%);
+		width: max(100%, 2.75rem); /* 44px */
+		height: max(100%, 2.75rem); /* 44px */
+		touch-action: inherit;
 	}
 
 	/* This will allow us to not animate via animation, but still benefit from delaying

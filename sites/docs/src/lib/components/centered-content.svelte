@@ -1,5 +1,7 @@
 <script lang="ts">
+	import type { Snippet } from "svelte";
 	import { Drawer } from "vaul-svelte";
+	let { children }: { children: Snippet } = $props();
 </script>
 
 <div class="mx-auto max-w-md">
@@ -28,5 +30,5 @@
 			this tweet.
 		</a>
 	</p>
-	<slot />
+	{@render children?.()}
 </div>

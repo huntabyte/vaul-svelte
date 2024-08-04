@@ -1,7 +1,8 @@
 <script lang="ts">
 	import { Drawer, type DrawerDirection } from "vaul-svelte";
 	import DrawerContent from "./drawer-content.svelte";
-	export let direction: DrawerDirection;
+
+	let { direction }: { direction: DrawerDirection } = $props();
 </script>
 
 <Drawer.Root {direction}>
