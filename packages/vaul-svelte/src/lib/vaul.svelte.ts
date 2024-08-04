@@ -1,13 +1,22 @@
-import { tick, untrack } from "svelte";
-import { type ReadableBoxedValues, type WritableBoxedValues, box } from "svelte-toolbelt";
+import { onMount, tick, untrack } from "svelte";
+import {
+	type ReadableBoxedValues,
+	type WithRefProps,
+	type WritableBoxedValues,
+	addEventListener,
+	box,
+	useRefById,
+} from "svelte-toolbelt";
 import { isBottomOrRight, isInput, isVertical } from "./internal/helpers/is.js";
 import { getTranslate, resetStyles, setStyles, styleToString } from "./internal/helpers/style.js";
 import { TRANSITIONS, VELOCITY_THRESHOLD } from "./internal/constants.js";
-import { preventScroll } from "./internal/prevent-scroll.js";
+import { isIOS, preventScroll } from "./internal/prevent-scroll.js";
 import { PositionFixed } from "./position-fixed.svelte.js";
+import { createContext } from "./internal/createContext.js";
+import { noop } from "./internal/helpers/noop.js";
 
-const CLOSE_THRESHOLD = 0.25;
-const SCROLL_LOCK_TIMEOUT = 100;
+export const DEFAULT_CLOSE_THRESHOLD = 0.25;
+export const DEFAULT_SCROLL_LOCK_TIMEOUT = 100;
 const BORDER_RADIUS = 8;
 const NESTED_DISPLACEMENT = 16;
 const WINDOW_TOP_OFFSET = 26;
@@ -35,6 +44,9 @@ type DrawerRootStateProps = ReadableBoxedValues<{
 	onClose: () => void;
 	backgroundColor: string | undefined;
 	modal: boolean;
+	handleOnly: boolean;
+	noBodyStyles: boolean;
+	preventScrollRestoration: boolean;
 }> &
 	WritableBoxedValues<{
 		open: boolean;
@@ -58,6 +70,9 @@ class DrawerRootState {
 	onCloseProp: DrawerRootStateProps["onClose"];
 	activeSnapPoint: DrawerRootStateProps["activeSnapPoint"];
 	backgroundColor: DrawerRootStateProps["backgroundColor"];
+	noBodyStyles: DrawerRootStateProps["noBodyStyles"];
+	preventScrollRestoration: DrawerRootStateProps["preventScrollRestoration"];
+	handleOnly: DrawerRootStateProps["handleOnly"];
 	triggerNode = $state<HTMLElement | null>(null);
 	overlayNode = $state<HTMLElement | null>(null);
 	hasBeenOpened = $state(false);
@@ -178,11 +193,17 @@ class DrawerRootState {
 		this.activeSnapPoint = props.activeSnapPoint;
 		this.backgroundColor = props.backgroundColor;
 		this.modal = props.modal;
+		this.handleOnly = props.handleOnly;
+		this.noBodyStyles = props.noBodyStyles;
+		this.preventScrollRestoration = props.preventScrollRestoration;
+
 		this.positionFixed = new PositionFixed({
 			hasBeenOpened: box.with(() => this.hasBeenOpened),
 			open: this.open,
 			modal: this.modal,
 			nested: this.nested,
+			noBodyStyles: this.noBodyStyles,
+			preventScrollRestoration: this.preventScrollRestoration,
 		});
 
 		$effect(() => {
@@ -277,6 +298,89 @@ class DrawerRootState {
 				}
 			});
 		});
+
+		$effect(() => {
+			const activeSnapPointIndex = this.activeSnapPointIndex;
+			const snapPoints = this.snapPoints.current;
+			const snapPointsOffset = this.snapPointsOffset;
+			let removeListener = noop;
+
+			untrack(() => {
+				const onVisualViewportChange = () => {
+					const drawerNode = this.drawerNode;
+					if (!drawerNode) return;
+					const keyboardIsOpen = this.keyboardIsOpen;
+					const focusedElement = document.activeElement as HTMLElement;
+					if (isInput(focusedElement) || keyboardIsOpen) {
+						const visualViewportHeight = window.visualViewport?.height || 0;
+						// this is the height of the keyboard
+						let diffFromInitial = window.innerHeight - visualViewportHeight;
+						const drawerHeight = drawerNode.getBoundingClientRect().height || 0;
+						if (!this.initialDrawerHeight) {
+							this.initialDrawerHeight = drawerHeight;
+						}
+						const offsetFromTop = drawerNode.getBoundingClientRect().top;
+
+						// visualViewport height may change due to some subtle changes to the
+						// keyboard. Checking if the height changed by 60 or more will make sure
+						// that they keyboard really changed its open state.
+						if (Math.abs(this.previousDiffFromInitial - diffFromInitial) > 60) {
+							this.keyboardIsOpen = !this.keyboardIsOpen;
+						}
+
+						if (
+							snapPoints &&
+							snapPoints.length > 0 &&
+							snapPointsOffset &&
+							activeSnapPointIndex
+						) {
+							const activeSnapPointHeight =
+								snapPointsOffset[activeSnapPointIndex] || 0;
+							diffFromInitial += activeSnapPointHeight;
+						}
+
+						this.previousDiffFromInitial = diffFromInitial;
+
+						// We don't have to change the height if the input is in view, when we are here we are in the opened keyboard state so we can correctly check if the input is in view
+						if (drawerHeight > visualViewportHeight || keyboardIsOpen) {
+							const height = drawerNode.getBoundingClientRect().height;
+							let newDrawerHeight = height;
+
+							if (height > visualViewportHeight) {
+								newDrawerHeight = visualViewportHeight - WINDOW_TOP_OFFSET;
+							}
+							// When fixed, don't move the drawer upwards if there's space, but rather only change it's height so it's fully scrollable when the keyboard is open
+							if (this.fixed.current) {
+								drawerNode.style.height = `${height - Math.max(diffFromInitial, 0)}px`;
+							} else {
+								drawerNode.style.height = `${Math.max(
+									newDrawerHeight,
+									visualViewportHeight - offsetFromTop
+								)}px`;
+							}
+						} else {
+							drawerNode.style.height = `${this.initialDrawerHeight}px`;
+						}
+
+						if (snapPoints && snapPoints.length > 0 && !keyboardIsOpen) {
+							drawerNode.style.bottom = `0px`;
+						} else {
+							// Negative bottom value would never make sense
+							drawerNode.style.bottom = `${Math.max(diffFromInitial, 0)}px`;
+						}
+					}
+				};
+
+				if (window.visualViewport) {
+					removeListener = addEventListener(
+						window.visualViewport,
+						"resize",
+						onVisualViewportChange
+					);
+				}
+			});
+			return removeListener;
+		});
 	}
 
 	setActiveSnapPoint = (newValue: number | string | null) => {
@@ -287,12 +391,15 @@ class DrawerRootState {
 		this.open.current = open;
 	};
 
-	getContentStyle = (style: string | null = "") => {
+	setHasBeenOpened = (hasBeenOpened: boolean) => {
+		this.hasBeenOpened = hasBeenOpened;
+	};
+
+	getContentStyle = () => {
 		if (this.snapPointsOffset && this.snapPointsOffset.length > 0) {
-			const styleProp = styleToString({
+			return {
 				"--snap-point-height": `${this.snapPointsOffset[0]}px`,
-			});
-			return style + styleProp;
+			};
 		}
 	};
 
@@ -560,6 +667,12 @@ class DrawerRootState {
 		}
 	};
 
+	openDrawer = () => {
+		if (this.isClosing) return;
+		this.setHasBeenOpened(true);
+		this.setOpen(true);
+	};
+
 	closeDrawer = (withKeyboard: boolean = false) => {
 		if (this.isClosing) return;
 
@@ -729,6 +842,28 @@ class DrawerRootState {
 		return true;
 	};
 
+	onPress = (e: PointerEvent) => {
+		const drawerNode = this.drawerNode;
+		if (!this.dismissible.current && !this.snapPoints.current) return;
+		if (drawerNode && !drawerNode.contains(e.target as Node)) return;
+		this.drawerHeight = drawerNode?.getBoundingClientRect().height || 0;
+
+		this.isDragging = true;
+
+		this.dragStartTime = new Date();
+
+		// iOS doesn't trigger mouseUp after scrolling so we need to listen to touched in order to disallow dragging
+		if (isIOS()) {
+			window.addEventListener("touchend", () => (this.isAllowedToDrag = false), {
+				once: true,
+			});
+		}
+		// Ensure we maintain correct pointer capture even when going outside of the drawer
+		(e.target as HTMLElement).setPointerCapture(e.pointerId);
+
+		this.pointerStart = isVertical(this.direction.current) ? e.screenY : e.screenX;
+	};
+
 	onRelease = (e: OnReleaseEvent) => {
 		const drawerNode = this.drawerNode;
 		if (!this.isDragging || !drawerNode) return;
@@ -807,6 +942,130 @@ class DrawerRootState {
 		this.resetDrawer();
 	};
 
+	onDrag = (e: PointerEvent) => {
+		const drawerNode = this.drawerNode;
+		if (!drawerNode) return;
+		// We need to know how much of the drawer has been dragged in percentages so that we can transform background accordingly
+		if (this.isDragging) {
+			const direction = this.direction.current;
+			const directionMultiplier = direction === "bottom" || direction === "right" ? 1 : -1;
+			const draggedDistance =
+				(this.pointerStart - (isVertical(direction) ? e.clientY : e.clientX)) *
+				directionMultiplier;
+			const isDraggingInDirection = draggedDistance > 0;
+
+			// Pre condition for disallowing dragging in the close direction.
+			const noCloseSnapPointsPreCondition =
+				this.snapPoints.current && !this.dismissible.current && !isDraggingInDirection;
+
+			// Disallow dragging down to close when first snap point is the active one and dismissible prop is set to false.
+			if (noCloseSnapPointsPreCondition && this.activeSnapPointIndex === 0) return;
+
+			// We need to capture last time when drag with scroll was triggered and have a timeout between
+			const absDraggedDistance = Math.abs(draggedDistance);
+			const wrapper = document.querySelector("[vaul-drawer-wrapper]");
+
+			// Calculate the percentage dragged, where 1 is the closed position
+			let percentageDragged = absDraggedDistance / this.drawerHeight;
+			const snapPointPercentageDragged = this.getSnapPointsPercentageDragged(
+				absDraggedDistance,
+				isDraggingInDirection
+			);
+
+			if (snapPointPercentageDragged !== null) {
+				percentageDragged = snapPointPercentageDragged;
+			}
+
+			// Disallow close dragging beyond the smallest snap point.
+			if (noCloseSnapPointsPreCondition && percentageDragged >= 1) {
+				return;
+			}
+
+			if (
+				!this.isAllowedToDrag &&
+				!this.shouldDrag(e.target as HTMLElement, isDraggingInDirection)
+			)
+				return;
+			drawerNode.classList.add(DRAG_CLASS);
+			// If shouldDrag gave true once after pressing down on the drawer, we set isAllowedToDrag to true and it will remain true until we let go, there's no reason to disable dragging mid way, ever, and that's the solution to it
+			this.isAllowedToDrag = true;
+			setStyles(drawerNode, {
+				transition: "none",
+			});
+
+			setStyles(this.overlayNode, {
+				transition: "none",
+			});
+
+			if (this.snapPoints.current) {
+				this.onDragSnapPoints({ draggedDistance });
+			}
+
+			// Run this only if snapPoints are not defined or if we are at the last snap point (highest one)
+			if (isDraggingInDirection && !this.snapPoints.current) {
+				const dampenedDraggedDistance = dampenValue(draggedDistance);
+
+				const translateValue =
+					Math.min(dampenedDraggedDistance * -1, 0) * directionMultiplier;
+				setStyles(drawerNode, {
+					transform: isVertical(direction)
+						? `translate3d(0, ${translateValue}px, 0)`
+						: `translate3d(${translateValue}px, 0, 0)`,
+				});
+				return;
+			}
+
+			const opacityValue = 1 - percentageDragged;
+
+			if (
+				this.shouldFade ||
+				(this.fadeFromIndex.current &&
+					this.activeSnapPointIndex === this.fadeFromIndex.current - 1)
+			) {
+				this.onDragProp?.current(e, percentageDragged);
+
+				setStyles(
+					this.overlayNode,
+					{
+						opacity: `${opacityValue}`,
+						transition: "none",
+					},
+					true
+				);
+			}
+
+			if (wrapper && this.overlayNode && this.shouldScaleBackground.current) {
+				// Calculate percentageDragged as a fraction (0 to 1)
+				const scaleValue = Math.min(getScale() + percentageDragged * (1 - getScale()), 1);
+				const borderRadiusValue = 8 - percentageDragged * 8;
+
+				const translateValue = Math.max(0, 14 - percentageDragged * 14);
+
+				setStyles(
+					wrapper,
+					{
+						borderRadius: `${borderRadiusValue}px`,
+						transform: isVertical(direction)
+							? `scale(${scaleValue}) translate3d(0, ${translateValue}px, 0)`
+							: `scale(${scaleValue}) translate3d(${translateValue}px, 0, 0)`,
+						transition: "none",
+					},
+					true
+				);
+			}
+
+			if (!this.snapPoints.current) {
+				const translateValue = absDraggedDistance * directionMultiplier;
+
+				setStyles(this.drawerNode, {
+					transform: isVertical(direction)
+						? `translate3d(0, ${translateValue}px, 0)`
+						: `translate3d(${translateValue}px, 0, 0)`,
+				});
+			}
+		}
+	};
+
 	onNestedOpenChange = (o: boolean) => {
 		const drawerNode = this.drawerNode;
 		const scale = o ? (window.innerWidth - NESTED_DISPLACEMENT) / window.innerWidth : 1;
@@ -866,7 +1125,350 @@ class DrawerRootState {
 				: `scale(${scale}) translate3d(${translate}px, 0, 0)`,
 		});
 	};
+
+	createContentState = (props: DrawerContentStateProps) => {
+		return new DrawerContentState(props, this);
+	};
+
+	createOverlayState = (props: DrawerOverlayStateProps) => {
+		return new DrawerOverlayState(props, this);
+	};
 }
+
+type DrawerContentStateProps = WithRefProps;
+
+class DrawerContentState {
+	#id: DrawerContentStateProps["id"];
+	#ref: DrawerContentStateProps["ref"];
+	root: DrawerRootState;
+	#pointerStart = $state<{ x: number; y: number } | null>(null);
+	#wasBeyondThePoint = $state(false);
+
+	constructor(props: DrawerContentStateProps, root: DrawerRootState) {
+		this.#id = props.id;
+		this.#ref = props.ref;
+		this.root = root;
+
+		useRefById({
+			id: this.#id,
+			ref: this.#ref,
+			condition: () => this.root.open.current,
+			onRefChange: (node) => {
+				this.root.drawerNode = node;
+			},
+		});
+
+		$effect(() => {
+			this.root.visible = true;
+		});
+	}
+
+	#isDeltaInDirection = (
+		delta: { x: number; y: number },
+		direction: DrawerDirection,
+		threshold = 0
+	) => {
+		if (this.#wasBeyondThePoint) return true;
+
+		const deltaY = Math.abs(delta.y);
+		const deltaX = Math.abs(delta.x);
+		const isDeltaX = deltaX > deltaY;
+		const dFactor = ["bottom", "right"].includes(direction) ? 1 : -1;
+
+		if (direction === "bottom" || direction === "right") {
+			const isReverseDirection = delta.x * dFactor < 0;
+			if (!isReverseDirection && deltaX >= 0 && deltaX <= threshold) {
+				return isDeltaX;
+			}
+		} else {
+			const isReverseDirection = delta.y * dFactor < 0;
+			if (!isReverseDirection && deltaY >= 0 && deltaY <= threshold) {
+				return !isDeltaX;
+			}
+		}
+
+		this.#wasBeyondThePoint = true;
+		return true;
+	};
+
+	onMountAutoFocus = (e: Event) => {
+		e.preventDefault();
+		this.root.drawerNode?.focus();
+	};
+
+	onInteractOutside = (e: PointerEvent | TouchEvent | MouseEvent) => {
+		if (!this.root.modal.current) {
+			e.preventDefault();
+			return;
+		}
+		if (this.root.keyboardIsOpen) {
+			this.root.keyboardIsOpen = false;
+		}
+		e.preventDefault();
+		this.root.closeDrawer();
+	};
+
+	onFocusOutside = (e: Event) => {
+		if (this.root.modal.current) return;
+		e.preventDefault();
+	};
+
+	#onpointerdown = (e: PointerEvent) => {
+		if (this.root.handleOnly.current) return;
+		this.#pointerStart = { x: e.clientX, y: e.clientY };
+		this.root.onPress(e);
+	};
+
+	#onpointermove = (e: PointerEvent) => {
+		if (this.root.handleOnly.current) return;
+		if (!this.#pointerStart) return;
+		const yPosition = e.clientY - this.#pointerStart.y;
+		const xPosition = e.clientX - this.#pointerStart.x;
+
+		const swipeStartThreshold = e.pointerType === "touch" ? 10 : 2;
+		const delta = { x: xPosition, y: yPosition };
+
+		const isAllowedToSwipe = this.#isDeltaInDirection(
+			delta,
+			this.root.direction.current,
+			swipeStartThreshold
+		);
+		if (isAllowedToSwipe) {
+			this.root.onDrag(e);
+		} else if (
+			Math.abs(xPosition) > swipeStartThreshold ||
+			Math.abs(yPosition) > swipeStartThreshold
+		) {
+			this.#pointerStart = null;
+		}
+	};
+
+	#onpointerup = (e: PointerEvent) => {
+		this.#pointerStart = null;
+		this.#wasBeyondThePoint = false;
+		this.root.onRelease(e);
+	};
+
+	#style = $derived.by(() => this.root.getContentStyle());
+
+	props = $derived.by(
+		() =>
+			({
+				id: this.#id.current,
+				"vaul-drawer": "",
+				"vaul-drawer-direction": this.root.direction.current,
+				"vaul-drawer-visible": this.root.visible ? "true" : "false",
+				style: this.#style,
+				onpointerdown: this.#onpointerdown,
+				onpointermove: this.#onpointermove,
+				onpointerup: this.#onpointerup,
+			}) as const
+	);
+}
+
+type DrawerOverlayStateProps = WithRefProps;
+
+class DrawerOverlayState {
+	#id: DrawerOverlayStateProps["id"];
+	#ref: DrawerOverlayStateProps["ref"];
+	root: DrawerRootState;
+	#hasSnapPoints = $derived.by(
+		() => this.root.snapPoints.current && this.root.snapPoints.current.length > 0
+	);
+
+	constructor(props: DrawerOverlayStateProps, root: DrawerRootState) {
+		this.#id = props.id;
+		this.#ref = props.ref;
+		this.root = root;
+
+		useRefById({
+			id: this.#id,
+			ref: this.#ref,
+			condition: () => this.root.open.current,
+			onRefChange: (node) => {
+				this.root.overlayNode = node;
+			},
+		});
+	}
+
+	#onmouseup = (e: MouseEvent) => {
+		this.root.onRelease(e);
+	};
+
+	props = $derived.by(
+		() =>
+			({
+				id: this.#id.current,
+				"vaul-drawer-visible": this.root.visible ? "true" : "false",
+				"vaul-overlay": "",
+				"vaul-snap-points":
+					this.root.open.current && this.#hasSnapPoints ? "true" : "false",
+				"vaul-snap-points-overlay":
+					this.root.open.current && this.root.shouldFade ? "true" : "false",
+				onmouseup: this.#onmouseup,
+			}) as const
+	);
+}
+
+type DrawerHandleStateProps = WithRefProps &
+	ReadableBoxedValues<{
+		preventCycle: boolean;
+	}>;
+
+const LONG_HANDLE_PRESS_TIMEOUT = 250;
+const DOUBLE_TAP_TIMEOUT = 120;
+class DrawerHandleState {
+	#id: DrawerHandleStateProps["id"];
+	#ref: DrawerHandleStateProps["ref"];
+	#preventCycle: DrawerHandleStateProps["preventCycle"];
+	root: DrawerRootState;
+	#closeTimeoutId: number | null = null;
+	#shouldCancelInteractions = false;
+
+	constructor(props: DrawerHandleStateProps, root: DrawerRootState) {
+		this.#id = props.id;
+		this.#ref = props.ref;
+		this.#preventCycle = props.preventCycle;
+		this.root = root;
+
+		useRefById({
+			id: this.#id,
+			ref: this.#ref,
+			condition: () => this.root.open.current,
+			onRefChange: (node) => {
+				this.root.triggerNode = node;
+			},
+		});
+	}
+
+	handleStartCycle = () => {
+		if (this.#shouldCancelInteractions) {
+			this.handleCancelInteraction();
+			return;
+		}
+		window.setTimeout(() => {
+			this.handleCycleSnapPoints();
+		}, DOUBLE_TAP_TIMEOUT);
+	};
+
+	handleCycleSnapPoints = () => {
+		// prevent accidental taps while resizing drawer
+		if (this.root.isDragging || this.#preventCycle || this.#shouldCancelInteractions) {
+			this.handleCancelInteraction();
+			return;
+		}
+		// clear timeout id if the user releases the handle before the cancel timeout
+		this.handleCancelInteraction();
+
+		const snapPoints = this.root.snapPoints.current;
+		const dismissible = this.root.dismissible.current;
+
+		if ((!snapPoints || snapPoints.length === 0) && dismissible) {
+			this.root.closeDrawer();
+			return;
+		}
+
+		const activeSnapPoint = this.root.activeSnapPoint.current;
+
+		const isLastSnapPoint = activeSnapPoint === snapPoints?.[snapPoints.length - 1];
+
+		if (isLastSnapPoint && dismissible) {
+			this.root.closeDrawer();
+			return;
+		}
+
+		const currentSnapIdx = snapPoints?.findIndex((snapPoint) => snapPoint === activeSnapPoint);
+		if (currentSnapIdx === -1 || currentSnapIdx === undefined) return;
+		const nextSnapPoint = snapPoints?.[currentSnapIdx + 1];
+		if (!nextSnapPoint) return;
+		this.root.setActiveSnapPoint(nextSnapPoint);
+	};
+
+	handleStartInteraction = () => {
+		this.#closeTimeoutId = window.setTimeout(() => {
+			// cancel click interaction on a long press
+			this.#shouldCancelInteractions = true;
+		}, LONG_HANDLE_PRESS_TIMEOUT);
+	};
+
+	handleCancelInteraction = () => {
+		if (this.#closeTimeoutId) {
+			window.clearTimeout(this.#closeTimeoutId);
+		}
+		this.#shouldCancelInteractions = false;
+	};
+
+	#onclick = (_: MouseEvent) => {
+		this.handleStartCycle();
+	};
+
+	#ondblclick = (_: MouseEvent) => {
+		this.#shouldCancelInteractions = true;
+		this.root.closeDrawer();
+	};
+
+	#onpointercancel = (_: PointerEvent) => {
+		this.handleCancelInteraction();
+	};
+
+	#onpointerdown = (e: PointerEvent) => {
+		if (this.root.handleOnly.current) {
+			this.root.onPress(e);
+		}
+		this.handleStartInteraction();
+	};
+
+	#onpointermove = (e: PointerEvent) => {
+		if (this.root.handleOnly.current) {
+			this.root.onDrag(e);
+		}
+	};
+
+	props = $derived.by(
+		() =>
+			({
+				id: this.#id.current,
+				"vaul-drawer-visible": this.root.visible ? "true" : "false",
+				"vaul-handle": "",
+				"aria-hidden": "true",
+				onclick: this.#onclick,
+				ondblclick: this.#ondblclick,
+				onpointercancel: this.#onpointercancel,
+				onpointerdown: this.#onpointerdown,
+				onpointermove: this.#onpointermove,
+			}) as const
+	);
+
+	hitAreaProps = $derived.by(
+		() =>
+			({
+				"vaul-handle-hitarea": "",
+				"aria-hidden": "true",
+			}) as const
+	);
+}
+
+////////////////////////////////////
+// CONTEXT
+////////////////////////////////////
+
+const [setDrawerRootContext, getDrawerRootContext] = createContext<DrawerRootState>("Drawer.Root");
+
+export function useDrawerRoot(props: DrawerRootStateProps) {
+	return setDrawerRootContext(new DrawerRootState(props));
+}
+
+export function useDrawerContent(props: DrawerContentStateProps) {
+	return getDrawerRootContext().createContentState(props);
+}
+
+export function useDrawerOverlay(props: DrawerOverlayStateProps) {
+	return getDrawerRootContext().createOverlayState(props);
+}
+
+////////////////////////////////////
+// HELPERS
+////////////////////////////////////
 
 function getScale() {
 	return (window.innerWidth - WINDOW_TOP_OFFSET) / window.innerWidth;
@@ -905,4 +1507,8 @@ function getDistanceMovedForTouch(
 
 function getDirectionMultiplier(direction: DrawerDirection) {
 	return direction === "bottom" || direction === "right" ? 1 : -1;
+}
+
+export function dampenValue(v: number) {
+	return 8 * (Math.log(v + 1) - 2);
 }

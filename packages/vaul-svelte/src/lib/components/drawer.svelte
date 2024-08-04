@@ -1,44 +1,85 @@
 <script lang="ts">
-	import { getCtx } from "../ctx.js";
-	import Root from "./root.svelte.js";
-	import type { Props } from "./types.js";
+	import { Dialog as DialogPrimitive } from "bits-ui";
+	import { box } from "svelte-toolbelt";
+	import type { DrawerRootProps } from "./types.js";
+	import { noop } from "$lib/internal/helpers/noop.js";
+	import {
+		DEFAULT_CLOSE_THRESHOLD,
+		DEFAULT_SCROLL_LOCK_TIMEOUT,
+		useDrawerRoot,
+	} from "$lib/vaul.svelte.js";
 
-	type $$Props = Props;
+	let {
+		open = $bindable(false),
+		onOpenChange = noop,
+		closeThreshold = DEFAULT_CLOSE_THRESHOLD,
+		scrollLockTimeout = DEFAULT_SCROLL_LOCK_TIMEOUT,
+		snapPoints,
+		fadeFromIndex,
+		backgroundColor = "black",
+		nested = false,
+		shouldScaleBackground = false,
+		activeSnapPoint = $bindable(null),
+		onActiveSnapPointChange = noop,
+		onRelease = noop,
+		onDrag = noop,
+		onClose = noop,
+		dismissible = true,
+		direction = "bottom",
+		fixed = false,
+		handleOnly = false,
+		noBodyStyles = false,
+		preventScrollRestoration = true,
+		...restProps
+	}: DrawerRootProps = $props();
 
-	export let onDrag: $$Props["onDrag"] = undefined;
-	export let onOpenChange: $$Props["onOpenChange"] = undefined;
-	export let open: $$Props["open"] = undefined;
-
-	const {
-		methods: { onNestedDrag, onNestedRelease, onNestedOpenChange },
-	} = getCtx();
-
-	if (!onNestedDrag) {
-		throw new Error("NestedRoot must be a child of a Root");
-	}
+	const rootState = useDrawerRoot({
+		open: box.with(
+			() => open,
+			(v) => {
+				open = v;
+				onOpenChange(v);
+			}
+		),
+		closeThreshold: box.with(() => closeThreshold),
+		scrollLockTimeout: box.with(() => scrollLockTimeout),
+		snapPoints: box.with(() => snapPoints),
+		fadeFromIndex: box.with(() => fadeFromIndex),
+		backgroundColor: box.with(() => backgroundColor),
+		nested: box.with(() => nested),
+		shouldScaleBackground: box.with(() => shouldScaleBackground),
+		activeSnapPoint: box.with(
+			() => activeSnapPoint,
+			(v) => {
+				activeSnapPoint = v;
+				onActiveSnapPointChange(v);
+			}
+		),
+		onRelease: box.with(() => onRelease),
+		onDrag: box.with(() => onDrag),
+		onClose: box.with(() => onClose),
+		dismissible: box.with(() => dismissible),
+		direction: box.with(() => direction),
+		fixed: box.with(() => fixed),
+		modal: box.with(() => true),
+		handleOnly: box.with(() => handleOnly),
+		noBodyStyles: box.with(() => noBodyStyles),
+		preventScrollRestoration: box.with(() => preventScrollRestoration),
+	});
 </script>
 
-<Root
-	nested={true}
+<DialogPrimitive.Root
 	bind:open
-	onClose={() => {
-		onNestedOpenChange(false);
-	}}
-	onDrag={(e, p) => {
-		onNestedDrag(e, p);
-		onDrag?.(e, p);
-	}}
 	onOpenChange={(o) => {
-		if (o) {
-			onNestedOpenChange(o);
+		onOpenChange(o);
+		if (!o) {
+			rootState.closeDrawer();
+		} else if (o) {
+			rootState.openDrawer();
 		}
-		onOpenChange?.(o);
 	}}
-	onRelease={onNestedRelease}
-	{...$$restProps}
->
-	<slot />
-</Root>
+	{...restProps}
+/>
 
 <style>
 	:global([data-vaul-drawer]) {

@@ -1,10 +1,11 @@
 import { onMount, untrack } from "svelte";
 import {
-	type Getter,
 	type ReadableBoxedValues,
 	type WritableBoxedValues,
 	addEventListener,
 } from "svelte-toolbelt";
+
+let previousBodyPosition: Record<string, string> | null = null;
 
 type PositionFixedProps = WritableBoxedValues<{
 	open: boolean;
@@ -13,16 +14,22 @@ type PositionFixedProps = WritableBoxedValues<{
 		modal: boolean;
 		nested: boolean;
 		hasBeenOpened: boolean;
+		preventScrollRestoration: boolean;
+		noBodyStyles: boolean;
 	}>;
 
-let previousBodyPosition: Record<string, string> | null = null;
+function getActiveUrl() {
+	return typeof window !== "undefined" ? window.location.href : "";
+}
 
 export class PositionFixed {
 	#open: PositionFixedProps["open"];
 	#modal: PositionFixedProps["modal"];
 	#nested: PositionFixedProps["nested"];
 	#hasBeenOpened: PositionFixedProps["hasBeenOpened"];
-	#activeUrl = $state(typeof window !== "undefined" ? window.location.href : "");
+	#preventScrollRestoration: PositionFixedProps["preventScrollRestoration"];
+	#noBodyStyles: PositionFixedProps["noBodyStyles"];
+	#activeUrl = $state(getActiveUrl());
 	#scrollPos = 0;
 
 	constructor(props: PositionFixedProps) {
@@ -30,6 +37,8 @@ export class PositionFixed {
 		this.#modal = props.modal;
 		this.#nested = props.nested;
 		this.#hasBeenOpened = props.hasBeenOpened;
+		this.#preventScrollRestoration = props.preventScrollRestoration;
+		this.#noBodyStyles = props.noBodyStyles;
 
 		onMount(() => {
 			const onScroll = () => {
@@ -46,13 +55,17 @@ export class PositionFixed {
 		$effect(() => {
 			const _ = this.#activeUrl;
 			const open = this.#open.current;
+			const modal = this.#modal.current;
+			const hasBeenOpened = this.#hasBeenOpened.current;
+			const nested = this.#nested.current;
 			untrack(() => {
-				if (this.#nested.current || !this.#hasBeenOpened.current) return;
+				if (nested || !hasBeenOpened) return;
 				// This is needed to force Safari toolbar to show **before** the drawer starts animating to prevent a gnarly shift from happening
 				if (open) {
-					this.#setPositionFixed(open);
+					const isStandalone = window.matchMedia("(display-mode: standalone)").matches;
+					!isStandalone && this.#setPositionFixed();
 
-					if (!this.#modal.current) {
+					if (!modal) {
 						setTimeout(() => {
 							this.restorePositionSetting();
 						}, 500);
@@ -64,25 +77,29 @@ export class PositionFixed {
 		});
 	}
 
-	#setPositionFixed = (o: boolean) => {
+	#setPositionFixed = () => {
 		// If previousBodyPosition is already set, don't set it again.
-		if (!(previousBodyPosition === null && o)) return;
+		if (!(previousBodyPosition === null && this.#open.current && !this.#noBodyStyles.current))
+			return;
 
 		previousBodyPosition = {
 			position: document.body.style.position,
 			top: document.body.style.top,
 			left: document.body.style.left,
 			height: document.body.style.height,
+			right: "unset",
 		};
 
 		// Update the dom inside an animation frame
 		const { scrollX, innerHeight } = window;
 
 		document.body.style.setProperty("position", "fixed", "important");
-		document.body.style.top = `${-this.#scrollPos}px`;
-		document.body.style.left = `${-scrollX}px`;
-		document.body.style.right = "0px";
-		document.body.style.height = "auto";
+		Object.assign(document.body.style, {
+			top: `${-this.#scrollPos}px`,
+			left: `${-scrollX}px`,
+			right: "0px",
+			height: "auto",
+		});
 
 		setTimeout(
 			() =>
@@ -99,7 +116,7 @@ export class PositionFixed {
 	};
 
 	restorePositionSetting = () => {
-		if (previousBodyPosition === null) return;
+		if (previousBodyPosition === null || this.#noBodyStyles.current) return;
 		const activeUrl = this.#activeUrl;
 
 		// Convert the position from "px" to Int
@@ -107,14 +124,10 @@ export class PositionFixed {
 		const x = -Number.parseInt(document.body.style.left, 10);
 
 		// Restore styles
-		document.body.style.position = previousBodyPosition.position;
-		document.body.style.top = previousBodyPosition.top;
-		document.body.style.left = previousBodyPosition.left;
-		document.body.style.height = previousBodyPosition.height;
-		document.body.style.right = "unset";
+		Object.assign(document.body.style, previousBodyPosition);
 
-		requestAnimationFrame(() => {
-			if (activeUrl !== window.location.href) {
+		window.requestAnimationFrame(() => {
+			if (this.#preventScrollRestoration.current && activeUrl !== window.location.href) {
 				this.#activeUrl = window.location.href;
 				return;
 			}
