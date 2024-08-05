@@ -12,7 +12,7 @@ import type { WithChildren, Without } from "svelte-toolbelt";
 import type { DrawerDirection, OnChangeFn } from "$lib/types.js";
 import type { OnDrag, OnRelease } from "$lib/vaul.svelte.js";
 
-type BaseDrawerRootPropsWithoutHTML = WithChildren<{
+export type BaseDrawerRootPropsWithoutHTML = WithChildren<{
 	/**
 	 * The open state of the Drawer.
 	 * @bindable
