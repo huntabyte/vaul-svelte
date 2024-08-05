@@ -1,6 +1,7 @@
 <script lang="ts">
-	import { Dialog as DialogPrimitive, useId } from "bits-ui";
-	import { box, mergeProps } from "svelte-toolbelt";
+	import { Dialog as DialogPrimitive, type WithoutChildrenOrChild, useId } from "bits-ui";
+	import { type WithChildren, box, mergeProps } from "svelte-toolbelt";
+	import Mounted from "../utils/mounted.svelte";
 	import type { DrawerContentProps } from "./types.js";
 	import { useDrawerContent } from "$lib/vaul.svelte.js";
 	import { noop } from "$lib/internal/helpers/noop.js";
@@ -12,8 +13,9 @@
 		onEscapeKeydown = noop,
 		onInteractOutside = noop,
 		onFocusOutside = noop,
+		children,
 		...restProps
-	}: DrawerContentProps = $props();
+	}: WithChildren<WithoutChildrenOrChild<DrawerContentProps>> = $props();
 
 	const contentState = useDrawerContent({
 		id: box.with(() => id),
@@ -29,6 +31,7 @@
 <DialogPrimitive.Content
 	bind:ref
 	{...mergedProps}
+	preventScroll={false}
 	onMountAutoFocus={(e) => {
 		onMountAutoFocus(e);
 		if (e.defaultPrevented) return;
@@ -37,20 +40,29 @@
 	onEscapeKeydown={(e) => {
 		onEscapeKeydown(e);
 		if (e.defaultPrevented) return;
-		if (!contentState.root.modal.current) {
-			e.preventDefault();
-		}
+		e.preventDefault();
+		if (!contentState.root.modal.current) return;
+		contentState.root.closeDrawer();
 	}}
 	onFocusOutside={(e) => {
 		onFocusOutside(e);
 		if (e.defaultPrevented) return;
-		if (!contentState.root.modal.current) {
-			e.preventDefault();
-		}
+		contentState.onFocusOutside(e);
 	}}
 	onInteractOutside={(e) => {
 		onInteractOutside(e);
 		if (e.defaultPrevented) return;
 		contentState.onInteractOutside(e);
 	}}
-/>
+>
+	<Mounted
+		onMounted={(mounted) => {
+			if (mounted) {
+				contentState.root.visible = true;
+			} else {
+				contentState.root.drawerNode = null;
+			}
+		}}
+	/>
+	{@render children?.()}
+</DialogPrimitive.Content>

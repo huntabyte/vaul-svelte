@@ -29,8 +29,16 @@ export function isInput(target: Element) {
 }
 
 export function isVertical(direction: DrawerDirection) {
-	if (direction === "top" || direction === "bottom") return true;
-	return false;
+	switch (direction) {
+		case "top":
+		case "bottom":
+			return true;
+		case "left":
+		case "right":
+			return false;
+		default:
+			return direction satisfies never;
+	}
 }
 
 export function isBottomOrRight(direction: DrawerDirection) {

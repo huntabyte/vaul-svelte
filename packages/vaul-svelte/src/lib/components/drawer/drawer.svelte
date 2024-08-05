@@ -31,6 +31,7 @@
 		noBodyStyles = false,
 		preventScrollRestoration = true,
 		setBackgroundColorOnScale = true,
+		disablePreventScroll = false,
 		...restProps
 	}: DrawerRootProps = $props();
 
@@ -67,6 +68,7 @@
 		noBodyStyles: box.with(() => noBodyStyles),
 		preventScrollRestoration: box.with(() => preventScrollRestoration),
 		setBackgroundColorOnScale: box.with(() => setBackgroundColorOnScale),
+		disablePreventScroll: box.with(() => disablePreventScroll),
 	});
 </script>
 
@@ -74,18 +76,15 @@
 	bind:open
 	onOpenChange={(o) => {
 		onOpenChange(o);
-		if (!o) {
-			rootState.closeDrawer();
-		} else if (o) {
-			rootState.openDrawer();
-		}
+		rootState.onOpenChange(o);
 	}}
 	{...restProps}
 />
 
-<style>
+<style global>
 	:global([data-vaul-drawer]) {
 		touch-action: none;
+		will-change: transform;
 		transition: transform 0.5s cubic-bezier(0.32, 0.72, 0, 1);
 	}
 
@@ -105,18 +104,18 @@
 		transform: translate3d(100%, 0, 0);
 	}
 
-	:global(.vaul-dragging .vaul-scrollable [data-vaul-drawer-direction="top"]) {
+	:global(.vaul-dragging .vaul-scrollable [data-vault-drawer-direction="top"]) {
+		overflow-y: hidden !important;
+	}
+	:global(.vaul-dragging .vaul-scrollable [data-vault-drawer-direction="bottom"]) {
 		overflow-y: hidden !important;
 	}
 
-	:global(.vaul-dragging .vaul-scrollable [data-vaul-drawer-direction="bottom"]) {
-		overflow-y: hidden !important;
-	}
-
-	:global(.vaul-dragging .vaul-scrollable [data-vaul-drawer-direction="left"]) {
+	:global(.vaul-dragging .vaul-scrollable [data-vault-drawer-direction="left"]) {
 		overflow-x: hidden !important;
 	}
-	:global(.vaul-dragging .vaul-scrollable [data-vaul-drawer-direction="right"]) {
+
+	:global(.vaul-dragging .vaul-scrollable [data-vault-drawer-direction="right"]) {
 		overflow-x: hidden !important;
 	}
 
@@ -190,22 +189,6 @@
 		width: 200%;
 	}
 
-	:global(
-			[data-vaul-overlay][data-vaul-snap-points="true"]:not(
-					[data-vaul-snap-points-overlay="true"]
-				):not([data-state="closed"])
-		) {
-		opacity: 0;
-	}
-
-	:global(
-			[data-vaul-overlay][data-vaul-snap-points-overlay="true"]:not(
-					[data-vaul-drawer-visible="false"]
-				)
-		) {
-		opacity: 1;
-	}
-
 	:global([data-vaul-handle]) {
 		display: block;
 		position: relative;
@@ -237,8 +220,24 @@
 		touch-action: inherit;
 	}
 
-	/* This will allow us to not animate via animation, but still benefit from delaying
-	unmount via Bits */
+	:global(
+			[data-vaul-overlay][data-vaul-snap-points="true"]:not(
+					[data-vaul-snap-points-overlay="true"]
+				):not([data-state="closed"])
+		) {
+		opacity: 0;
+	}
+
+	:global(
+			[data-vaul-overlay][data-vaul-snap-points-overlay="true"]:not(
+					[data-vaul-drawer-visible="false"]
+				)
+		) {
+		opacity: 1;
+	}
+
+	/* This will allow us to not animate via animation, but still benefit from delaying unmount via Radix. */
+
 	@keyframes -global-fake-animation {
 		from {
 		}
@@ -249,6 +248,13 @@
 	@media (hover: hover) and (pointer: fine) {
 		:global([data-vaul-drawer]) {
 			user-select: none;
+		}
+	}
+
+	@media (pointer: fine) {
+		:global([data-vaul-handle-hitarea]) {
+			width: 100%;
+			height: 100%;
 		}
 	}
 </style>

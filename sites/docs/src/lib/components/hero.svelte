@@ -38,7 +38,7 @@
 			fill="url(#83fd4e5a-9d52-42fc-97b6-718e5d7ee527)"
 		/>
 	</svg>
-	<div class="mx-auto max-w-2xl pt-64 text-center">
+	<div class="mx-auto max-w-2xl select-none pt-64 text-center">
 		<div class="relative flex flex-col">
 			<h1 class="relative mb-4 text-7xl font-semibold">Vaul Svelte</h1>
 			<p class="text-xl text-gray-600">Drawer component for Svelte.</p>
@@ -56,9 +56,7 @@
 						class="fixed bottom-0 left-0 right-0 mt-24 flex h-full max-h-[96%] flex-col rounded-t-[10px] bg-gray-100"
 					>
 						<div class="flex-1 rounded-t-[10px] bg-white p-4">
-							<div
-								class="mx-auto mb-8 h-1.5 w-12 flex-shrink-0 rounded-full bg-gray-300"
-							></div>
+							<Drawer.Handle class="mb-8 bg-gray-300" />
 							<CenteredContent>
 								<p class="mb-8 text-gray-600">
 									Here are

@@ -7,9 +7,12 @@ interface Style {
 
 const cache = new WeakMap();
 
-export function setStyles(el?: Element | HTMLElement | null, styles?: Style, ignoreCache = false) {
-	if (!el || !(el instanceof HTMLElement) || !styles) return;
-
+export function setStyles(
+	el: Element | HTMLElement | null | undefined,
+	styles: Style,
+	ignoreCache = false
+) {
+	if (!el || !(el instanceof HTMLElement)) return;
 	const originalStyles: Style = {};
 
 	Object.entries(styles).forEach(([key, value]: [string, string]) => {
@@ -49,6 +52,7 @@ export function resetStyles(el: Element | HTMLElement | null, prop?: string) {
 }
 
 export function getTranslate(element: HTMLElement, direction: DrawerDirection): number | null {
+	if (!element) return null;
 	const style = window.getComputedStyle(element);
 	const transform =
 		// @ts-expect-error - vendor prefix
@@ -61,11 +65,4 @@ export function getTranslate(element: HTMLElement, direction: DrawerDirection): 
 	// https://developer.mozilla.org/en-US/docs/Web/CSS/transform-function/matrix
 	mat = transform.match(/^matrix\((.+)\)$/);
 	return mat ? Number.parseFloat(mat[1].split(", ")[isVertical(direction) ? 5 : 4]) : null;
-}
-
-export function styleToString(style: Record<string, number | string | undefined>): string {
-	return Object.keys(style).reduce((str, key) => {
-		if (style[key] === undefined) return str;
-		return `${str}${key}:${style[key]};`;
-	}, "");
 }

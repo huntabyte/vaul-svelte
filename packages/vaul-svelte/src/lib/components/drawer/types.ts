@@ -159,6 +159,13 @@ type BaseDrawerRootPropsWithoutHTML = WithChildren<{
 	 * @default true
 	 */
 	setBackgroundColorOnScale?: boolean;
+
+	/**
+	 * When `true` scroll will not be prevented outside the drawer.
+	 *
+	 * @default false
+	 */
+	disablePreventScroll?: boolean;
 }>;
 
 export type DrawerRootPropsWithoutHTML = BaseDrawerRootPropsWithoutHTML &

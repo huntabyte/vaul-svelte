@@ -10,7 +10,7 @@ import {
 import { isInput, isVertical } from "./internal/helpers/is.js";
 import { getTranslate, resetStyles, setStyles } from "./internal/helpers/style.js";
 import { TRANSITIONS, VELOCITY_THRESHOLD } from "./internal/constants.js";
-import { isIOS } from "./internal/prevent-scroll.js";
+import { isIOS, usePreventScroll } from "./prevent-scroll.svelte.js";
 import { PositionFixed } from "./position-fixed.svelte.js";
 import { createContext } from "./internal/createContext.js";
 import { noop } from "./internal/helpers/noop.js";
@@ -48,6 +48,7 @@ type DrawerRootStateProps = ReadableBoxedValues<{
 	noBodyStyles: boolean;
 	preventScrollRestoration: boolean;
 	setBackgroundColorOnScale: boolean;
+	disablePreventScroll: boolean;
 }> &
 	WritableBoxedValues<{
 		open: boolean;
@@ -75,6 +76,7 @@ class DrawerRootState {
 	preventScrollRestoration: DrawerRootStateProps["preventScrollRestoration"];
 	handleOnly: DrawerRootStateProps["handleOnly"];
 	setBackgroundColorOnScale: DrawerRootStateProps["setBackgroundColorOnScale"];
+	disablePreventScroll: DrawerRootStateProps["disablePreventScroll"];
 	hasBeenOpened = $state(false);
 	visible = $state(false);
 	justReleased = $state(false);
@@ -119,6 +121,7 @@ class DrawerRootState {
 		this.noBodyStyles = props.noBodyStyles;
 		this.preventScrollRestoration = props.preventScrollRestoration;
 		this.setBackgroundColorOnScale = props.setBackgroundColorOnScale;
+		this.disablePreventScroll = props.disablePreventScroll;
 
 		this.positionFixedState = new PositionFixed({
 			hasBeenOpened: box.with(() => this.hasBeenOpened),
@@ -138,13 +141,6 @@ class DrawerRootState {
 			direction: this.direction,
 			onSnapPointChange: this.onSnapPointChange,
 			setActiveSnapPoint: this.setActiveSnapPoint,
-		});
-
-		$effect(() => {
-			return () => {
-				this.scaleBackground(false);
-				this.positionFixedState.restorePositionSetting();
-			};
 		});
 
 		$effect(() => {
@@ -236,7 +232,7 @@ class DrawerRootState {
 
 			if (!open && shouldScaleBackground) {
 				const id = setTimeout(() => {
-					resetStyles(document.body, "background");
+					resetStyles(document.body);
 				}, 200);
 				return () => clearTimeout(id);
 			}
@@ -276,7 +272,24 @@ class DrawerRootState {
 				}
 			});
 		});
+
+		usePreventScroll({
+			isDisabled: box.with(
+				() =>
+					!this.open.current ||
+					this.isDragging ||
+					!this.modal.current ||
+					this.justReleased ||
+					!this.hasBeenOpened ||
+					this.disablePreventScroll.current
+			),
+		});
 	}
+
+	cleanupBodyStyles = () => {
+		this.scaleBackground(false);
+		this.positionFixedState.restorePositionSetting();
+	};
 
 	setActiveSnapPoint = (newValue: number | string | null | undefined) => {
 		this.activeSnapPoint.current = newValue;
@@ -392,7 +405,6 @@ class DrawerRootState {
 			if (element.scrollHeight > element.clientHeight) {
 				if (element.scrollTop !== 0) {
 					this.lastTimeDragPrevented = new Date();
-
 					// The element is scrollable and not scrolled to the top, so don't drag
 					return false;
 				}
@@ -407,6 +419,7 @@ class DrawerRootState {
 		}
 
 		// No scrollable parents not scrolled to the top found, so drag
+
 		return true;
 	};
 
@@ -415,6 +428,7 @@ class DrawerRootState {
 		if (!drawerNode) return;
 		// We need to know how much of the drawer has been dragged in percentages so that we can transform background accordingly
 		if (!this.isDragging) return;
+
 		const direction = this.direction.current;
 		const directionMultiplier = direction === "bottom" || direction === "right" ? 1 : -1;
 		const draggedDistance =
@@ -430,11 +444,13 @@ class DrawerRootState {
 		const activeSnapPointIndex = this.snapPointState.activeSnapPointIndex;
 
 		// Disallow dragging down to close when first snap point is the active one and dismissible prop is set to false.
-		if (noCloseSnapPointsPreCondition && activeSnapPointIndex === 0) return;
+		if (noCloseSnapPointsPreCondition && activeSnapPointIndex === 0) {
+			return;
+		}
 
 		// We need to capture last time when drag with scroll was triggered and have a timeout between
 		const absDraggedDistance = Math.abs(draggedDistance);
-		const wrapper = document.querySelector("[vaul-drawer-wrapper]");
+		const wrapper = document.querySelector("[data-vaul-drawer-wrapper]");
 
 		// Calculate the percentage dragged, where 1 is the closed position
 		let percentageDragged = absDraggedDistance / this.drawerHeight;
@@ -452,7 +468,9 @@ class DrawerRootState {
 			return;
 		}
 
-		if (!this.isAllowedToDrag && !this.shouldDrag(e.target!, isDraggingInDirection)) return;
+		if (!this.isAllowedToDrag && !this.shouldDrag(e.target!, isDraggingInDirection)) {
+			return;
+		}
 		drawerNode.classList.add(DRAG_CLASS);
 		// If shouldDrag gave true once after pressing down on the drawer, we set isAllowedToDrag to true and it will remain true until we let go, there's no reason to disable dragging mid way, ever, and that's the solution to it
 		this.isAllowedToDrag = true;
@@ -582,36 +600,32 @@ class DrawerRootState {
 		});
 		// Don't reset background if swiped upwards
 		if (
-			!(
-				this.shouldScaleBackground.current &&
-				currentSwipeAmount &&
-				currentSwipeAmount > 0 &&
-				this.open.current
-			)
+			this.shouldScaleBackground.current &&
+			currentSwipeAmount &&
+			currentSwipeAmount > 0 &&
+			this.open.current
 		) {
-			return;
+			setStyles(
+				wrapper,
+				{
+					borderRadius: `${BORDER_RADIUS}px`,
+					overflow: "hidden",
+					...(isVertical(direction)
+						? {
+								transform: `scale(${getScale()}) translate3d(0, calc(env(safe-area-inset-top) + 14px), 0)`,
+								transformOrigin: "top",
+							}
+						: {
+								transform: `scale(${getScale()}) translate3d(calc(env(safe-area-inset-top) + 14px), 0, 0)`,
+								transformOrigin: "left",
+							}),
+					transitionProperty: "transform, border-radius",
+					transitionDuration: `${TRANSITIONS.DURATION}s`,
+					transitionTimingFunction: `cubic-bezier(${TRANSITIONS.EASE.join(",")})`,
+				},
+				true
+			);
 		}
-
-		setStyles(
-			wrapper,
-			{
-				borderRadius: `${BORDER_RADIUS}px`,
-				overflow: "hidden",
-				...(isVertical(direction)
-					? {
-							transform: `scale(${getScale()}) translate3d(0, calc(env(safe-area-inset-top) + 14px), 0)`,
-							transformOrigin: "top",
-						}
-					: {
-							transform: `scale(${getScale()}) translate3d(calc(env(safe-area-inset-top) + 14px), 0, 0)`,
-							transformOrigin: "left",
-						}),
-				transitionProperty: "transform, border-radius",
-				transitionDuration: `${TRANSITIONS.DURATION}s`,
-				transitionTimingFunction: `cubic-bezier(${TRANSITIONS.EASE.join(",")})`,
-			},
-			true
-		);
 	};
 
 	cancelDrag = () => {
@@ -652,7 +666,7 @@ class DrawerRootState {
 			}, 200);
 		}
 
-		if (this.snapPoints) {
+		if (this.snapPoints.current) {
 			const directionMultiplier = direction === "bottom" || direction === "right" ? 1 : -1;
 			this.snapPointState.onReleaseSnapPoints({
 				draggedDistance: distMoved * directionMultiplier,
@@ -693,7 +707,7 @@ class DrawerRootState {
 	};
 
 	scaleBackground = (open: boolean) => {
-		const wrapper = document.querySelector("[vaul-drawer-wrapper]");
+		const wrapper = document.querySelector("[data-vaul-drawer-wrapper]");
 
 		if (!wrapper || !this.shouldScaleBackground.current) return;
 
@@ -807,6 +821,7 @@ class DrawerRootState {
 
 	onOpenChange = (o: boolean) => {
 		if (!o) {
+			this.hasBeenOpened = false;
 			this.closeDrawer();
 		} else {
 			this.hasBeenOpened = true;
@@ -849,10 +864,6 @@ class DrawerContentState {
 				this.root.drawerNode = node;
 			},
 		});
-
-		$effect(() => {
-			this.root.visible = true;
-		});
 	}
 
 	#isDeltaInDirection = (
@@ -867,7 +878,7 @@ class DrawerContentState {
 		const isDeltaX = deltaX > deltaY;
 		const dFactor = ["bottom", "right"].includes(direction) ? 1 : -1;
 
-		if (direction === "bottom" || direction === "right") {
+		if (direction === "left" || direction === "right") {
 			const isReverseDirection = delta.x * dFactor < 0;
 			if (!isReverseDirection && deltaX >= 0 && deltaX <= threshold) {
 				return isDeltaX;

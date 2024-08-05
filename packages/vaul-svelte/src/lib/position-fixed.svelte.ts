@@ -58,6 +58,7 @@ export class PositionFixed {
 			const modal = this.#modal.current;
 			const hasBeenOpened = this.#hasBeenOpened.current;
 			const nested = this.#nested.current;
+			const __ = this.#noBodyStyles.current;
 			untrack(() => {
 				if (nested || !hasBeenOpened) return;
 				// This is needed to force Safari toolbar to show **before** the drawer starts animating to prevent a gnarly shift from happening
@@ -115,7 +116,7 @@ export class PositionFixed {
 	};
 
 	restorePositionSetting = () => {
-		if (previousBodyPosition !== null && !this.#noBodyStyles) {
+		if (previousBodyPosition !== null && !this.#noBodyStyles.current) {
 			// Convert the position from "px" to Int
 			const y = -Number.parseInt(document.body.style.top, 10);
 			const x = -Number.parseInt(document.body.style.left, 10);
