@@ -892,8 +892,7 @@ class DrawerContentState {
 		});
 
 		$effect(() => {
-			const mounted = this.mounted;
-			if (!mounted) return;
+			if (!this.mounted) return;
 			this.root.visible = true;
 		});
 	}
