@@ -79,62 +79,63 @@ export class PositionFixed {
 
 	#setPositionFixed = () => {
 		// If previousBodyPosition is already set, don't set it again.
-		if (!(previousBodyPosition === null && this.#open.current && !this.#noBodyStyles.current))
-			return;
+		if (previousBodyPosition === null && this.#open.current && !this.#noBodyStyles.current) {
+			previousBodyPosition = {
+				position: document.body.style.position,
+				top: document.body.style.top,
+				left: document.body.style.left,
+				height: document.body.style.height,
+				right: "unset",
+			};
 
-		previousBodyPosition = {
-			position: document.body.style.position,
-			top: document.body.style.top,
-			left: document.body.style.left,
-			height: document.body.style.height,
-			right: "unset",
-		};
+			// Update the dom inside an animation frame
+			const { scrollX, innerHeight } = window;
 
-		// Update the dom inside an animation frame
-		const { scrollX, innerHeight } = window;
+			document.body.style.setProperty("position", "fixed", "important");
+			Object.assign(document.body.style, {
+				top: `${-this.#scrollPos}px`,
+				left: `${-scrollX}px`,
+				right: "0px",
+				height: "auto",
+			});
 
-		document.body.style.setProperty("position", "fixed", "important");
-		Object.assign(document.body.style, {
-			top: `${-this.#scrollPos}px`,
-			left: `${-scrollX}px`,
-			right: "0px",
-			height: "auto",
-		});
-
-		setTimeout(
-			() =>
-				requestAnimationFrame(() => {
-					// Attempt to check if the bottom bar appeared due to the position change
-					const bottomBarHeight = innerHeight - window.innerHeight;
-					if (bottomBarHeight && this.#scrollPos >= innerHeight) {
-						// Move the content further up so that the bottom bar doesn't hide it
-						document.body.style.top = `${-(this.#scrollPos + bottomBarHeight)}px`;
-					}
-				}),
-			300
-		);
+			window.setTimeout(
+				() =>
+					window.requestAnimationFrame(() => {
+						// Attempt to check if the bottom bar appeared due to the position change
+						const bottomBarHeight = innerHeight - window.innerHeight;
+						if (bottomBarHeight && this.#scrollPos >= innerHeight) {
+							// Move the content further up so that the bottom bar doesn't hide it
+							document.body.style.top = `${-(this.#scrollPos + bottomBarHeight)}px`;
+						}
+					}),
+				300
+			);
+		}
 	};
 
 	restorePositionSetting = () => {
-		if (previousBodyPosition === null || this.#noBodyStyles.current) return;
-		const activeUrl = this.#activeUrl;
+		if (previousBodyPosition !== null && !this.#noBodyStyles) {
+			// Convert the position from "px" to Int
+			const y = -Number.parseInt(document.body.style.top, 10);
+			const x = -Number.parseInt(document.body.style.left, 10);
 
-		// Convert the position from "px" to Int
-		const y = -Number.parseInt(document.body.style.top, 10);
-		const x = -Number.parseInt(document.body.style.left, 10);
+			// Restore styles
+			Object.assign(document.body.style, previousBodyPosition);
 
-		// Restore styles
-		Object.assign(document.body.style, previousBodyPosition);
+			window.requestAnimationFrame(() => {
+				if (
+					this.#preventScrollRestoration.current &&
+					this.#activeUrl !== window.location.href
+				) {
+					this.#activeUrl = window.location.href;
+					return;
+				}
 
-		window.requestAnimationFrame(() => {
-			if (this.#preventScrollRestoration.current && activeUrl !== window.location.href) {
-				this.#activeUrl = window.location.href;
-				return;
-			}
+				window.scrollTo(x, y);
+			});
 
-			window.scrollTo(x, y);
-		});
-
-		previousBodyPosition = null;
+			previousBodyPosition = null;
+		}
 	};
 }

@@ -6,17 +6,17 @@ import { setStyles } from "./internal/helpers/index.js";
 import { TRANSITIONS, VELOCITY_THRESHOLD } from "./internal/constants.js";
 
 type SnapPointsProps = WritableBoxedValues<{
-	activeSnapPoint: number | string | null;
+	activeSnapPoint: number | string | null | undefined;
 }> &
 	ReadableBoxedValues<{
-		snapPoints: (number | string)[];
-		fadeFromIndex: number;
+		snapPoints: (number | string)[] | null;
+		fadeFromIndex: number | null;
 		drawerRef: HTMLElement | null;
 		overlayRef: HTMLElement | null;
 		direction: DrawerDirection;
 	}> & {
 		onSnapPointChange: (activeSnapPointIdx: number) => void;
-		setActiveSnapPoint: (newValue: number | string | null) => void;
+		setActiveSnapPoint: (newValue: number | string | null | undefined) => void;
 	};
 
 export class SnapPoints {
@@ -175,7 +175,8 @@ export class SnapPoints {
 		velocity: number;
 		dismissible: boolean;
 	}) => {
-		if (this.#fadeFromIndex.current === undefined) return;
+		if (this.#fadeFromIndex.current === undefined || this.#fadeFromIndex.current === null)
+			return;
 		const direction = this.#direction.current;
 		const activeSnapPointOffset = this.activeSnapPointOffset;
 		const activeSnapPointIndex = this.activeSnapPointIndex;
@@ -221,6 +222,7 @@ export class SnapPoints {
 
 			// Don't do anything if we swipe upwards while being on the last snap point
 			if (dragDirection > 0 && this.isLastSnapPoint) {
+				if (!this.#snapPoints.current) return;
 				this.snapToPoint(this.snapPointsOffset[this.#snapPoints.current.length - 1]);
 				return;
 			}
@@ -276,7 +278,8 @@ export class SnapPoints {
 			!snapPoints ||
 			typeof activeSnapPointIndex !== "number" ||
 			!snapPointsOffset ||
-			fadeFromIndex === undefined
+			fadeFromIndex === undefined ||
+			fadeFromIndex === null
 		)
 			return null;
 

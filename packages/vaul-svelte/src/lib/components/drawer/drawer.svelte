@@ -14,7 +14,7 @@
 		onOpenChange = noop,
 		closeThreshold = DEFAULT_CLOSE_THRESHOLD,
 		scrollLockTimeout = DEFAULT_SCROLL_LOCK_TIMEOUT,
-		snapPoints = [],
+		snapPoints = null,
 		fadeFromIndex = snapPoints && snapPoints.length - 1,
 		backgroundColor = "black",
 		nested = false,
@@ -30,6 +30,7 @@
 		handleOnly = false,
 		noBodyStyles = false,
 		preventScrollRestoration = true,
+		setBackgroundColorOnScale = true,
 		...restProps
 	}: DrawerRootProps = $props();
 
@@ -65,6 +66,7 @@
 		handleOnly: box.with(() => handleOnly),
 		noBodyStyles: box.with(() => noBodyStyles),
 		preventScrollRestoration: box.with(() => preventScrollRestoration),
+		setBackgroundColorOnScale: box.with(() => setBackgroundColorOnScale),
 	});
 </script>
 
@@ -204,7 +206,7 @@
 		opacity: 1;
 	}
 
-	:global([vaul-handle]) {
+	:global([data-vaul-handle]) {
 		display: block;
 		position: relative;
 		opacity: 0.8;
@@ -217,15 +219,15 @@
 		cursor: grab;
 	}
 
-	:global([vaul-handle]:hover, [vaul-handle]:active) {
+	:global([data-vaul-handle]:hover, [data-vaul-handle]:active) {
 		opacity: 1;
 	}
 
-	:global([vaul-handle]:active) {
+	:global([data-vaul-handle]:active) {
 		cursor: grabbing;
 	}
 
-	:global([vaul-handle-hitarea]) {
+	:global([data-vaul-handle-hitarea]) {
 		position: absolute;
 		left: 50%;
 		top: 50%;

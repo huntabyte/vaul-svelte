@@ -25,17 +25,16 @@ const DRAG_CLASS = "vaul-dragging";
 
 export type DrawerDirection = "left" | "right" | "top" | "bottom";
 
-export type OnDragEvent = PointerEvent | TouchEvent;
-export type OnDrag = (event: OnDragEvent, percentageDragged: number) => void;
+export type OnDrag = (event: PointerEvent, percentageDragged: number) => void;
 export type OnReleaseEvent = PointerEvent | MouseEvent | TouchEvent;
-export type OnRelease = (event: OnReleaseEvent, open: boolean) => void;
+export type OnRelease = (event: PointerEvent, open: boolean) => void;
 
 type DrawerRootStateProps = ReadableBoxedValues<{
 	closeThreshold: number;
 	shouldScaleBackground: boolean;
 	scrollLockTimeout: number;
-	snapPoints: (string | number)[];
-	fadeFromIndex: number;
+	snapPoints: (string | number)[] | null;
+	fadeFromIndex: number | null;
 	fixed: boolean;
 	dismissible: boolean;
 	direction: DrawerDirection;
@@ -52,7 +51,7 @@ type DrawerRootStateProps = ReadableBoxedValues<{
 }> &
 	WritableBoxedValues<{
 		open: boolean;
-		activeSnapPoint: number | string | null;
+		activeSnapPoint: number | string | null | undefined;
 	}>;
 
 class DrawerRootState {
@@ -279,7 +278,7 @@ class DrawerRootState {
 		});
 	}
 
-	setActiveSnapPoint = (newValue: number | string | null) => {
+	setActiveSnapPoint = (newValue: number | string | null | undefined) => {
 		this.activeSnapPoint.current = newValue;
 	};
 
@@ -625,7 +624,7 @@ class DrawerRootState {
 		this.dragEndTime = new Date();
 	};
 
-	onRelease = (e: PointerEvent | MouseEvent) => {
+	onRelease = (e: PointerEvent) => {
 		const drawerNode = this.drawerNode;
 		if (!this.isDragging || !drawerNode) return;
 
@@ -806,6 +805,15 @@ class DrawerRootState {
 		}
 	};
 
+	onOpenChange = (o: boolean) => {
+		if (!o) {
+			this.closeDrawer();
+		} else {
+			this.hasBeenOpened = true;
+			this.setOpen(true);
+		}
+	};
+
 	createContentState = (props: DrawerContentStateProps) => {
 		return new DrawerContentState(props, this);
 	};
@@ -939,9 +947,9 @@ class DrawerContentState {
 		() =>
 			({
 				id: this.#id.current,
-				"vaul-drawer": "",
-				"vaul-drawer-direction": this.root.direction.current,
-				"vaul-drawer-visible": this.root.visible ? "true" : "false",
+				"data-vaul-drawer": "",
+				"data-vaul-drawer-direction": this.root.direction.current,
+				"data-vaul-drawer-visible": this.root.visible ? "true" : "false",
 				style: this.#style,
 				onpointerdown: this.#onpointerdown,
 				onpointermove: this.#onpointermove,
@@ -975,7 +983,7 @@ class DrawerOverlayState {
 		});
 	}
 
-	#onmouseup = (e: MouseEvent) => {
+	#onmouseup = (e: PointerEvent) => {
 		this.root.onRelease(e);
 	};
 
@@ -983,11 +991,11 @@ class DrawerOverlayState {
 		() =>
 			({
 				id: this.#id.current,
-				"vaul-drawer-visible": this.root.visible ? "true" : "false",
-				"vaul-overlay": "",
-				"vaul-snap-points":
+				"data-vaul-drawer-visible": this.root.visible ? "true" : "false",
+				"data-vaul-overlay": "",
+				"data-vaul-snap-points":
 					this.root.open.current && this.#hasSnapPoints ? "true" : "false",
-				"vaul-snap-points-overlay":
+				"data-vaul-snap-points-overlay":
 					this.root.open.current && this.root.snapPointState.shouldFade
 						? "true"
 						: "false",
@@ -1003,13 +1011,14 @@ type DrawerHandleStateProps = WithRefProps &
 
 const LONG_HANDLE_PRESS_TIMEOUT = 250;
 const DOUBLE_TAP_TIMEOUT = 120;
+
 class DrawerHandleState {
 	#id: DrawerHandleStateProps["id"];
 	#ref: DrawerHandleStateProps["ref"];
 	#preventCycle: DrawerHandleStateProps["preventCycle"];
 	root: DrawerRootState;
-	#closeTimeoutId: number | null = null;
-	#shouldCancelInteractions = false;
+	#closeTimeoutId: number | null = $state(null);
+	#shouldCancelInteractions = $state(false);
 
 	constructor(props: DrawerHandleStateProps, root: DrawerRootState) {
 		this.#id = props.id;
@@ -1039,7 +1048,7 @@ class DrawerHandleState {
 
 	handleCycleSnapPoints = () => {
 		// prevent accidental taps while resizing drawer
-		if (this.root.isDragging || this.#preventCycle || this.#shouldCancelInteractions) {
+		if (this.root.isDragging || this.#preventCycle.current || this.#shouldCancelInteractions) {
 			this.handleCancelInteraction();
 			return;
 		}
@@ -1114,8 +1123,8 @@ class DrawerHandleState {
 		() =>
 			({
 				id: this.#id.current,
-				"vaul-drawer-visible": this.root.visible ? "true" : "false",
-				"vaul-handle": "",
+				"data-vaul-drawer-visible": this.root.visible ? "true" : "false",
+				"data-vaul-handle": "",
 				"aria-hidden": "true",
 				onclick: this.#onclick,
 				ondblclick: this.#ondblclick,
@@ -1128,7 +1137,7 @@ class DrawerHandleState {
 	hitAreaProps = $derived.by(
 		() =>
 			({
-				"vaul-handle-hitarea": "",
+				"data-vaul-handle-hitarea": "",
 				"aria-hidden": "true",
 			}) as const
 	);

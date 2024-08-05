@@ -49,14 +49,14 @@ type BaseDrawerRootPropsWithoutHTML = WithChildren<{
 	 * Example [0.2, 0.5, 0.8]. You can also use px values, which doesn't take
 	 * screen height into account.
 	 */
-	snapPoints?: (number | string)[];
+	snapPoints?: (number | string)[] | null;
 
 	/**
 	 * Index of a `snapPoint` from which the overlay fade should be applied.
 	 *
 	 * @default snapPoints[snapPoints.length - 1] (last snap point)
 	 */
-	fadeFromIndex?: number;
+	fadeFromIndex?: number | null;
 
 	/**
 	 * A callback function that is called when the drawer is dragged
@@ -152,6 +152,13 @@ type BaseDrawerRootPropsWithoutHTML = WithChildren<{
 	 * @default false
 	 */
 	noBodyStyles?: boolean;
+
+	/**
+	 * When false we don't change body's background color when the drawer is open.
+	 *
+	 * @default true
+	 */
+	setBackgroundColorOnScale?: boolean;
 }>;
 
 export type DrawerRootPropsWithoutHTML = BaseDrawerRootPropsWithoutHTML &
