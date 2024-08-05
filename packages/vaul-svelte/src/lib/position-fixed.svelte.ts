@@ -75,6 +75,10 @@ export class PositionFixed {
 					this.restorePositionSetting();
 				}
 			});
+
+			return () => {
+				this.restorePositionSetting();
+			};
 		});
 	}
 

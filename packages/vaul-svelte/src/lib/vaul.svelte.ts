@@ -95,7 +95,6 @@ class DrawerRootState {
 	drawerNode = $state<HTMLElement | null>(null);
 	drawerHeight = $state(0);
 	initialDrawerHeight = $state(0);
-	drawerId = $state<string | null>(null);
 
 	positionFixedState: PositionFixed;
 	snapPointState: SnapPoints;
@@ -573,6 +572,7 @@ class DrawerRootState {
 		window.setTimeout(() => {
 			this.visible = false;
 			this.open.current = false;
+			this.hasBeenOpened = false;
 		}, 300);
 
 		window.setTimeout(() => {
@@ -821,7 +821,6 @@ class DrawerRootState {
 
 	onOpenChange = (o: boolean) => {
 		if (!o) {
-			this.hasBeenOpened = false;
 			this.closeDrawer();
 		} else {
 			this.hasBeenOpened = true;
@@ -1041,9 +1040,6 @@ class DrawerHandleState {
 			id: this.#id,
 			ref: this.#ref,
 			condition: () => this.root.open.current,
-			onRefChange: (node) => {
-				this.root.triggerNode = node;
-			},
 		});
 	}
 
@@ -1183,41 +1179,6 @@ export function useDrawerHandle(props: DrawerHandleStateProps) {
 
 function getScale() {
 	return (window.innerWidth - WINDOW_TOP_OFFSET) / window.innerWidth;
-}
-
-function getDistanceMoved(
-	pointerStart: number,
-	direction: DrawerDirection,
-	event: PointerEvent | MouseEvent | TouchEvent
-) {
-	if (event.type.startsWith("touch")) {
-		return getDistanceMovedForTouch(pointerStart, direction, event as TouchEvent);
-	} else {
-		return getDistanceMovedForPointer(pointerStart, direction, event as PointerEvent);
-	}
-}
-
-function getDistanceMovedForPointer(
-	pointerStart: number,
-	direction: DrawerDirection,
-	event: PointerEvent | MouseEvent
-) {
-	return pointerStart - (isVertical(direction) ? event.screenY : event.screenX);
-}
-
-function getDistanceMovedForTouch(
-	pointerStart: number,
-	direction: DrawerDirection,
-	event: TouchEvent
-) {
-	return (
-		pointerStart -
-		(isVertical(direction) ? event.changedTouches[0].screenY : event.changedTouches[0].screenX)
-	);
-}
-
-function getDirectionMultiplier(direction: DrawerDirection) {
-	return direction === "bottom" || direction === "right" ? 1 : -1;
 }
 
 export function dampenValue(v: number) {
