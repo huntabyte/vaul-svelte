@@ -26,9 +26,7 @@
 <DialogPrimitive.Overlay bind:ref {...mergedProps}>
 	<Mounted
 		onMounted={(mounted) => {
-			if (!mounted) {
-				overlayState.root.overlayNode = null;
-			}
+			overlayState.mounted = mounted;
 		}}
 	/>
 	{@render children?.()}

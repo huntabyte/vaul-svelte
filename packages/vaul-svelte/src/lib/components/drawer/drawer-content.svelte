@@ -29,7 +29,6 @@
 </script>
 
 <DialogPrimitive.Content
-	bind:ref
 	{...mergedProps}
 	preventScroll={false}
 	onMountAutoFocus={(e) => {
@@ -55,14 +54,10 @@
 		contentState.onInteractOutside(e);
 	}}
 >
+	{@render children?.()}
 	<Mounted
 		onMounted={(mounted) => {
-			if (mounted) {
-				contentState.root.visible = true;
-			} else {
-				contentState.root.drawerNode = null;
-			}
+			contentState.mounted = mounted;
 		}}
 	/>
-	{@render children?.()}
 </DialogPrimitive.Content>

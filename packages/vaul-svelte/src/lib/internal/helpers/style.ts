@@ -12,7 +12,6 @@ export function setStyles(
 	styles: Style,
 	ignoreCache = false
 ) {
-	console.log(el, styles);
 	if (!el || !(el instanceof HTMLElement)) return;
 	const originalStyles: Style = {};
 

@@ -99,6 +99,27 @@ class DrawerRootState {
 	positionFixedState: PositionFixed;
 	snapPointState: SnapPoints;
 
+	resetDrawerRootState = () => {
+		this.hasBeenOpened = false;
+		this.visible = false;
+		this.justReleased = false;
+		this.isDragging = false;
+		this.triggerNode = null;
+		this.overlayNode = null;
+		this.openTime = null;
+		this.dragStartTime = null;
+		this.dragEndTime = null;
+		this.lastTimeDragPrevented = null;
+		this.isAllowedToDrag = false;
+		this.nestedOpenChangeTimer = null;
+		this.pointerStart = 0;
+		this.keyboardIsOpen = false;
+		this.previousDiffFromInitial = 0;
+		this.drawerNode = null;
+		this.drawerHeight = 0;
+		this.initialDrawerHeight = 0;
+	};
+
 	constructor(props: DrawerRootStateProps) {
 		this.open = props.open;
 		this.closeThreshold = props.closeThreshold;
@@ -252,7 +273,6 @@ class DrawerRootState {
 		});
 
 		// Find all scrollable elements inside our drawer and assign a class to it so that we can disable overflow when dragging to prevent pointermove not being captured
-
 		$effect(() => {
 			const visible = this.visible;
 			const drawerNode = untrack(() => this.drawerNode);
@@ -284,11 +304,6 @@ class DrawerRootState {
 			),
 		});
 	}
-
-	cleanupBodyStyles = () => {
-		this.scaleBackground(false);
-		this.positionFixedState.restorePositionSetting();
-	};
 
 	setActiveSnapPoint = (newValue: number | string | null | undefined) => {
 		this.activeSnapPoint.current = newValue;
@@ -849,6 +864,7 @@ class DrawerContentState {
 	root: DrawerRootState;
 	#pointerStart = $state<{ x: number; y: number } | null>(null);
 	#wasBeyondThePoint = $state(false);
+	mounted = $state(false);
 
 	constructor(props: DrawerContentStateProps, root: DrawerRootState) {
 		this.#id = props.id;
@@ -858,10 +874,20 @@ class DrawerContentState {
 		useRefById({
 			id: this.#id,
 			ref: this.#ref,
-			condition: () => this.root.open.current,
+			condition: () => this.mounted,
 			onRefChange: (node) => {
+				if (!this.mounted) {
+					this.root.drawerNode = null;
+					return;
+				}
 				this.root.drawerNode = node;
 			},
+		});
+
+		$effect(() => {
+			const mounted = this.mounted;
+			if (!mounted) return;
+			this.root.visible = true;
 		});
 	}
 
@@ -977,6 +1003,7 @@ class DrawerOverlayState {
 	#hasSnapPoints = $derived.by(
 		() => this.root.snapPoints.current && this.root.snapPoints.current.length > 0
 	);
+	mounted = $state(false);
 
 	constructor(props: DrawerOverlayStateProps, root: DrawerRootState) {
 		this.#id = props.id;
@@ -986,8 +1013,12 @@ class DrawerOverlayState {
 		useRefById({
 			id: this.#id,
 			ref: this.#ref,
-			condition: () => this.root.open.current,
+			condition: () => this.mounted,
 			onRefChange: (node) => {
+				if (!this.mounted) {
+					this.root.overlayNode = null;
+					return;
+				}
 				this.root.overlayNode = node;
 			},
 		});

@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { Drawer, type DrawerDirection } from "vaul-svelte";
-	import DrawerContent from "./drawer-content.svelte";
+	import DrawerContent from "./drawer-content-wrapper.svelte";
 
 	let { direction }: { direction: DrawerDirection } = $props();
 </script>

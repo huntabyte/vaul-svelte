@@ -49,7 +49,9 @@ export class PositionFixed {
 
 			const unsubListener = addEventListener(window, "scroll", onScroll);
 
-			return unsubListener;
+			return () => {
+				unsubListener();
+			};
 		});
 
 		$effect(() => {

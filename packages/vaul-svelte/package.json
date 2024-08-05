@@ -53,7 +53,7 @@
 	"types": "./dist/index.d.ts",
 	"type": "module",
 	"dependencies": {
-		"bits-ui": "https://pkg.pr.new/huntabyte/bits-ui/bits-ui@8cd05f0",
+		"bits-ui": "https://pkg.pr.new/huntabyte/bits-ui/bits-ui@3632b7e",
 		"svelte-toolbelt": "^0.3.0"
 	},
 	"engines": {
