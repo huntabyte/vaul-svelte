@@ -1,9 +1,5 @@
 import type { Action } from "svelte/action";
 
-export type SvelteEvent<T extends Event = Event, U extends EventTarget = EventTarget> = T & {
-	currentTarget: EventTarget & U;
-};
-
 export type OnChangeFn<T> = (value: T) => void;
 
 export type Arrayable<T> = T | T[];
