@@ -303,6 +303,13 @@ class DrawerRootState {
 					this.disablePreventScroll.current
 			),
 		});
+
+		$effect(() => {
+			return () => {
+				this.scaleBackground(false);
+				this.positionFixedState.restorePositionSetting();
+			};
+		});
 	}
 
 	setActiveSnapPoint = (newValue: number | string | null | undefined) => {
