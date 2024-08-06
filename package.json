@@ -1,76 +1,40 @@
 {
-	"name": "vaul-svelte",
-	"version": "0.3.2",
-	"license": "MIT",
-	"repository": "github:huntabyte/vaul-svelte",
+	"name": "root",
+	"description": "Monorepo for vaul-svelte",
+	"version": "0.0.0",
 	"scripts": {
-		"dev": "vite dev",
-		"build": "vite build && pnpm run package",
-		"preview": "vite preview",
-		"package": "svelte-kit sync && svelte-package && publint",
-		"prepublishOnly": "pnpm run package",
-		"test": "vitest",
-		"check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
-		"check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
-		"lint": "prettier --check . && eslint .",
+		"build": "pnpm -r build",
+		"build:packages": "pnpm -F \"./packages/**\" --parallel build",
+		"check": "pnpm build:packages && pnpm -r check",
+		"ci:publish": "pnpm build:packages && changeset publish",
+		"dev": "pnpm -F \"./packages/**\" svelte-kit sync && pnpm -r --parallel --reporter append-only --color dev",
 		"format": "prettier --write .",
-		"release": "changeset publish",
-		"changeset": "changeset"
+		"lint": "prettier --check . && eslint .",
+		"lint:fix": "eslint --fix .",
+		"test": "pnpm -F bits-ui test"
 	},
-	"exports": {
-		".": {
-			"types": "./dist/index.d.ts",
-			"svelte": "./dist/index.js"
-		}
-	},
-	"files": [
-		"dist",
-		"!dist/**/*.test.*",
-		"!dist/**/*.spec.*"
-	],
-	"peerDependencies": {
-		"svelte": "^4.0.0 || ^5.0.0-next.1"
-	},
+	"keywords": [],
+	"author": "Hunter Johnston <https://github.com/huntabyte>",
+	"license": "MIT",
 	"devDependencies": {
 		"@changesets/cli": "^2.27.1",
-		"@playwright/test": "^1.28.1",
-		"@sveltejs/adapter-vercel": "^4.0.3",
-		"@sveltejs/kit": "^2.0.0",
-		"@sveltejs/package": "^2.0.0",
-		"@sveltejs/vite-plugin-svelte": "^3.0.1",
+		"@huntabyte/eslint-config": "^0.3.2",
+		"@huntabyte/eslint-plugin": "^0.1.0",
 		"@svitejs/changesets-changelog-github-compact": "^1.1.0",
-		"@testing-library/dom": "^9.3.3",
-		"@testing-library/svelte": "^4.0.5",
-		"@testing-library/user-event": "^14.5.2",
-		"@types/eslint": "8.56.0",
-		"@types/node": "^20.10.5",
-		"@typescript-eslint/eslint-plugin": "^6.0.0",
-		"@typescript-eslint/parser": "^6.0.0",
-		"autoprefixer": "^10.4.16",
-		"clsx": "^2.1.0",
-		"eslint": "^8.56.0",
-		"eslint-config-prettier": "^9.1.0",
-		"eslint-plugin-svelte": "^2.35.1",
-		"jsdom": "^23.0.1",
-		"postcss": "^8.4.32",
-		"postcss-load-config": "^5.0.2",
-		"prettier": "^3.1.1",
-		"prettier-plugin-svelte": "^3.1.2",
-		"prettier-plugin-tailwindcss": "^0.5.9",
-		"publint": "^0.1.9",
-		"svelte": "^4.2.7",
-		"svelte-check": "^3.6.0",
-		"tailwindcss": "^3.3.6",
-		"tslib": "^2.4.1",
-		"typescript": "^5.0.0",
-		"vite": "^5.0.3",
-		"vitest": "^1.0.0",
-		"vitest-dom": "^0.1.1"
+		"eslint": "^9.0.0",
+		"eslint-plugin-svelte": "^2.37.0",
+		"prettier": "^3.2.5",
+		"prettier-plugin-svelte": "^3.2.2",
+		"prettier-plugin-tailwindcss": "0.5.13",
+		"svelte": "5.0.0-next.208",
+		"svelte-eslint-parser": "^0.41.0",
+		"wrangler": "^3.44.0"
 	},
-	"svelte": "./dist/index.js",
-	"types": "./dist/index.d.ts",
 	"type": "module",
-	"dependencies": {
-		"bits-ui": "^0.21.7"
-	}
+	"engines": {
+		"pnpm": ">=8.7.0",
+		"node": ">=18"
+	},
+	"packageManager": "pnpm@9.6.0",
+	"private": true
 }
