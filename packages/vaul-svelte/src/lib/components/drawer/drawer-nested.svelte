@@ -5,6 +5,8 @@
 	import { getDrawerRootContext } from "$lib/vaul.svelte.js";
 
 	let {
+		open = $bindable(false),
+		activeSnapPoint = $bindable(null),
 		onOpenChange = noop,
 		onDrag = noop,
 		...restProps
@@ -14,6 +16,8 @@
 </script>
 
 <DrawerRoot
+	bind:activeSnapPoint
+	bind:open
 	nested
 	onClose={() => rootState.onNestedOpenChange(false)}
 	onDrag={(e, p) => {
