@@ -1,10 +1,10 @@
-import { useId } from "bits-ui";
 import { onMount, untrack } from "svelte";
 import {
 	type ReadableBoxedValues,
 	type WritableBoxedValues,
 	addEventListener,
 } from "svelte-toolbelt";
+import { useId } from "./internal/use-id.js";
 
 let previousBodyPosition: Record<string, string> | null = null;
 
@@ -24,17 +24,7 @@ function getActiveUrl() {
 	return typeof window !== "undefined" ? window.location.href : "";
 }
 
-class Counter {
-	value = 0;
-
-	constructor(initialValue: number = 0) {
-		this.value = initialValue;
-	}
-}
-
-const count = new Counter(0);
-
-let firstPositionFixedId: number = 0;
+let firstPositionFixedId: string | null = null;
 
 export class PositionFixed {
 	#open: PositionFixedProps["open"];
@@ -46,7 +36,7 @@ export class PositionFixed {
 	#noBodyStyles: PositionFixedProps["noBodyStyles"];
 	#activeUrl = $state(getActiveUrl());
 	#scrollPos = $state(0);
-	#id = generateId();
+	#id = useId();
 
 	constructor(props: PositionFixedProps) {
 		this.#open = props.open;
@@ -108,7 +98,7 @@ export class PositionFixed {
 			previousBodyPosition === null &&
 			this.#open.current &&
 			!this.#noBodyStyles.current &&
-			(firstPositionFixedId === 0 || firstPositionFixedId === this.#id)
+			(firstPositionFixedId === null || firstPositionFixedId === this.#id)
 		) {
 			firstPositionFixedId = this.#id;
 			const win = document.defaultView ?? window;
@@ -184,11 +174,4 @@ export class PositionFixed {
 			previousBodyPosition = null;
 		}
 	};
-}
-
-/**
- * Generates a unique ID based on a global counter.
- */
-function generateId() {
-	return count.value++;
 }

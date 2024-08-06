@@ -1,10 +1,11 @@
 <script lang="ts">
-	import { Dialog as DialogPrimitive, type WithoutChildrenOrChild, useId } from "bits-ui";
+	import { Dialog as DialogPrimitive, type WithoutChildrenOrChild } from "bits-ui";
 	import { type WithChildren, box, mergeProps } from "svelte-toolbelt";
 	import Mounted from "../utils/mounted.svelte";
 	import type { ContentProps } from "./index.js";
 	import { useDrawerContent } from "$lib/vaul.svelte.js";
 	import { noop } from "$lib/internal/helpers/noop.js";
+	import { useId } from "$lib/internal/use-id.js";
 
 	let {
 		id = useId(),

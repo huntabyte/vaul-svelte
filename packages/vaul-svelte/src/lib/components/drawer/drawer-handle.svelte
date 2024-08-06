@@ -1,8 +1,8 @@
 <script lang="ts">
 	import { box, mergeProps } from "svelte-toolbelt";
-	import { useId } from "bits-ui";
 	import type { HandleProps } from "./index.js";
 	import { useDrawerHandle } from "$lib/vaul.svelte.js";
+	import { useId } from "$lib/internal/use-id.js";
 
 	let {
 		id = useId(),
