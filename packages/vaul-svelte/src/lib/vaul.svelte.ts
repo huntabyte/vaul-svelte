@@ -15,6 +15,7 @@ import { PositionFixed } from "./position-fixed.svelte.js";
 import { createContext } from "./internal/createContext.js";
 import { noop } from "./internal/helpers/noop.js";
 import { SnapPoints } from "./snap-points.svelte.js";
+import type { DrawerDirection, OnDrag, OnRelease } from "./types.js";
 
 export const DEFAULT_CLOSE_THRESHOLD = 0.25;
 export const DEFAULT_SCROLL_LOCK_TIMEOUT = 100;
@@ -22,12 +23,6 @@ const BORDER_RADIUS = 8;
 const NESTED_DISPLACEMENT = 16;
 const WINDOW_TOP_OFFSET = 26;
 const DRAG_CLASS = "vaul-dragging";
-
-export type DrawerDirection = "left" | "right" | "top" | "bottom";
-
-export type OnDrag = (event: PointerEvent, percentageDragged: number) => void;
-export type OnReleaseEvent = PointerEvent | MouseEvent | TouchEvent;
-export type OnRelease = (event: PointerEvent, open: boolean) => void;
 
 type DrawerRootStateProps = ReadableBoxedValues<{
 	closeThreshold: number;

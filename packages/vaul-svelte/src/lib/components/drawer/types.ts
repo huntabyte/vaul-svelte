@@ -1,7 +1,6 @@
 import type { Dialog as DialogPrimitive, PrimitiveDivAttributes, WithChild } from "bits-ui";
 import type { WithChildren, Without } from "svelte-toolbelt";
-import type { DrawerDirection, OnChangeFn } from "$lib/types.js";
-import type { OnDrag, OnRelease } from "$lib/vaul.svelte.js";
+import type { DrawerDirection, OnChangeFn, OnDrag, OnRelease } from "$lib/types.js";
 
 export type BaseDrawerRootPropsWithoutHTML = WithChildren<{
 	/**
