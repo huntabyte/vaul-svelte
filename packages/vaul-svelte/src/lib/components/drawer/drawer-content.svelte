@@ -2,7 +2,7 @@
 	import { Dialog as DialogPrimitive, type WithoutChildrenOrChild, useId } from "bits-ui";
 	import { type WithChildren, box, mergeProps } from "svelte-toolbelt";
 	import Mounted from "../utils/mounted.svelte";
-	import type { DrawerContentProps } from "./types.js";
+	import type { ContentProps } from "./index.js";
 	import { useDrawerContent } from "$lib/vaul.svelte.js";
 	import { noop } from "$lib/internal/helpers/noop.js";
 
@@ -15,7 +15,7 @@
 		onFocusOutside = noop,
 		children,
 		...restProps
-	}: WithChildren<WithoutChildrenOrChild<DrawerContentProps>> = $props();
+	}: WithChildren<WithoutChildrenOrChild<ContentProps>> = $props();
 
 	const contentState = useDrawerContent({
 		id: box.with(() => id),

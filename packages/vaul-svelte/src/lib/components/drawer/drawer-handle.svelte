@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { box, mergeProps } from "svelte-toolbelt";
 	import { useId } from "bits-ui";
-	import type { DrawerHandleProps } from "./types.js";
+	import type { HandleProps } from "./index.js";
 	import { useDrawerHandle } from "$lib/vaul.svelte.js";
 
 	let {
@@ -10,7 +10,7 @@
 		preventCycle = false,
 		children,
 		...restProps
-	}: DrawerHandleProps = $props();
+	}: HandleProps = $props();
 
 	const handleState = useDrawerHandle({
 		id: box.with(() => id),

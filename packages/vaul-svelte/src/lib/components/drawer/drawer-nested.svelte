@@ -1,6 +1,6 @@
 <script lang="ts">
 	import DrawerRoot from "./drawer.svelte";
-	import type { DrawerRootProps } from "./types.js";
+	import type { RootProps } from "./index.js";
 	import { noop } from "$lib/internal/helpers/noop.js";
 	import { getDrawerRootContext } from "$lib/vaul.svelte.js";
 
@@ -8,7 +8,7 @@
 		onOpenChange = noop,
 		onDrag = noop,
 		...restProps
-	}: Omit<DrawerRootProps, "nested" | "onRelease" | "onClose"> = $props();
+	}: Omit<RootProps, "nested" | "onRelease" | "onClose"> = $props();
 
 	const rootState = getDrawerRootContext();
 </script>

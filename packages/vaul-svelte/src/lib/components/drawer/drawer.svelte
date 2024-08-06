@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { Dialog as DialogPrimitive } from "bits-ui";
 	import { box } from "svelte-toolbelt";
-	import type { DrawerRootProps } from "./types.js";
+	import type { RootProps } from "./index.js";
 	import { noop } from "$lib/internal/helpers/noop.js";
 	import {
 		DEFAULT_CLOSE_THRESHOLD,
@@ -33,7 +33,7 @@
 		setBackgroundColorOnScale = true,
 		disablePreventScroll = false,
 		...restProps
-	}: DrawerRootProps = $props();
+	}: RootProps = $props();
 
 	const rootState = useDrawerRoot({
 		open: box.with(

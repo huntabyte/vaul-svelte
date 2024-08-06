@@ -1,4 +1,4 @@
-import type { Dialog as DialogPrimitive, PrimitiveDivAttributes, WithChild } from "bits-ui";
+import type { Dialog as DrawerPrimitive, PrimitiveDivAttributes, WithChild } from "bits-ui";
 import type { WithChildren, Without } from "svelte-toolbelt";
 import type { DrawerDirection, OnChangeFn, OnDrag, OnRelease } from "$lib/types.js";
 
@@ -159,7 +159,7 @@ export type BaseDrawerRootPropsWithoutHTML = WithChildren<{
 }>;
 
 export type DrawerRootPropsWithoutHTML = BaseDrawerRootPropsWithoutHTML &
-	Without<DialogPrimitive.RootProps, BaseDrawerRootPropsWithoutHTML>;
+	Without<DrawerPrimitive.RootProps, BaseDrawerRootPropsWithoutHTML>;
 
 export type DrawerRootProps = DrawerRootPropsWithoutHTML;
 
@@ -185,12 +185,8 @@ export type {
 	DialogOverlayProps as DrawerOverlayProps,
 	DialogPortalPropsWithoutHTML as DrawerPortalPropsWithoutHTML,
 	DialogPortalProps as DrawerPortalProps,
-	DialogTriggerPropsWithoutHTML as DrawerTriggerPropsWithoutHTML,
 	DialogTriggerProps as DrawerTriggerProps,
-	DialogTitlePropsWithoutHTML as DrawerTitlePropsWithoutHTML,
 	DialogTitleProps as DrawerTitleProps,
-	DialogDescriptionPropsWithoutHTML as DrawerDescriptionPropsWithoutHTML,
 	DialogDescriptionProps as DrawerDescriptionProps,
-	DialogClosePropsWithoutHTML as DrawerClosePropsWithoutHTML,
 	DialogCloseProps as DrawerCloseProps,
 } from "bits-ui";

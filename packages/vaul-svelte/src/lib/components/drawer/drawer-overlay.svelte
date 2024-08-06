@@ -2,7 +2,7 @@
 	import { Dialog as DialogPrimitive, type WithoutChildrenOrChild, useId } from "bits-ui";
 	import { type WithChildren, box, mergeProps } from "svelte-toolbelt";
 	import Mounted from "../utils/mounted.svelte";
-	import type { DrawerOverlayProps } from "./types.js";
+	import type { OverlayProps } from "./index.js";
 	import { useDrawerOverlay } from "$lib/vaul.svelte.js";
 
 	let {
@@ -10,7 +10,7 @@
 		ref = $bindable(null),
 		children,
 		...restProps
-	}: WithChildren<WithoutChildrenOrChild<DrawerOverlayProps>> = $props();
+	}: WithChildren<WithoutChildrenOrChild<OverlayProps>> = $props();
 
 	const overlayState = useDrawerOverlay({
 		id: box.with(() => id),
