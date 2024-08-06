@@ -17,6 +17,7 @@ type PositionFixedProps = WritableBoxedValues<{
 		hasBeenOpened: boolean;
 		preventScrollRestoration: boolean;
 		noBodyStyles: boolean;
+		disablePreventScroll: boolean;
 	}>;
 
 function getActiveUrl() {
@@ -41,6 +42,7 @@ export class PositionFixed {
 	#nested: PositionFixedProps["nested"];
 	#hasBeenOpened: PositionFixedProps["hasBeenOpened"];
 	#preventScrollRestoration: PositionFixedProps["preventScrollRestoration"];
+	#disablePreventScroll: PositionFixedProps["disablePreventScroll"];
 	#noBodyStyles: PositionFixedProps["noBodyStyles"];
 	#activeUrl = $state(getActiveUrl());
 	#scrollPos = $state(0);
@@ -53,6 +55,7 @@ export class PositionFixed {
 		this.#hasBeenOpened = props.hasBeenOpened;
 		this.#preventScrollRestoration = props.preventScrollRestoration;
 		this.#noBodyStyles = props.noBodyStyles;
+		this.#disablePreventScroll = props.disablePreventScroll;
 
 		onMount(() => {
 			const onScroll = () => {
@@ -125,13 +128,17 @@ export class PositionFixed {
 			// Update the dom inside an animation frame
 			const { scrollX, innerHeight } = window;
 
-			document.body.style.setProperty("position", "fixed", "important");
+			if (!this.#disablePreventScroll.current) {
+				document.body.style.setProperty("position", "fixed", "important");
+			}
 			Object.assign(document.body.style, {
 				top: `${-this.#scrollPos}px`,
 				left: `${-scrollX}px`,
 				right: "0px",
 				height: "auto",
-				paddingRight: `${scrollbarWidth}px`,
+				paddingRight: this.#disablePreventScroll.current
+					? document.body.style.paddingRight
+					: `${scrollbarWidth}px`,
 			});
 
 			window.setTimeout(

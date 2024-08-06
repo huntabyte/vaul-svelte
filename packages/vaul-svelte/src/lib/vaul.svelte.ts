@@ -145,6 +145,7 @@ class DrawerRootState {
 			nested: this.nested,
 			noBodyStyles: this.noBodyStyles,
 			preventScrollRestoration: this.preventScrollRestoration,
+			disablePreventScroll: this.disablePreventScroll,
 		});
 
 		this.snapPointState = new SnapPoints({
@@ -288,17 +289,17 @@ class DrawerRootState {
 			});
 		});
 
-		// usePreventScroll({
-		// 	isDisabled: box.with(
-		// 		() =>
-		// 			!this.open.current ||
-		// 			this.isDragging ||
-		// 			!this.modal.current ||
-		// 			this.justReleased ||
-		// 			!this.hasBeenOpened ||
-		// 			this.disablePreventScroll.current
-		// 	),
-		// });
+		usePreventScroll({
+			isDisabled: box.with(
+				() =>
+					!this.open.current ||
+					this.isDragging ||
+					!this.modal.current ||
+					this.justReleased ||
+					!this.hasBeenOpened ||
+					this.disablePreventScroll.current
+			),
+		});
 
 		$effect(() => {
 			return () => {
