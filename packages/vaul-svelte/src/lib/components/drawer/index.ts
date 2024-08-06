@@ -12,16 +12,15 @@ export const Title = DrawerPrimitive.Title;
 export const Description = DrawerPrimitive.Description;
 export const Close = DrawerPrimitive.Close;
 
-export type PortalProps = DrawerPrimitive.PortalProps;
-export type TriggerProps = DrawerPrimitive.TriggerProps;
-export type TitleProps = DrawerPrimitive.TitleProps;
-export type DescriptionProps = DrawerPrimitive.DescriptionProps;
-export type CloseProps = DrawerPrimitive.CloseProps;
-
 export type {
 	DrawerRootProps as RootProps,
 	DrawerContentProps as ContentProps,
 	DrawerOverlayProps as OverlayProps,
 	DrawerRootProps as NestedRootProps,
 	DrawerHandleProps as HandleProps,
+	DrawerTitleProps as TitleProps,
+	DrawerDescriptionProps as DescriptionProps,
+	DrawerCloseProps as CloseProps,
+	DrawerPortalProps as PortalProps,
+	DrawerTriggerProps as TriggerProps,
 } from "./types.js";

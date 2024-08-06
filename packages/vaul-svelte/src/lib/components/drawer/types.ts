@@ -1,13 +1,4 @@
-import type {
-	DialogClosePropsWithoutHTML,
-	DialogContentPropsWithoutHTML,
-	DialogDescriptionPropsWithoutHTML,
-	DialogOverlayPropsWithoutHTML,
-	Dialog as DialogPrimitive,
-	DialogTitlePropsWithoutHTML,
-	PrimitiveDivAttributes,
-	WithChild,
-} from "bits-ui";
+import type { Dialog as DialogPrimitive, PrimitiveDivAttributes, WithChild } from "bits-ui";
 import type { WithChildren, Without } from "svelte-toolbelt";
 import type { DrawerDirection, OnChangeFn } from "$lib/types.js";
 import type { OnDrag, OnRelease } from "$lib/vaul.svelte.js";
@@ -173,26 +164,6 @@ export type DrawerRootPropsWithoutHTML = BaseDrawerRootPropsWithoutHTML &
 
 export type DrawerRootProps = DrawerRootPropsWithoutHTML;
 
-export type DrawerOverlayPropsWithoutHTML = DialogOverlayPropsWithoutHTML;
-
-export type DrawerOverlayProps = DialogPrimitive.OverlayProps;
-
-export type DrawerTitlePropsWithoutHTML = DialogTitlePropsWithoutHTML;
-
-export type DrawerTitleProps = DialogPrimitive.TitleProps;
-
-export type DrawerDescriptionPropsWithoutHTML = DialogDescriptionPropsWithoutHTML;
-
-export type DrawerDescriptionProps = DialogPrimitive.DescriptionProps;
-
-export type DrawerClosePropsWithoutHTML = DialogClosePropsWithoutHTML;
-
-export type DrawerCloseProps = DialogPrimitive.CloseProps;
-
-export type DrawerContentPropsWithoutHTML = DialogContentPropsWithoutHTML;
-
-export type DrawerContentProps = DialogPrimitive.ContentProps;
-
 export type DrawerHandlePropsWithoutHTML = Omit<
 	WithChild<{
 		/**
@@ -207,3 +178,20 @@ export type DrawerHandlePropsWithoutHTML = Omit<
 
 export type DrawerHandleProps = DrawerHandlePropsWithoutHTML &
 	Without<PrimitiveDivAttributes, DrawerHandlePropsWithoutHTML>;
+
+export type {
+	DialogContentPropsWithoutHTML as DrawerContentPropsWithoutHTML,
+	DialogContentProps as DrawerContentProps,
+	DialogOverlayPropsWithoutHTML as DrawerOverlayPropsWithoutHTML,
+	DialogOverlayProps as DrawerOverlayProps,
+	DialogPortalPropsWithoutHTML as DrawerPortalPropsWithoutHTML,
+	DialogPortalProps as DrawerPortalProps,
+	DialogTriggerPropsWithoutHTML as DrawerTriggerPropsWithoutHTML,
+	DialogTriggerProps as DrawerTriggerProps,
+	DialogTitlePropsWithoutHTML as DrawerTitlePropsWithoutHTML,
+	DialogTitleProps as DrawerTitleProps,
+	DialogDescriptionPropsWithoutHTML as DrawerDescriptionPropsWithoutHTML,
+	DialogDescriptionProps as DrawerDescriptionProps,
+	DialogClosePropsWithoutHTML as DrawerClosePropsWithoutHTML,
+	DialogCloseProps as DrawerCloseProps,
+} from "bits-ui";
