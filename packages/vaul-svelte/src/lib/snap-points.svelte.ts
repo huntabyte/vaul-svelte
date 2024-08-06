@@ -2,7 +2,7 @@ import type { ReadableBoxedValues, WritableBoxedValues } from "svelte-toolbelt";
 import { untrack } from "svelte";
 import type { DrawerDirection } from "./types.js";
 import { isVertical } from "./internal/helpers/is.js";
-import { setStyles } from "./internal/helpers/index.js";
+import { setStyles } from "./internal/helpers/style.js";
 import { TRANSITIONS, VELOCITY_THRESHOLD } from "./internal/constants.js";
 
 type SnapPointsProps = WritableBoxedValues<{

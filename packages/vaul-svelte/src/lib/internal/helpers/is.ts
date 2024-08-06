@@ -1,4 +1,4 @@
-import type { DrawerDirection } from "../types.js";
+import type { DrawerDirection } from "$lib/types.js";
 
 // HTML input types that do not cause the software keyboard to appear.
 const nonTextInputTypes = new Set([

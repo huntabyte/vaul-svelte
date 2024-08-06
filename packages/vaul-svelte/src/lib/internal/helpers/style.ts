@@ -1,5 +1,5 @@
-import type { DrawerDirection } from "../types.js";
-import { isVertical } from "./index.js";
+import { isVertical } from "./is.js";
+import type { DrawerDirection } from "$lib/types.js";
 
 interface Style {
 	[key: string]: string;
