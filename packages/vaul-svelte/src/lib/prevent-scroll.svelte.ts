@@ -117,13 +117,20 @@ export function usePreventScroll({ isDisabled }: PreventScrollOptions) {
 // For most browsers, all we need to do is set `overflow: hidden` on the root element, and
 // add some padding to prevent the page from shifting when the scrollbar is hidden.
 function preventScrollStandard() {
+	if (typeof document === "undefined") return () => {};
+	const win = document.defaultView ?? window;
+
+	const { documentElement, body } = document;
+	const scrollbarWidth = win.innerWidth - documentElement.clientWidth;
+	const setScrollbarWidthProperty = () =>
+		setCSSProperty(documentElement, "--scrollbar-width", `${scrollbarWidth}px`);
+	const paddingProperty = getPaddingProperty(documentElement);
+	const scrollbarSidePadding = win.getComputedStyle(body)[paddingProperty];
+
 	return chain(
-		setStyle(
-			document.documentElement,
-			"paddingRight",
-			`${window.innerWidth - document.documentElement.clientWidth}px`
-		)
-		// setStyle(document.documentElement, 'overflow', 'hidden'),
+		setScrollbarWidthProperty(),
+		setStyle(body, paddingProperty, `calc(${scrollbarSidePadding} + ${scrollbarWidth}px)`),
+		setStyle(body, "overflow", "hidden")
 	);
 }
 
@@ -156,23 +163,19 @@ function preventScrollStandard() {
 function preventScrollMobileSafari() {
 	let scrollable: Element;
 	let lastY = 0;
-	const onTouchStart = (e: TouchEvent) => {
+	const { documentElement, body, activeElement } = document;
+
+	function onTouchStart(e: TouchEvent) {
 		// Store the nearest scrollable parent element from the element that the user touched.
 		scrollable = getScrollParent(e.target as Element);
-		if (scrollable === document.documentElement && scrollable === document.body) {
-			return;
-		}
+		if (scrollable === documentElement && scrollable === body) return;
 
 		lastY = e.changedTouches[0].pageY;
-	};
+	}
 
-	const onTouchMove = (e: TouchEvent) => {
+	function onTouchMove(e: TouchEvent) {
 		// Prevent scrolling the window.
-		if (
-			!scrollable ||
-			scrollable === document.documentElement ||
-			scrollable === document.body
-		) {
+		if (!scrollable || scrollable === documentElement || scrollable === body) {
 			e.preventDefault();
 			return;
 		}
@@ -185,72 +188,68 @@ function preventScrollMobileSafari() {
 		const scrollTop = scrollable.scrollTop;
 		const bottom = scrollable.scrollHeight - scrollable.clientHeight;
 
-		if (bottom === 0) {
-			return;
-		}
+		if (bottom === 0) return;
 
 		if ((scrollTop <= 0 && y > lastY) || (scrollTop >= bottom && y < lastY)) {
 			e.preventDefault();
 		}
 
 		lastY = y;
-	};
+	}
 
-	const onTouchEnd = (e: TouchEvent) => {
+	function onTouchEnd(e: TouchEvent) {
 		const target = e.target as HTMLElement;
-
+		if (!(isInput(target) && target !== activeElement)) return;
 		// Apply this change if we're not already focused on the target element
-		if (isInput(target) && target !== document.activeElement) {
-			e.preventDefault();
+		e.preventDefault();
 
-			// Apply a transform to trick Safari into thinking the input is at the top of the page
-			// so it doesn't try to scroll it into view. When tapping on an input, this needs to
-			// be done before the "focus" event, so we have to focus the element ourselves.
-			target.style.transform = "translateY(-2000px)";
-			target.focus();
-			requestAnimationFrame(() => {
-				target.style.transform = "";
-			});
-		}
-	};
+		// Apply a transform to trick Safari into thinking the input is at the top of the page
+		// so it doesn't try to scroll it into view. When tapping on an input, this needs to
+		// be done before the "focus" event, so we have to focus the element ourselves.
+		target.style.transform = "translateY(-2000px)";
+		target.focus();
+		requestAnimationFrame(() => {
+			target.style.transform = "";
+		});
+	}
 
-	const onFocus = (e: FocusEvent) => {
+	function onFocus(e: FocusEvent) {
 		const target = e.target as HTMLElement;
-		if (isInput(target)) {
-			// Transform also needs to be applied in the focus event in cases where focus moves
-			// other than tapping on an input directly, e.g. the next/previous buttons in the
-			// software keyboard. In these cases, it seems applying the transform in the focus event
-			// is good enough, whereas when tapping an input, it must be done before the focus event. 🤷‍♂️
-			target.style.transform = "translateY(-2000px)";
-			requestAnimationFrame(() => {
-				target.style.transform = "";
+		if (!isInput(target)) return;
 
-				// This will have prevented the browser from scrolling the focused element into view,
-				// so we need to do this ourselves in a way that doesn't cause the whole page to scroll.
-				if (visualViewport) {
-					if (visualViewport.height < window.innerHeight) {
-						// If the keyboard is already visible, do this after one additional frame
-						// to wait for the transform to be removed.
-						requestAnimationFrame(() => {
-							scrollIntoView(target);
-						});
-					} else {
-						// Otherwise, wait for the visual viewport to resize before scrolling so we can
-						// measure the correct position to scroll to.
-						visualViewport.addEventListener("resize", () => scrollIntoView(target), {
-							once: true,
-						});
-					}
+		// Transform also needs to be applied in the focus event in cases where focus moves
+		// other than tapping on an input directly, e.g. the next/previous buttons in the
+		// software keyboard. In these cases, it seems applying the transform in the focus event
+		// is good enough, whereas when tapping an input, it must be done before the focus event. 🤷‍♂️
+		target.style.transform = "translateY(-2000px)";
+		requestAnimationFrame(() => {
+			target.style.transform = "";
+
+			// This will have prevented the browser from scrolling the focused element into view,
+			// so we need to do this ourselves in a way that doesn't cause the whole page to scroll.
+			if (visualViewport) {
+				if (visualViewport.height < window.innerHeight) {
+					// If the keyboard is already visible, do this after one additional frame
+					// to wait for the transform to be removed.
+					requestAnimationFrame(() => {
+						scrollIntoView(target);
+					});
+				} else {
+					// Otherwise, wait for the visual viewport to resize before scrolling so we can
+					// measure the correct position to scroll to.
+					visualViewport.addEventListener("resize", () => scrollIntoView(target), {
+						once: true,
+					});
 				}
-			});
-		}
-	};
+			}
+		});
+	}
 
-	const onWindowScroll = () => {
+	function onWindowScroll() {
 		// Last resort. If the window scrolled, scroll it back to the top.
 		// It should always be at the top because the body will have a negative margin (see below).
 		window.scrollTo(0, 0);
-	};
+	}
 
 	// Record the original scroll position so we can restore it.
 	// Then apply a negative margin to the body to offset it by the scroll position. This will
@@ -260,11 +259,11 @@ function preventScrollMobileSafari() {
 
 	const restoreStyles = chain(
 		setStyle(
-			document.documentElement,
+			documentElement,
 			"paddingRight",
-			`${window.innerWidth - document.documentElement.clientWidth}px`
-		)
-		// setStyle(document.documentElement, 'overflow', 'hidden'),
+			`${window.innerWidth - documentElement.clientWidth}px`
+		),
+		setStyle(documentElement, "overflow", "hidden")
 		// setStyle(document.body, 'marginTop', `-${scrollY}px`),
 	);
 
@@ -330,4 +329,24 @@ export function isInput(target: Element) {
 		target instanceof HTMLTextAreaElement ||
 		(target instanceof HTMLElement && target.isContentEditable)
 	);
+}
+
+function setCSSProperty(el: HTMLElement | null | undefined, property: string, value: string) {
+	if (!el) return;
+	const previousValue = el.style.getPropertyValue(property);
+	el.style.setProperty(property, value);
+	return () => {
+		if (previousValue) {
+			el.style.setProperty(property, previousValue);
+		} else {
+			el.style.removeProperty(property);
+		}
+	};
+}
+
+function getPaddingProperty(documentElement: HTMLElement) {
+	// RTL <body> scrollbar
+	const documentLeft = documentElement.getBoundingClientRect().left;
+	const scrollbarX = Math.round(documentLeft) + documentElement.scrollLeft;
+	return scrollbarX ? "paddingLeft" : "paddingRight";
 }
