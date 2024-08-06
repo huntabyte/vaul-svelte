@@ -14,6 +14,7 @@
 		onInteractOutside = noop,
 		onFocusOutside = noop,
 		children,
+		preventScroll = false,
 		...restProps
 	}: WithChildren<WithoutChildrenOrChild<ContentProps>> = $props();
 
@@ -30,7 +31,7 @@
 
 <DialogPrimitive.Content
 	{...mergedProps}
-	preventScroll={false}
+	{preventScroll}
 	onMountAutoFocus={(e) => {
 		onMountAutoFocus(e);
 		if (e.defaultPrevented) return;

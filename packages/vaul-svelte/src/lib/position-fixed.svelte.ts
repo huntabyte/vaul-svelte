@@ -1,3 +1,4 @@
+import { useId } from "bits-ui";
 import { onMount, untrack } from "svelte";
 import {
 	type ReadableBoxedValues,
@@ -22,6 +23,18 @@ function getActiveUrl() {
 	return typeof window !== "undefined" ? window.location.href : "";
 }
 
+class Counter {
+	value = 0;
+
+	constructor(initialValue: number = 0) {
+		this.value = initialValue;
+	}
+}
+
+const count = new Counter(0);
+
+let firstPositionFixedId: number = 0;
+
 export class PositionFixed {
 	#open: PositionFixedProps["open"];
 	#modal: PositionFixedProps["modal"];
@@ -31,6 +44,7 @@ export class PositionFixed {
 	#noBodyStyles: PositionFixedProps["noBodyStyles"];
 	#activeUrl = $state(getActiveUrl());
 	#scrollPos = $state(0);
+	#id = generateId();
 
 	constructor(props: PositionFixedProps) {
 		this.#open = props.open;
@@ -66,6 +80,7 @@ export class PositionFixed {
 				// This is needed to force Safari toolbar to show **before** the drawer starts animating to prevent a gnarly shift from happening
 				if (open) {
 					const isStandalone = window.matchMedia("(display-mode: standalone)").matches;
+
 					!isStandalone && this.#setPositionFixed();
 
 					if (!modal) {
@@ -86,13 +101,25 @@ export class PositionFixed {
 
 	#setPositionFixed = () => {
 		// If previousBodyPosition is already set, don't set it again.
-		if (previousBodyPosition === null && this.#open.current && !this.#noBodyStyles.current) {
+		if (
+			previousBodyPosition === null &&
+			this.#open.current &&
+			!this.#noBodyStyles.current &&
+			(firstPositionFixedId === 0 || firstPositionFixedId === this.#id)
+		) {
+			firstPositionFixedId = this.#id;
+			const win = document.defaultView ?? window;
+
+			const { documentElement } = document;
+			const scrollbarWidth = win.innerWidth - documentElement.clientWidth;
+
 			previousBodyPosition = {
 				position: document.body.style.position,
 				top: document.body.style.top,
 				left: document.body.style.left,
 				height: document.body.style.height,
 				right: "unset",
+				paddingRight: document.body.style.paddingRight,
 			};
 
 			// Update the dom inside an animation frame
@@ -104,6 +131,7 @@ export class PositionFixed {
 				left: `${-scrollX}px`,
 				right: "0px",
 				height: "auto",
+				paddingRight: `${scrollbarWidth}px`,
 			});
 
 			window.setTimeout(
@@ -122,7 +150,11 @@ export class PositionFixed {
 	};
 
 	restorePositionSetting = () => {
-		if (previousBodyPosition !== null && !this.#noBodyStyles.current) {
+		if (
+			previousBodyPosition !== null &&
+			!this.#noBodyStyles.current &&
+			firstPositionFixedId === this.#id
+		) {
 			// Convert the position from "px" to Int
 			const y = -Number.parseInt(document.body.style.top, 10);
 			const x = -Number.parseInt(document.body.style.left, 10);
@@ -145,4 +177,11 @@ export class PositionFixed {
 			previousBodyPosition = null;
 		}
 	};
+}
+
+/**
+ * Generates a unique ID based on a global counter.
+ */
+function generateId() {
+	return count.value++;
 }

@@ -257,10 +257,11 @@ class DrawerRootState {
 		$effect(() => {
 			const open = this.open.current;
 			if (!open) return;
+
 			untrack(() => {
-				setStyles(document.documentElement, {
-					scrollBehavior: "auto",
-				});
+				// setStyles(document.documentElement, {
+				// 	scrollBehavior: "auto",
+				// });
 
 				this.openTime = new Date();
 				this.scaleBackground(true);
@@ -287,17 +288,17 @@ class DrawerRootState {
 			});
 		});
 
-		usePreventScroll({
-			isDisabled: box.with(
-				() =>
-					!this.open.current ||
-					this.isDragging ||
-					!this.modal.current ||
-					this.justReleased ||
-					!this.hasBeenOpened ||
-					this.disablePreventScroll.current
-			),
-		});
+		// usePreventScroll({
+		// 	isDisabled: box.with(
+		// 		() =>
+		// 			!this.open.current ||
+		// 			this.isDragging ||
+		// 			!this.modal.current ||
+		// 			this.justReleased ||
+		// 			!this.hasBeenOpened ||
+		// 			this.disablePreventScroll.current
+		// 	),
+		// });
 
 		$effect(() => {
 			return () => {
@@ -749,7 +750,7 @@ class DrawerRootState {
 
 			setStyles(wrapper, {
 				borderRadius: `${BORDER_RADIUS}px`,
-				overflow: "hidden",
+				// overflow: "hidden",
 				...(isVertical(this.direction.current)
 					? {
 							transform: `scale(${getScale()}) translate3d(0, calc(env(safe-area-inset-top) + 14px), 0)`,
