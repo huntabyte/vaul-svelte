@@ -1,4 +1,11 @@
-import type { Dialog as DrawerPrimitive, PrimitiveDivAttributes, WithChild } from "bits-ui";
+import type {
+	DialogContentPropsWithoutHTML,
+	DialogOverlayPropsWithoutHTML,
+	Dialog as DrawerPrimitive,
+	PrimitiveDivAttributes,
+	WithChild,
+	WithoutChildrenOrChild,
+} from "bits-ui";
 import type { WithChildren, Without } from "svelte-toolbelt";
 import type { DrawerDirection, OnChangeFn, OnDrag, OnRelease } from "$lib/types.js";
 
@@ -178,11 +185,20 @@ export type DrawerHandlePropsWithoutHTML = Omit<
 export type DrawerHandleProps = DrawerHandlePropsWithoutHTML &
 	Without<PrimitiveDivAttributes, DrawerHandlePropsWithoutHTML>;
 
+export type DrawerContentPropsWithoutHTML = WithChildren<
+	WithoutChildrenOrChild<DialogContentPropsWithoutHTML>
+>;
+
+export type DrawerContentProps = DrawerContentPropsWithoutHTML &
+	Without<PrimitiveDivAttributes, DrawerContentPropsWithoutHTML>;
+
+export type DrawerOverlayPropsWithoutHTML = WithChildren<
+	WithoutChildrenOrChild<DialogOverlayPropsWithoutHTML>
+>;
+export type DrawerOverlayProps = DrawerOverlayPropsWithoutHTML &
+	Without<PrimitiveDivAttributes, DrawerOverlayPropsWithoutHTML>;
+
 export type {
-	DialogContentPropsWithoutHTML as DrawerContentPropsWithoutHTML,
-	DialogContentProps as DrawerContentProps,
-	DialogOverlayPropsWithoutHTML as DrawerOverlayPropsWithoutHTML,
-	DialogOverlayProps as DrawerOverlayProps,
 	DialogPortalPropsWithoutHTML as DrawerPortalPropsWithoutHTML,
 	DialogPortalProps as DrawerPortalProps,
 	DialogTriggerProps as DrawerTriggerProps,
