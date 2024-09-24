@@ -48,8 +48,8 @@ importers:
   packages/vaul-svelte:
     dependencies:
       bits-ui:
-        specifier: https://pkg.pr.new/huntabyte/bits-ui/bits-ui@3632b7e
-        version: https://pkg.pr.new/huntabyte/bits-ui/bits-ui@3632b7e(svelte@5.0.0-next.208)
+        specifier: https://pkg.pr.new/huntabyte/bits-ui/bits-ui@9cc6eb7
+        version: https://pkg.pr.new/huntabyte/bits-ui/bits-ui@9cc6eb7(svelte@5.0.0-next.208)
       svelte-toolbelt:
         specifier: ^0.3.0
         version: 0.3.0(svelte@5.0.0-next.208)
@@ -101,7 +101,7 @@ importers:
         version: 5.0.0-next.208
       svelte-check:
         specifier: ^3.8.4
-        version: 3.8.5(postcss-load-config@5.0.2(jiti@1.21.0)(postcss@8.4.40))(postcss@8.4.40)(svelte@5.0.0-next.208)
+        version: 3.8.5(postcss-load-config@5.0.2(postcss@8.4.40))(postcss@8.4.40)(svelte@5.0.0-next.208)
       tslib:
         specifier: ^2.6.3
         version: 2.6.3
@@ -150,7 +150,7 @@ importers:
         version: 5.0.0-next.208
       svelte-check:
         specifier: ^3.6.9
-        version: 3.8.5(postcss-load-config@5.0.2(jiti@1.21.0)(postcss@8.4.40))(postcss@8.4.40)(svelte@5.0.0-next.208)
+        version: 3.8.5(postcss-load-config@5.0.2(postcss@8.4.40))(postcss@8.4.40)(svelte@5.0.0-next.208)
       tailwindcss:
         specifier: ^3.4.7
         version: 3.4.7
@@ -1353,9 +1353,9 @@ packages:
     resolution: {integrity: sha512-jDctJ/IVQbZoJykoeHbhXpOlNBqGNcwXJKJog42E5HDPUwQTSdjCHdihjj0DlnheQ7blbT6dHOafNAiS8ooQKA==}
     engines: {node: '>=8'}
 
-  bits-ui@https://pkg.pr.new/huntabyte/bits-ui/bits-ui@3632b7e:
-    resolution: {tarball: https://pkg.pr.new/huntabyte/bits-ui/bits-ui@3632b7e}
-    version: 0.21.13
+  bits-ui@https://pkg.pr.new/huntabyte/bits-ui/bits-ui@9cc6eb7:
+    resolution: {tarball: https://pkg.pr.new/huntabyte/bits-ui/bits-ui@9cc6eb7}
+    version: 0.21.15
     engines: {node: '>=18', pnpm: '>=8.7.0'}
     peerDependencies:
       svelte: ^5.0.0-next.1
@@ -2727,6 +2727,11 @@ packages:
     engines: {node: ^10 || ^12 || ^13.7 || ^14 || >=15.0.1}
     hasBin: true
 
+  nanoid@5.0.7:
+    resolution: {integrity: sha512-oLxFY2gd2IqnjcYyOXD8XGCftpGtZP2AbHbOkthDkvRywH5ayNtPVy9YlOPcHckXzbLTCHpkb7FB+yuxKV13pQ==}
+    engines: {node: ^18 || >=20}
+    hasBin: true
+
   natural-compare-lite@1.4.0:
     resolution: {integrity: sha512-Tj+HTDSJJKaZnfiuw+iaF9skdPpTo2GtEly5JHnWV/hfv2Qj/9RKsGISQtLh2ox3l5EAGw487hnBee0sIJ6v2g==}
 
@@ -3264,8 +3269,8 @@ packages:
   run-parallel@1.2.0:
     resolution: {integrity: sha512-5l4VyZR86LZ/lDxZTR6jqL8AFE2S0IFLMP26AbjsLVADxHdhB/c0GUsH+y39UfCi3dzz8OlQuPmnaJOMoDHQBA==}
 
-  runed@0.15.0:
-    resolution: {integrity: sha512-dVFyidL/ihmoQF9eKu3hxXl3p4yg3asCIMTtxDIcH76wBLB99q6OvJoDl/qbIeL7+lT7q7gzOyaBMuGc1U2vhw==}
+  runed@0.15.2:
+    resolution: {integrity: sha512-4rqCpoq3IezYYxgGo4ukboXdZ86Z7xPkQJzdIO0h0NVHVX0Hwg+X5rOnRWoqRHMYIwEGpr+tSA2ywhlzOcMF5g==}
     peerDependencies:
       svelte: ^5.0.0-next.1
 
@@ -3568,14 +3573,14 @@ packages:
       typescript:
         optional: true
 
-  svelte-toolbelt@0.1.0:
-    resolution: {integrity: sha512-8O9dd2aP/qh01VXqJqP3upHHhNwYkOGpnYgH4YRsqcCLMNw0vYsR4jSYPLd1rL4IWpzhYVEygX1Bi/4LEEGVhw==}
+  svelte-toolbelt@0.3.0:
+    resolution: {integrity: sha512-kQbQgPXHm9CfuqPdOc9wO6+dTEZPqVWEpXV60jneD+EBprrCsS3khVCThNJU5TdStwNJin8OT1ZmVWteU0iKEg==}
     engines: {node: '>=20', pnpm: '>=8.7.0'}
     peerDependencies:
       svelte: ^5.0.0-next.126
 
-  svelte-toolbelt@0.3.0:
-    resolution: {integrity: sha512-kQbQgPXHm9CfuqPdOc9wO6+dTEZPqVWEpXV60jneD+EBprrCsS3khVCThNJU5TdStwNJin8OT1ZmVWteU0iKEg==}
+  svelte-toolbelt@0.3.1:
+    resolution: {integrity: sha512-RL7/iOpvZQF499fjl+P76LkZUgekK6joXfbZwc3sQzFIMhl1wgBCVL3lfsYOfEF4u9SfeD8BNFlgs1pfJh09kw==}
     engines: {node: '>=20', pnpm: '>=8.7.0'}
     peerDependencies:
       svelte: ^5.0.0-next.126
@@ -5318,19 +5323,20 @@ snapshots:
 
   binary-extensions@2.2.0: {}
 
-  bits-ui@https://pkg.pr.new/huntabyte/bits-ui/bits-ui@3632b7e(svelte@5.0.0-next.208):
+  bits-ui@https://pkg.pr.new/huntabyte/bits-ui/bits-ui@9cc6eb7(svelte@5.0.0-next.208):
     dependencies:
       '@floating-ui/core': 1.6.5
       '@floating-ui/dom': 1.6.8
       '@internationalized/date': 3.5.5
       clsx: 2.1.1
       esm-env: 1.0.0
-      runed: 0.15.0(svelte@5.0.0-next.208)
+      nanoid: 5.0.7
+      runed: 0.15.2(svelte@5.0.0-next.208)
       scule: 1.3.0
       style-object-to-css-string: 1.1.3
       style-to-object: 1.0.6
       svelte: 5.0.0-next.208
-      svelte-toolbelt: 0.1.0(svelte@5.0.0-next.208)
+      svelte-toolbelt: 0.3.1(svelte@5.0.0-next.208)
 
   blake3-wasm@2.1.5: {}
 
@@ -6875,6 +6881,8 @@ snapshots:
 
   nanoid@3.3.7: {}
 
+  nanoid@5.0.7: {}
+
   natural-compare-lite@1.4.0: {}
 
   natural-compare@1.4.0: {}
@@ -7326,7 +7334,7 @@ snapshots:
     dependencies:
       queue-microtask: 1.2.3
 
-  runed@0.15.0(svelte@5.0.0-next.208):
+  runed@0.15.2(svelte@5.0.0-next.208):
     dependencies:
       esm-env: 1.0.0
       svelte: 5.0.0-next.208
@@ -7584,14 +7592,14 @@ snapshots:
 
   supports-preserve-symlinks-flag@1.0.0: {}
 
-  svelte-check@3.8.5(postcss-load-config@5.0.2(jiti@1.21.0)(postcss@8.4.40))(postcss@8.4.40)(svelte@5.0.0-next.208):
+  svelte-check@3.8.5(postcss-load-config@5.0.2(postcss@8.4.40))(postcss@8.4.40)(svelte@5.0.0-next.208):
     dependencies:
       '@jridgewell/trace-mapping': 0.3.20
       chokidar: 3.5.3
       picocolors: 1.0.1
       sade: 1.8.1
       svelte: 5.0.0-next.208
-      svelte-preprocess: 5.1.3(postcss-load-config@5.0.2(jiti@1.21.0)(postcss@8.4.40))(postcss@8.4.40)(svelte@5.0.0-next.208)(typescript@5.5.4)
+      svelte-preprocess: 5.1.3(postcss-load-config@5.0.2(postcss@8.4.40))(postcss@8.4.40)(svelte@5.0.0-next.208)(typescript@5.5.4)
       typescript: 5.5.4
     transitivePeerDependencies:
       - '@babel/core'
@@ -7618,7 +7626,7 @@ snapshots:
     dependencies:
       svelte: 5.0.0-next.208
 
-  svelte-preprocess@5.1.3(postcss-load-config@5.0.2(jiti@1.21.0)(postcss@8.4.40))(postcss@8.4.40)(svelte@5.0.0-next.208)(typescript@5.5.4):
+  svelte-preprocess@5.1.3(postcss-load-config@5.0.2(postcss@8.4.40))(postcss@8.4.40)(svelte@5.0.0-next.208)(typescript@5.5.4):
     dependencies:
       '@types/pug': 2.0.10
       detect-indent: 6.1.0
@@ -7631,11 +7639,15 @@ snapshots:
       postcss-load-config: 5.0.2(jiti@1.21.0)(postcss@8.4.40)
       typescript: 5.5.4
 
-  svelte-toolbelt@0.1.0(svelte@5.0.0-next.208):
+  svelte-toolbelt@0.3.0(svelte@5.0.0-next.208):
     dependencies:
+      clsx: 2.1.1
+      scule: 1.3.0
+      style-object-to-css-string: 1.1.3
+      style-to-object: 1.0.6
       svelte: 5.0.0-next.208
 
-  svelte-toolbelt@0.3.0(svelte@5.0.0-next.208):
+  svelte-toolbelt@0.3.1(svelte@5.0.0-next.208):
     dependencies:
       clsx: 2.1.1
       scule: 1.3.0
