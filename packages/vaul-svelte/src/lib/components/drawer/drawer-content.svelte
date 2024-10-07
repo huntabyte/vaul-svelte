@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { Dialog as DialogPrimitive, type WithoutChildrenOrChild } from "bits-ui";
 	import { type WithChildren, box, mergeProps } from "svelte-toolbelt";
+	import Mounted from "../utils/mounted.svelte";
 	import type { ContentProps } from "./index.js";
 	import { useDrawerContent } from "$lib/vaul.svelte.js";
 	import { noop } from "$lib/internal/helpers/noop.js";
@@ -16,6 +17,7 @@
 		onpointerup = noop,
 		onpointerout = noop,
 		onpointermove = noop,
+		children,
 		...restProps
 	}: WithChildren<WithoutChildrenOrChild<ContentProps>> = $props();
 
@@ -37,4 +39,7 @@
 	const mergedProps = $derived(mergeProps(restProps, contentState.props));
 </script>
 
-<DialogPrimitive.Content preventScroll={false} {...mergedProps} />
+<DialogPrimitive.Content preventScroll={false} {...mergedProps}>
+	<Mounted onMounted={(m) => (contentState.mounted = m)} />
+	{@render children?.()}
+</DialogPrimitive.Content>

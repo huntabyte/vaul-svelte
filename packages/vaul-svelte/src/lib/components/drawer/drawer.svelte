@@ -3,18 +3,14 @@
 	import { box } from "svelte-toolbelt";
 	import type { RootProps } from "./index.js";
 	import { noop } from "$lib/internal/helpers/noop.js";
-	import {
-		DEFAULT_CLOSE_THRESHOLD,
-		DEFAULT_SCROLL_LOCK_TIMEOUT,
-		useDrawerRoot,
-	} from "$lib/vaul.svelte.js";
-	import { TRANSITIONS } from "$lib/internal/constants.js";
+	import { useDrawerRoot } from "$lib/vaul.svelte.js";
+	import { CLOSE_THRESHOLD, SCROLL_LOCK_TIMEOUT, TRANSITIONS } from "$lib/internal/constants.js";
 
 	let {
 		open = $bindable(false),
 		onOpenChange = noop,
-		closeThreshold = DEFAULT_CLOSE_THRESHOLD,
-		scrollLockTimeout = DEFAULT_SCROLL_LOCK_TIMEOUT,
+		closeThreshold = CLOSE_THRESHOLD,
+		scrollLockTimeout = SCROLL_LOCK_TIMEOUT,
 		snapPoints,
 		fadeFromIndex = snapPoints && snapPoints.length - 1,
 		backgroundColor = "black",
@@ -49,11 +45,9 @@
 			() => open,
 			(o) => {
 				if (controlledOpen) {
-					onOpenChange(o);
 					handleOpenChange(open);
 				} else {
 					open = o;
-					onOpenChange(o);
 					handleOpenChange(o);
 				}
 			}
@@ -95,6 +89,7 @@
 	});
 
 	function handleOpenChange(o: boolean) {
+		onOpenChange?.(o);
 		if (!o && !nested) {
 			rootState.positionFixedState.restorePositionSetting();
 		}
@@ -132,71 +127,115 @@
 		touch-action: none;
 		will-change: transform;
 		transition: transform 0.5s cubic-bezier(0.32, 0.72, 0, 1);
+		animation-duration: 0.5s;
+		animation-timing-function: cubic-bezier(0.32, 0.72, 0, 1);
 	}
 
-	:global([data-vaul-drawer][data-vaul-drawer-direction="bottom"]) {
+	:global(
+			[data-vaul-drawer][data-vaul-snap-points="false"][data-vaul-drawer-direction="bottom"][data-state="open"]
+		) {
+		animation-name: slideFromBottom;
+	}
+	:global(
+			[data-vaul-drawer][data-vaul-snap-points="false"][data-vaul-drawer-direction="bottom"][data-state="closed"]
+		) {
+		animation-name: slideToBottom;
+	}
+
+	:global(
+			[data-vaul-drawer][data-vaul-snap-points="false"][data-vaul-drawer-direction="top"][data-state="open"]
+		) {
+		animation-name: slideFromTop;
+	}
+	:global(
+			[data-vaul-drawer][data-vaul-snap-points="false"][data-vaul-drawer-direction="top"][data-state="closed"]
+		) {
+		animation-name: slideToTop;
+	}
+
+	:global(
+			[data-vaul-drawer][data-vaul-snap-points="false"][data-vaul-drawer-direction="left"][data-state="open"]
+		) {
+		animation-name: slideFromLeft;
+	}
+	:global(
+			[data-vaul-drawer][data-vaul-snap-points="false"][data-vaul-drawer-direction="left"][data-state="closed"]
+		) {
+		animation-name: slideToLeft;
+	}
+
+	:global(
+			[data-vaul-drawer][data-vaul-snap-points="false"][data-vaul-drawer-direction="right"][data-state="open"]
+		) {
+		animation-name: slideFromRight;
+	}
+	:global(
+			[data-vaul-drawer][data-vaul-snap-points="false"][data-vaul-drawer-direction="right"][data-state="closed"]
+		) {
+		animation-name: slideToRight;
+	}
+
+	:global([data-vaul-drawer][data-vaul-snap-points="true"][data-vaul-drawer-direction="bottom"]) {
 		transform: translate3d(0, 100%, 0);
 	}
 
-	:global([data-vaul-drawer][data-vaul-drawer-direction="top"]) {
+	:global([data-vaul-drawer][data-vaul-snap-points="true"][data-vaul-drawer-direction="top"]) {
 		transform: translate3d(0, -100%, 0);
 	}
 
-	:global([data-vaul-drawer][data-vaul-drawer-direction="left"]) {
+	:global([data-vaul-drawer][data-vaul-snap-points="true"][data-vaul-drawer-direction="left"]) {
 		transform: translate3d(-100%, 0, 0);
 	}
 
-	:global([data-vaul-drawer][data-vaul-drawer-direction="right"]) {
+	:global([data-vaul-drawer][data-vaul-snap-points="true"][data-vaul-drawer-direction="right"]) {
 		transform: translate3d(100%, 0, 0);
 	}
 
-	:global(.vaul-dragging .vaul-scrollable [data-vault-drawer-direction="top"]) {
-		overflow-y: hidden !important;
-	}
-	:global(.vaul-dragging .vaul-scrollable [data-vault-drawer-direction="bottom"]) {
-		overflow-y: hidden !important;
-	}
-
-	:global(.vaul-dragging .vaul-scrollable [data-vault-drawer-direction="left"]) {
-		overflow-x: hidden !important;
-	}
-
-	:global(.vaul-dragging .vaul-scrollable [data-vault-drawer-direction="right"]) {
-		overflow-x: hidden !important;
-	}
-
-	:global([data-vaul-drawer][data-vaul-drawer-visible="true"][data-vaul-drawer-direction="top"]) {
-		transform: translate3d(0, var(--snap-point-height, 0), 0);
-	}
-
 	:global(
-			[data-vaul-drawer][data-vaul-drawer-visible="true"][data-vaul-drawer-direction="bottom"]
+			[data-vaul-drawer][data-vaul-delayed-snap-points="true"][data-vaul-drawer-direction="top"]
 		) {
 		transform: translate3d(0, var(--snap-point-height, 0), 0);
 	}
 
 	:global(
-			[data-vaul-drawer][data-vaul-drawer-visible="true"][data-vaul-drawer-direction="left"]
+			[data-vaul-drawer][data-vaul-delayed-snap-points="true"][data-vaul-drawer-direction="bottom"]
+		) {
+		transform: translate3d(0, var(--snap-point-height, 0), 0);
+	}
+
+	:global(
+			[data-vaul-drawer][data-vaul-delayed-snap-points="true"][data-vaul-drawer-direction="left"]
 		) {
 		transform: translate3d(var(--snap-point-height, 0), 0, 0);
 	}
 
 	:global(
-			[data-vaul-drawer][data-vaul-drawer-visible="true"][data-vaul-drawer-direction="right"]
+			[data-vaul-drawer][data-vaul-delayed-snap-points="true"][data-vaul-drawer-direction="right"]
 		) {
 		transform: translate3d(var(--snap-point-height, 0), 0, 0);
 	}
 
-	:global([data-vaul-overlay]) {
+	:global([data-vaul-overlay][data-vaul-snap-points="false"]) {
+		animation-duration: 0.5s;
+		animation-timing-function: cubic-bezier(0.32, 0.72, 0, 1);
+	}
+	:global([data-vaul-overlay][data-vaul-snap-points="false"][data-state="open"]) {
+		animation-name: fadeIn;
+	}
+	:global([data-vaul-overlay][data-state="closed"]) {
+		animation-name: fadeOut;
+	}
+
+	:global([data-vaul-overlay][data-vaul-snap-points="true"]) {
 		opacity: 0;
 		transition: opacity 0.5s cubic-bezier(0.32, 0.72, 0, 1);
 	}
 
-	:global([data-vaul-overlay][data-vaul-drawer-visible="true"]) {
+	:global([data-vaul-overlay][data-vaul-snap-points="true"]) {
 		opacity: 1;
 	}
 
-	:global([data-vaul-drawer]::after) {
+	:global([data-vaul-drawer]:not([data-vaul-custom-container="true"])::after) {
 		content: "";
 		position: absolute;
 		background: inherit;
@@ -235,25 +274,33 @@
 		width: 200%;
 	}
 
+	:global(
+			[data-vaul-overlay][data-vaul-snap-points="true"]:not(
+					[data-vaul-snap-points-overlay="true"]
+				):not([data-state="closed"])
+		) {
+		opacity: 0;
+	}
+
+	:global([data-vaul-overlay][data-vaul-snap-points-overlay="true"]) {
+		opacity: 1;
+	}
+
 	:global([data-vaul-handle]) {
 		display: block;
 		position: relative;
-		opacity: 0.8;
+		opacity: 0.7;
+		background: #e2e2e4;
 		margin-left: auto;
 		margin-right: auto;
 		height: 5px;
-		width: 56px;
+		width: 32px;
 		border-radius: 1rem;
 		touch-action: pan-y;
-		cursor: grab;
 	}
 
 	:global([data-vaul-handle]:hover, [data-vaul-handle]:active) {
 		opacity: 1;
-	}
-
-	:global([data-vaul-handle]:active) {
-		cursor: grabbing;
 	}
 
 	:global([data-vaul-handle-hitarea]) {
@@ -266,28 +313,87 @@
 		touch-action: inherit;
 	}
 
-	:global(
-			[data-vaul-overlay][data-vaul-snap-points="true"]:not(
-					[data-vaul-snap-points-overlay="true"]
-				):not([data-state="closed"])
-		) {
-		opacity: 0;
-	}
-
-	:global(
-			[data-vaul-overlay][data-vaul-snap-points-overlay="true"]:not(
-					[data-vaul-drawer-visible="false"]
-				)
-		) {
-		opacity: 1;
-	}
-
 	/* This will allow us to not animate via animation, but still benefit from delaying unmount via Radix. */
 
 	@keyframes -global-fake-animation {
 		from {
 		}
 		to {
+		}
+	}
+
+	@keyframes -global-fadeIn {
+		from {
+			opacity: 0;
+		}
+		to {
+			opacity: 1;
+		}
+	}
+
+	@keyframes -global-fadeOut {
+		to {
+			opacity: 0;
+		}
+	}
+
+	@keyframes -global-slideFromBottom {
+		from {
+			transform: translate3d(0, 100%, 0);
+		}
+		to {
+			transform: translate3d(0, 0, 0);
+		}
+	}
+
+	@keyframes -global-slideToBottom {
+		to {
+			transform: translate3d(0, 100%, 0);
+		}
+	}
+
+	@keyframes -global-slideFromTop {
+		from {
+			transform: translate3d(0, -100%, 0);
+		}
+		to {
+			transform: translate3d(0, 0, 0);
+		}
+	}
+
+	@keyframes -global-slideToTop {
+		to {
+			transform: translate3d(0, -100%, 0);
+		}
+	}
+
+	@keyframes -global-slideFromLeft {
+		from {
+			transform: translate3d(-100%, 0, 0);
+		}
+		to {
+			transform: translate3d(0, 0, 0);
+		}
+	}
+
+	@keyframes -global-slideToLeft {
+		to {
+			transform: translate3d(-100%, 0, 0);
+		}
+	}
+
+	@keyframes -global-slideFromRight {
+		from {
+			transform: translate3d(100%, 0, 0);
+		}
+		to {
+			transform: translate3d(0, 0, 0);
+		}
+	}
+
+	@keyframes -global-slideToRight {
+		to {
+			transform: translate3d(100%, 0, 0);
 		}
 	}
 

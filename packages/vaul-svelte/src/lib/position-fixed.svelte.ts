@@ -3,6 +3,7 @@ import { isSafari } from "./prevent-scroll.svelte.js";
 import type { DrawerRootState } from "./vaul.svelte.js";
 
 let previousBodyPosition: Record<string, string> | null = null;
+
 export class PositionFixed {
 	#root: DrawerRootState;
 	#activeUrl = $state(typeof window !== "undefined" ? window.location.href : "");
@@ -18,11 +19,27 @@ export class PositionFixed {
 		this.#root = root;
 
 		$effect(() => {
+			untrack(() => {
+				const onScroll = () => {
+					this.#scrollPos = window.scrollY;
+				};
+
+				onScroll();
+
+				window.addEventListener("scroll", onScroll);
+
+				return () => {
+					window.removeEventListener("scroll", onScroll);
+				};
+			});
+		});
+
+		$effect(() => {
+			this.#activeUrl;
 			if (!this.#modal) return;
 
 			return () => {
 				if (typeof document === "undefined") return;
-
 				// another drawer has opened, safe to ignore the execution
 				const hasDrawerOpened = !!document.querySelector("[data-vaul-drawer]");
 				if (hasDrawerOpened) return;
@@ -32,10 +49,11 @@ export class PositionFixed {
 		});
 
 		$effect(() => {
-			const open = this.#open;
+			this.#open;
 			const modal = this.#modal;
 			const hasBeenOpened = this.#hasBeenOpened;
 			const nested = this.#nested;
+			this.#activeUrl;
 
 			untrack(() => {
 				if (nested || !hasBeenOpened) return;

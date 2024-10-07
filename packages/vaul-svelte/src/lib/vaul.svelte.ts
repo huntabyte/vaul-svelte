@@ -3,19 +3,16 @@ import {
 	type ReadableBoxedValues,
 	type WithRefProps,
 	type WritableBoxedValues,
-	box,
 	useRefById,
 } from "svelte-toolbelt";
 import { isInput, isVertical } from "./internal/helpers/is.js";
-import { getTranslate, resetStyles, setStyles } from "./internal/helpers/style.js";
+import { getTranslate } from "./internal/helpers/style.js";
 import { TRANSITIONS, VELOCITY_THRESHOLD } from "./internal/constants.js";
 import { isIOS, usePreventScroll } from "./prevent-scroll.svelte.js";
 import { PositionFixed } from "./position-fixed.svelte.js";
 import { createContext } from "./internal/createContext.js";
-import { noop } from "./internal/helpers/noop.js";
 import { SnapPointsState } from "./snap-points.svelte.js";
 import type { DrawerDirection, OnDrag, OnRelease } from "./types.js";
-import type { Drawer } from "./components/index.js";
 import { reset, set } from "./helpers.js";
 import { useScaleBackground } from "./use-scale-background.svelte.js";
 
@@ -706,6 +703,7 @@ class DrawerOverlayState {
 	#root: DrawerRootState;
 	#id: DrawerOverlayStateProps["id"];
 	#ref: DrawerOverlayStateProps["ref"];
+	mounted = $state(false);
 
 	constructor(props: DrawerOverlayStateProps, root: DrawerRootState) {
 		this.#root = root;
@@ -716,9 +714,13 @@ class DrawerOverlayState {
 			id: this.#id,
 			ref: this.#ref,
 			onRefChange: (node) => {
-				this.#root.overlayNode = node;
+				if (!this.mounted) {
+					this.#root.overlayNode = null;
+				} else {
+					this.#root.overlayNode = node;
+				}
 			},
-			deps: () => this.#root.open.current,
+			deps: () => this.mounted,
 		});
 	}
 
@@ -775,10 +777,10 @@ class DrawerContentState {
 	pointerStart = $state<{ x: number; y: number } | null>(null);
 	lastKnownPointerEvent = $state<PointerEvent | null>(null);
 	wasBeyondThePoint = $state(false);
-
 	hasSnapPoints = $derived.by(
 		() => this.#root.snapPoints.current && this.#root.snapPoints.current.length > 0
 	);
+	mounted = $state(false);
 
 	constructor(props: DrawerContentStateProps, root: DrawerRootState) {
 		this.#root = root;
@@ -796,9 +798,13 @@ class DrawerContentState {
 			id: this.#id,
 			ref: this.#ref,
 			onRefChange: (node) => {
-				this.#root.drawerNode = node;
+				if (!this.mounted) {
+					this.#root.drawerNode = null;
+				} else {
+					this.#root.drawerNode = node;
+				}
 			},
-			deps: () => this.#root.open.current,
+			deps: () => this.mounted,
 		});
 
 		useScaleBackground(this.#root);
