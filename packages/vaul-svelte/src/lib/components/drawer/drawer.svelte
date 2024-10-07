@@ -8,13 +8,14 @@
 		DEFAULT_SCROLL_LOCK_TIMEOUT,
 		useDrawerRoot,
 	} from "$lib/vaul.svelte.js";
+	import { TRANSITIONS } from "$lib/internal/constants.js";
 
 	let {
 		open = $bindable(false),
 		onOpenChange = noop,
 		closeThreshold = DEFAULT_CLOSE_THRESHOLD,
 		scrollLockTimeout = DEFAULT_SCROLL_LOCK_TIMEOUT,
-		snapPoints = null,
+		snapPoints,
 		fadeFromIndex = snapPoints && snapPoints.length - 1,
 		backgroundColor = "black",
 		nested = false,
@@ -32,15 +33,29 @@
 		preventScrollRestoration = true,
 		setBackgroundColorOnScale = true,
 		disablePreventScroll = false,
+		onAnimationEnd = noop,
+		controlledOpen = false,
+		repositionInputs = true,
+		autoFocus = false,
+		snapToSequentialPoint = false,
+		container = null,
+		controlledActiveSnapPoint = false,
+		modal = true,
 		...restProps
 	}: RootProps = $props();
 
 	const rootState = useDrawerRoot({
 		open: box.with(
 			() => open,
-			(v) => {
-				open = v;
-				onOpenChange(v);
+			(o) => {
+				if (controlledOpen) {
+					onOpenChange(o);
+					handleOpenChange(open);
+				} else {
+					open = o;
+					onOpenChange(o);
+					handleOpenChange(o);
+				}
 			}
 		),
 		closeThreshold: box.with(() => closeThreshold),
@@ -53,8 +68,12 @@
 		activeSnapPoint: box.with(
 			() => activeSnapPoint,
 			(v) => {
-				activeSnapPoint = v;
-				onActiveSnapPointChange(v);
+				if (controlledActiveSnapPoint) {
+					onActiveSnapPointChange(v);
+				} else {
+					activeSnapPoint = v;
+					onActiveSnapPointChange(v);
+				}
 			}
 		),
 		onRelease: box.with(() => onRelease),
@@ -63,20 +82,47 @@
 		dismissible: box.with(() => dismissible),
 		direction: box.with(() => direction),
 		fixed: box.with(() => fixed),
-		modal: box.with(() => true),
+		modal: box.with(() => modal),
 		handleOnly: box.with(() => handleOnly),
 		noBodyStyles: box.with(() => noBodyStyles),
 		preventScrollRestoration: box.with(() => preventScrollRestoration),
 		setBackgroundColorOnScale: box.with(() => setBackgroundColorOnScale),
 		disablePreventScroll: box.with(() => disablePreventScroll),
+		repositionInputs: box.with(() => repositionInputs),
+		autoFocus: box.with(() => autoFocus),
+		snapToSequentialPoint: box.with(() => snapToSequentialPoint),
+		container: box.with(() => container),
 	});
+
+	function handleOpenChange(o: boolean) {
+		if (!o && !nested) {
+			rootState.positionFixedState.restorePositionSetting();
+		}
+
+		setTimeout(() => {
+			onAnimationEnd?.(o);
+		}, TRANSITIONS.DURATION * 1000);
+
+		if (o && !modal) {
+			if (typeof window !== "undefined") {
+				window.requestAnimationFrame(() => {
+					document.body.style.pointerEvents = "auto";
+				});
+			}
+		}
+
+		if (!o) {
+			// This will be removed when the exit animation ends (`500ms`)
+			document.body.style.pointerEvents = "auto";
+		}
+	}
 </script>
 
 <DialogPrimitive.Root
-	bind:open
+	controlledOpen
+	open={rootState.open.current}
 	onOpenChange={(o) => {
-		onOpenChange(o);
-		rootState.onOpenChange(o);
+		rootState.onDialogOpenChange(o);
 	}}
 	{...restProps}
 />

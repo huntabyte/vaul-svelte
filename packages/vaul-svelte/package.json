@@ -53,8 +53,8 @@
 	"types": "./dist/index.d.ts",
 	"type": "module",
 	"dependencies": {
-		"bits-ui": "1.0.0-next.4",
-		"svelte-toolbelt": "^0.3.1"
+		"bits-ui": "1.0.0-next.14",
+		"svelte-toolbelt": "^0.4.1"
 	},
 	"engines": {
 		"pnpm": ">=8.7.0",

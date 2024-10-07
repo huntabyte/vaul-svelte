@@ -1,83 +1,52 @@
-import { onMount, untrack } from "svelte";
-import {
-	type ReadableBoxedValues,
-	type WritableBoxedValues,
-	addEventListener,
-} from "svelte-toolbelt";
-import { useId } from "./internal/use-id.js";
+import { untrack } from "svelte";
+import { isSafari } from "./prevent-scroll.svelte.js";
+import type { DrawerRootState } from "./vaul.svelte.js";
 
 let previousBodyPosition: Record<string, string> | null = null;
-
-type PositionFixedProps = WritableBoxedValues<{
-	open: boolean;
-}> &
-	ReadableBoxedValues<{
-		modal: boolean;
-		nested: boolean;
-		hasBeenOpened: boolean;
-		preventScrollRestoration: boolean;
-		noBodyStyles: boolean;
-		disablePreventScroll: boolean;
-	}>;
-
-function getActiveUrl() {
-	return typeof window !== "undefined" ? window.location.href : "";
-}
-
-let firstPositionFixedId: string | null = null;
-
 export class PositionFixed {
-	#open: PositionFixedProps["open"];
-	#modal: PositionFixedProps["modal"];
-	#nested: PositionFixedProps["nested"];
-	#hasBeenOpened: PositionFixedProps["hasBeenOpened"];
-	#preventScrollRestoration: PositionFixedProps["preventScrollRestoration"];
-	#disablePreventScroll: PositionFixedProps["disablePreventScroll"];
-	#noBodyStyles: PositionFixedProps["noBodyStyles"];
-	#activeUrl = $state(getActiveUrl());
+	#root: DrawerRootState;
+	#activeUrl = $state(typeof window !== "undefined" ? window.location.href : "");
 	#scrollPos = $state(0);
-	#id = useId();
+	#open = $derived.by(() => this.#root.open.current);
+	#noBodyStyles = $derived.by(() => this.#root.noBodyStyles.current);
+	#preventScrollRestoration = $derived.by(() => this.#root.preventScrollRestoration.current);
+	#modal = $derived.by(() => this.#root.modal.current);
+	#nested = $derived.by(() => this.#root.nested.current);
+	#hasBeenOpened = $derived.by(() => this.#root.hasBeenOpened);
 
-	constructor(props: PositionFixedProps) {
-		this.#open = props.open;
-		this.#modal = props.modal;
-		this.#nested = props.nested;
-		this.#hasBeenOpened = props.hasBeenOpened;
-		this.#preventScrollRestoration = props.preventScrollRestoration;
-		this.#noBodyStyles = props.noBodyStyles;
-		this.#disablePreventScroll = props.disablePreventScroll;
+	constructor(root: DrawerRootState) {
+		this.#root = root;
 
-		onMount(() => {
-			const onScroll = () => {
-				this.#scrollPos = window.scrollY;
-			};
-
-			onScroll();
-
-			const unsubListener = addEventListener(window, "scroll", onScroll);
+		$effect(() => {
+			if (!this.#modal) return;
 
 			return () => {
-				unsubListener();
+				if (typeof document === "undefined") return;
+
+				// another drawer has opened, safe to ignore the execution
+				const hasDrawerOpened = !!document.querySelector("[data-vaul-drawer]");
+				if (hasDrawerOpened) return;
+
+				this.restorePositionSetting();
 			};
 		});
 
 		$effect(() => {
-			const _ = this.#activeUrl;
-			const open = this.#open.current;
-			const modal = this.#modal.current;
-			const hasBeenOpened = this.#hasBeenOpened.current;
-			const nested = this.#nested.current;
-			const __ = this.#noBodyStyles.current;
+			const open = this.#open;
+			const modal = this.#modal;
+			const hasBeenOpened = this.#hasBeenOpened;
+			const nested = this.#nested;
+
 			untrack(() => {
 				if (nested || !hasBeenOpened) return;
 				// This is needed to force Safari toolbar to show **before** the drawer starts animating to prevent a gnarly shift from happening
-				if (open) {
+				if (this.#open) {
+					// avoid for standalone mode (PWA)
 					const isStandalone = window.matchMedia("(display-mode: standalone)").matches;
-
-					!isStandalone && this.#setPositionFixed();
+					!isStandalone && this.setPositionFixed();
 
 					if (!modal) {
-						setTimeout(() => {
+						window.setTimeout(() => {
 							this.restorePositionSetting();
 						}, 500);
 					}
@@ -85,50 +54,32 @@ export class PositionFixed {
 					this.restorePositionSetting();
 				}
 			});
-
-			return () => {
-				this.restorePositionSetting();
-			};
 		});
 	}
 
-	#setPositionFixed = () => {
-		// If previousBodyPosition is already set, don't set it again.
-		if (
-			previousBodyPosition === null &&
-			this.#open.current &&
-			!this.#noBodyStyles.current &&
-			(firstPositionFixedId === null || firstPositionFixedId === this.#id)
-		) {
-			firstPositionFixedId = this.#id;
-			const win = document.defaultView ?? window;
+	setPositionFixed = () => {
+		// All browsers on iOS will return true here.
+		if (!isSafari()) return;
 
-			const { documentElement } = document;
-			const scrollbarWidth = win.innerWidth - documentElement.clientWidth;
-
+		if (previousBodyPosition === null && this.#open && !this.#noBodyStyles) {
 			previousBodyPosition = {
 				position: document.body.style.position,
 				top: document.body.style.top,
 				left: document.body.style.left,
 				height: document.body.style.height,
 				right: "unset",
-				paddingRight: document.body.style.paddingRight,
 			};
 
-			// Update the dom inside an animation frame
+			// update the dom inside an animation frame
+
 			const { scrollX, innerHeight } = window;
 
-			if (!this.#disablePreventScroll.current) {
-				document.body.style.setProperty("position", "fixed", "important");
-			}
+			document.body.style.setProperty("position", "fixed", "important");
 			Object.assign(document.body.style, {
 				top: `${-this.#scrollPos}px`,
 				left: `${-scrollX}px`,
 				right: "0px",
 				height: "auto",
-				paddingRight: this.#disablePreventScroll.current
-					? document.body.style.paddingRight
-					: `${scrollbarWidth}px`,
 			});
 
 			window.setTimeout(
@@ -147,11 +98,10 @@ export class PositionFixed {
 	};
 
 	restorePositionSetting = () => {
-		if (
-			previousBodyPosition !== null &&
-			!this.#noBodyStyles.current &&
-			firstPositionFixedId === this.#id
-		) {
+		// all browsers on iOS will return true here.
+		if (!isSafari()) return;
+
+		if (previousBodyPosition !== null && !this.#noBodyStyles) {
 			// Convert the position from "px" to Int
 			const y = -Number.parseInt(document.body.style.top, 10);
 			const x = -Number.parseInt(document.body.style.left, 10);
@@ -160,10 +110,7 @@ export class PositionFixed {
 			Object.assign(document.body.style, previousBodyPosition);
 
 			window.requestAnimationFrame(() => {
-				if (
-					this.#preventScrollRestoration.current &&
-					this.#activeUrl !== window.location.href
-				) {
+				if (this.#preventScrollRestoration && this.#activeUrl !== window.location.href) {
 					this.#activeUrl = window.location.href;
 					return;
 				}

@@ -9,6 +9,29 @@ import type {
 import type { WithChildren, Without } from "svelte-toolbelt";
 import type { DrawerDirection, OnChangeFn, OnDrag, OnRelease } from "$lib/types.js";
 
+export type WithFadeFromProps = {
+	/**
+	 * Array of numbers from 0 to 100 that corresponds to % of the screen a given snap point should take up.
+	 * Should go from least visible. Example `[0.2, 0.5, 0.8]`.
+	 * You can also use px values, which doesn't take screen height into account.
+	 */
+	snapPoints: (number | string)[];
+	/**
+	 * Index of a `snapPoint` from which the overlay fade should be applied. Defaults to the last snap point.
+	 */
+	fadeFromIndex: number;
+};
+
+export type WithoutFadeFromProps = {
+	/**
+	 * Array of numbers from 0 to 100 that corresponds to % of the screen a given snap point should take up.
+	 * Should go from least visible. Example `[0.2, 0.5, 0.8]`.
+	 * You can also use px values, which doesn't take screen height into account.
+	 */
+	snapPoints?: (number | string)[];
+	fadeFromIndex?: never;
+};
+
 export type BaseDrawerRootPropsWithoutHTML = WithChildren<{
 	/**
 	 * The open state of the Drawer.
@@ -22,6 +45,18 @@ export type BaseDrawerRootPropsWithoutHTML = WithChildren<{
 	 * A function called when the open state of the Drawer changes.
 	 */
 	onOpenChange?: OnChangeFn<boolean>;
+
+	/**
+	 * When `true` the open state will be controlled, meaning you will be responsible for setting
+	 * the open state of the drawer using the `onOpenChange` prop.
+	 */
+	controlledOpen?: boolean;
+
+	/**
+	 * When `true` the open state will be controlled, meaning you will be responsible for setting
+	 * the open state of the drawer using the `onOpenChange` prop.
+	 */
+	controlledActiveSnapPoint?: boolean;
 
 	/**
 	 * Number between 0 and 1 that determines when the drawer should be closed.
@@ -38,22 +73,6 @@ export type BaseDrawerRootPropsWithoutHTML = WithChildren<{
 	 * @default 500
 	 */
 	scrollLockTimeout?: number;
-
-	/**
-	 * Array of numbers from 0 to 100 that corresponds to % of the screen a given
-	 * snap point should take up. Should go from least visible.
-	 *
-	 * Example [0.2, 0.5, 0.8]. You can also use px values, which doesn't take
-	 * screen height into account.
-	 */
-	snapPoints?: (number | string)[] | null;
-
-	/**
-	 * Index of a `snapPoint` from which the overlay fade should be applied.
-	 *
-	 * @default snapPoints[snapPoints.length - 1] (last snap point)
-	 */
-	fadeFromIndex?: number | null;
 
 	/**
 	 * A callback function that is called when the drawer is dragged
@@ -94,7 +113,7 @@ export type BaseDrawerRootPropsWithoutHTML = WithChildren<{
 
 	/**
 	 * The active snap point of the drawer. You can bind to this value to
-	 * programatically change the active snap point.
+	 * programmatically change the active snap point.
 	 */
 	activeSnapPoint?: string | number | null;
 
@@ -163,7 +182,36 @@ export type BaseDrawerRootPropsWithoutHTML = WithChildren<{
 	 * @default false
 	 */
 	disablePreventScroll?: boolean;
-}>;
+
+	/**
+	 * When `true` Vaul will reposition inputs rather than scroll then into view if the keyboard is in the way.
+	 * Setting it to `false` will fall back to the default browser behavior.
+	 * @default true when {@link snapPoints} is defined
+	 */
+	repositionInputs?: boolean;
+
+	/**
+	 * Disabled velocity based swiping for snap points.
+	 * This means that a snap point won't be skipped even if the velocity is high enough.
+	 * Useful if each snap point in a drawer is equally important.
+	 *
+	 * @default false
+	 */
+	snapToSequentialPoint?: boolean;
+
+	container?: HTMLElement | null;
+
+	/**
+	 * Gets triggered after the open or close animation ends, it receives an `open` argument with the `open` state of the drawer by the time the function was triggered.
+	 * Useful to revert any state changes for example.
+	 */
+	onAnimationEnd?: (open: boolean) => void;
+
+	autoFocus?: boolean;
+
+	modal?: boolean;
+}> &
+	(WithFadeFromProps | WithoutFadeFromProps);
 
 export type DrawerRootPropsWithoutHTML = BaseDrawerRootPropsWithoutHTML &
 	Without<DrawerPrimitive.RootProps, BaseDrawerRootPropsWithoutHTML>;
@@ -185,8 +233,9 @@ export type DrawerHandlePropsWithoutHTML = Omit<
 export type DrawerHandleProps = DrawerHandlePropsWithoutHTML &
 	Without<PrimitiveDivAttributes, DrawerHandlePropsWithoutHTML>;
 
-export type DrawerContentPropsWithoutHTML = WithChildren<
-	WithoutChildrenOrChild<DialogContentPropsWithoutHTML>
+export type DrawerContentPropsWithoutHTML = Omit<
+	WithChildren<WithoutChildrenOrChild<DialogContentPropsWithoutHTML>>,
+	"preventScroll"
 >;
 
 export type DrawerContentProps = DrawerContentPropsWithoutHTML &

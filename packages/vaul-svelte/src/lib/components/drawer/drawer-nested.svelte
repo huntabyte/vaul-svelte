@@ -31,5 +31,5 @@
 		onOpenChange(o);
 	}}
 	onRelease={(e, o) => rootState.onNestedRelease(e, o)}
-	{...restProps}
+	{...restProps as any}
 />
