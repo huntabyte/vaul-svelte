@@ -25,6 +25,7 @@ export function set(
 	styles: Style,
 	ignoreCache = false
 ) {
+	console.log(`setting style on node`, el, JSON.stringify(styles, null, 2));
 	if (!el || !(el instanceof HTMLElement)) return;
 	const originalStyles: Style = {};
 

@@ -469,7 +469,6 @@ export class DrawerRootState {
 	};
 
 	closeDrawer = (fromWithin?: boolean) => {
-		console.log("closing drawer");
 		this.cancelDrag();
 		this.onCloseProp.current?.();
 
@@ -848,9 +847,9 @@ class DrawerContentState {
 
 	onOpenAutoFocus = (e: Event) => {
 		this.#onOpenAutoFocusProp.current(e);
-		if (!this.#root.autoFocus.current) {
-			e.preventDefault();
-		}
+		// if (!this.#root.autoFocus.current) {
+		// 	e.preventDefault();
+		// }
 	};
 
 	onInteractOutside = (e: Event) => {

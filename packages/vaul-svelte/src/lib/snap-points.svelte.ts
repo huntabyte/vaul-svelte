@@ -121,6 +121,9 @@ export class SnapPointsState {
 			const activeSnapPoint = this.activeSnapPoint;
 			const snapPoints = this.#snapPoints;
 			const snapPointsOffset = this.snapPointsOffset;
+			this.#root.drawerNode;
+			this.fadeFromIndex;
+			this.#root.overlayNode;
 			untrack(() => {
 				if (activeSnapPoint) {
 					const newIndex =
@@ -149,7 +152,6 @@ export class SnapPointsState {
 			this.snapPointsOffset.findIndex((snapPointDim) => snapPointDim === dimension) ?? null;
 
 		this.#root.onSnapPointChange(newSnapPointIndex);
-
 		set(this.#drawerNode, {
 			transition: `transform ${TRANSITIONS.DURATION}s cubic-bezier(${TRANSITIONS.EASE.join(",")})`,
 			transform: isVertical(this.#direction)
