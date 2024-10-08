@@ -1,11 +1,12 @@
 import { untrack } from "svelte";
-import type {
-	Box,
-	Getter,
-	ReadableBoxedValues,
-	WithRefProps,
-	WritableBox,
-	WritableBoxedValues,
+import {
+	type Box,
+	type Getter,
+	type ReadableBoxedValues,
+	type WithRefProps,
+	type WritableBox,
+	type WritableBoxedValues,
+	afterTick,
 } from "svelte-toolbelt";
 import { isInput, isVertical } from "./internal/helpers/is.js";
 import {
@@ -138,6 +139,7 @@ export class DrawerRootState {
 			const snapPoints = this.snapPoints.current;
 			const snapPointsOffset = this.snapPointsState.snapPointsOffset;
 			this.drawerNode;
+
 			return untrack(() => {
 				const onVisualViewportChange = () => {
 					if (!this.drawerNode || !this.repositionInputs.current) return;
@@ -801,13 +803,13 @@ class DrawerContentState {
 		useScaleBackground(this.#root);
 
 		$effect(() => {
-			untrack(() => {
-				if (this.hasSnapPoints) {
-					window.requestAnimationFrame(() => {
-						this.delayedSnapPoints = true;
-					});
-				}
-			});
+			if (this.hasSnapPoints && this.#root.open.current) {
+				window.requestAnimationFrame(() => {
+					this.delayedSnapPoints = true;
+				});
+			} else {
+				this.delayedSnapPoints = false;
+			}
 		});
 	}
 
@@ -922,6 +924,10 @@ class DrawerContentState {
 		this.#root.onPress(e);
 	};
 
+	snapPointsOffset = $derived.by(() =>
+		$state.snapshot(this.#root.snapPointsState.snapPointsOffset)
+	);
+
 	props = $derived.by(
 		() =>
 			({
@@ -933,9 +939,9 @@ class DrawerContentState {
 				"data-vaul-snap-points":
 					this.#root.open.current && this.hasSnapPoints ? "true" : "false",
 				style:
-					this.#root.snapPointsOffset && this.#root.snapPointsOffset.length > 0
+					this.snapPointsOffset && this.snapPointsOffset.length > 0
 						? {
-								"--snap-point-height": `${this.#root.snapPointsOffset[0]!}px`,
+								"--snap-point-height": `${this.snapPointsOffset[0]!}px`,
 							}
 						: undefined,
 				onpointerdown: this.#onpointerdown,

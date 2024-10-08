@@ -20,7 +20,7 @@ export class SnapPointsState {
 	#drawerNode = $derived.by(() => this.#root.drawerNode);
 	#snapToSequentialPoint = $derived.by(() => this.#root.snapToSequentialPoint.current);
 
-	windowDimensions = $state<Dimensions | undefined>(
+	windowDimensions = $state.raw<Dimensions | undefined>(
 		isBrowser
 			? {
 					innerWidth: window.innerWidth,
@@ -48,6 +48,8 @@ export class SnapPointsState {
 	});
 
 	snapPointsOffset = $derived.by(() => {
+		this.windowDimensions;
+		this.#root.open.current;
 		const containerSize = this.#container
 			? {
 					width: this.#container.getBoundingClientRect().width,
@@ -57,7 +59,7 @@ export class SnapPointsState {
 				? { width: window.innerWidth, height: window.innerHeight }
 				: { width: 0, height: 0 };
 
-		return (
+		const offset =
 			this.#snapPoints?.map((snapPoint) => {
 				const isPx = typeof snapPoint === "string";
 				let snapPointAsNumber = 0;
@@ -94,8 +96,8 @@ export class SnapPointsState {
 				}
 
 				return width;
-			}) ?? []
-		);
+			}) ?? [];
+		return offset;
 	});
 
 	activeSnapPointOffset = $derived.by(() => {
@@ -121,9 +123,6 @@ export class SnapPointsState {
 			const activeSnapPoint = this.activeSnapPoint;
 			const snapPoints = this.#snapPoints;
 			const snapPointsOffset = this.snapPointsOffset;
-			this.#root.drawerNode;
-			this.fadeFromIndex;
-			this.#root.overlayNode;
 			untrack(() => {
 				if (activeSnapPoint) {
 					const newIndex =
