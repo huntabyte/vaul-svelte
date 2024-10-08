@@ -469,6 +469,7 @@ export class DrawerRootState {
 	};
 
 	closeDrawer = (fromWithin?: boolean) => {
+		console.log("closing drawer");
 		this.cancelDrag();
 		this.onCloseProp.current?.();
 

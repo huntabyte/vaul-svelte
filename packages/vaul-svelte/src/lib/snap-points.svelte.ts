@@ -130,7 +130,7 @@ export class SnapPointsState {
 						newIndex !== -1 &&
 						typeof snapPointsOffset[newIndex] === "number"
 					) {
-						this.snapToPoint(snapPointsOffset[newIndex] as number);
+						this.snapToPoint(snapPointsOffset[newIndex]);
 					}
 				}
 			});
