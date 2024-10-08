@@ -1,9 +1,11 @@
 import { untrack } from "svelte";
-import {
-	type ReadableBoxedValues,
-	type WithRefProps,
-	type WritableBoxedValues,
-	useRefById,
+import type {
+	Box,
+	Getter,
+	ReadableBoxedValues,
+	WithRefProps,
+	WritableBox,
+	WritableBoxedValues,
 } from "svelte-toolbelt";
 import { isInput, isVertical } from "./internal/helpers/is.js";
 import {
@@ -14,12 +16,11 @@ import {
 	VELOCITY_THRESHOLD,
 	WINDOW_TOP_OFFSET,
 } from "./internal/constants.js";
-import { isIOS, usePreventScroll } from "./use-prevent-scroll.svelte.js";
 import { PositionFixed } from "./position-fixed.svelte.js";
 import { createContext } from "./internal/createContext.js";
 import { SnapPointsState } from "./snap-points.svelte.js";
 import type { DrawerDirection, OnDrag, OnRelease } from "./types.js";
-import { getTranslate, reset, set } from "./helpers.js";
+import { getTranslate, isIOS, reset, set } from "./helpers.js";
 import { useScaleBackground } from "./use-scale-background.svelte.js";
 
 type DrawerRootStateProps = ReadableBoxedValues<{
@@ -129,17 +130,6 @@ export class DrawerRootState {
 		this.autoFocus = props.autoFocus;
 		//
 		this.snapPointsState = new SnapPointsState(this);
-
-		usePreventScroll({
-			isDisabled: () =>
-				!this.open.current ||
-				this.isDragging ||
-				!this.modal.current ||
-				this.justReleased ||
-				!this.hasBeenOpened ||
-				!this.repositionInputs.current ||
-				!this.disablePreventScroll.current,
-		});
 
 		this.positionFixedState = new PositionFixed(this);
 
@@ -380,6 +370,7 @@ export class DrawerRootState {
 
 		// Calculate the percentage dragged, where 1 is the closed position
 		let percentageDragged = absDraggedDistance / drawerDimension;
+
 		const snapPointPercentageDragged = this.snapPointsState.getPercentageDragged(
 			absDraggedDistance,
 			isDraggingInDirection
@@ -394,10 +385,13 @@ export class DrawerRootState {
 			return;
 		}
 
-		if (!this.isAllowedToDrag && !this.shouldDrag(e.target, isDraggingInDirection)) return;
+		if (!this.isAllowedToDrag && !this.shouldDrag(e.target, isDraggingInDirection)) {
+			return;
+		}
 		this.drawerNode.classList.add(DRAG_CLASS);
 		// If shouldDrag gave true once after pressing down on the drawer, we set isAllowedToDrag to true and it will remain true until we let go, there's no reason to disable dragging mid way, ever, and that's the solution to it
 		this.isAllowedToDrag = true;
+
 		set(this.drawerNode, {
 			transition: "none",
 		});
@@ -463,7 +457,7 @@ export class DrawerRootState {
 			);
 		}
 
-		if (!this.snapPoints) {
+		if (!this.snapPoints.current) {
 			const translateValue = absDraggedDistance * directionMultiplier;
 
 			set(this.drawerNode, {
@@ -801,7 +795,7 @@ class DrawerContentState {
 					this.#root.drawerNode = node;
 				}
 			},
-			deps: () => this.mounted,
+			deps: () => this.mounted && this.#root.open.current,
 		});
 
 		useScaleBackground(this.#root);
@@ -934,9 +928,10 @@ class DrawerContentState {
 				id: this.#id.current,
 				"data-vaul-drawer-direction": this.#root.direction.current,
 				"data-vaul-drawer": "",
-				"data-vaul-drawer-delayed-snap-points": this.delayedSnapPoints ? "true" : "false",
+				"data-vaul-delayed-snap-points": this.delayedSnapPoints ? "true" : "false",
 				"data-vaul-custom-container": this.#root.container.current ? "true" : "false",
-				"data-vaul-snap-points": this.hasSnapPoints ? "true" : "false",
+				"data-vaul-snap-points":
+					this.#root.open.current && this.hasSnapPoints ? "true" : "false",
 				style:
 					this.#root.snapPointsOffset && this.#root.snapPointsOffset.length > 0
 						? {
@@ -1129,4 +1124,62 @@ function getScale() {
 
 export function dampenValue(v: number) {
 	return 8 * (Math.log(v + 1) - 2);
+}
+
+type UseRefByIdProps = {
+	/**
+	 * The ID of the node to find.
+	 */
+	id: Box<string>;
+
+	/**
+	 * The ref to set the node to.
+	 */
+	ref: WritableBox<HTMLElement | null>;
+
+	/**
+	 * A reactive condition that will cause the node to be set.
+	 */
+	deps?: Getter<unknown>;
+
+	/**
+	 * A callback fired when the ref changes.
+	 */
+	onRefChange?: (node: HTMLElement | null) => void;
+};
+
+/**
+ * Finds the node with that ID and sets it to the boxed node.
+ * Reactive using `$effect` to ensure when the ID or condition changes,
+ * an update is triggered and new node is found.
+ */
+export function useRefById({
+	id,
+	ref,
+	deps = () => true,
+	onRefChange = () => {},
+}: UseRefByIdProps) {
+	const trueDeps = $derived.by(() => deps());
+	$effect(() => {
+		// re-run when the ID changes.
+		id.current;
+		// re-run when the deps changes.
+		trueDeps;
+		return untrack(() => {
+			const node = document.getElementById(id.current);
+			ref.current = node;
+			onRefChange(ref.current);
+
+			return () => {
+				onRefChange(null);
+			};
+		});
+	});
+
+	$effect(() => {
+		return () => {
+			ref.current = null;
+			onRefChange(null);
+		};
+	});
 }

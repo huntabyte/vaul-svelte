@@ -1,6 +1,6 @@
 import { untrack } from "svelte";
-import { isSafari } from "./use-prevent-scroll.svelte.js";
 import type { DrawerRootState } from "./vaul.svelte.js";
+import { isSafari } from "./helpers.js";
 
 let previousBodyPosition: Record<string, string> | null = null;
 

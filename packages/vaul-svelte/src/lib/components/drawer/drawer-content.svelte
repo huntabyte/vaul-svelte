@@ -39,7 +39,7 @@
 	const mergedProps = $derived(mergeProps(restProps, contentState.props));
 </script>
 
-<DialogPrimitive.Content preventScroll={false} {...mergedProps}>
-	<Mounted onMounted={(m) => (contentState.mounted = m)} />
+<DialogPrimitive.Content {...mergedProps}>
 	{@render children?.()}
+	<Mounted onMounted={(m) => (contentState.mounted = m)} />
 </DialogPrimitive.Content>

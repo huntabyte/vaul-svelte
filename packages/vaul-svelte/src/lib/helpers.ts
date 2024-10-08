@@ -64,6 +64,36 @@ export function reset(el: Element | HTMLElement | null, prop?: string) {
 	}
 }
 
+function isMac(): boolean | undefined {
+	return testPlatform(/^Mac/);
+}
+
+function testPlatform(re: RegExp): boolean | undefined {
+	return typeof window !== "undefined" && window.navigator != null
+		? re.test(window.navigator.platform)
+		: undefined;
+}
+
+function isIPhone(): boolean | undefined {
+	return testPlatform(/^iPhone/);
+}
+
+export function isSafari(): boolean | undefined {
+	return /^(?:(?!chrome|android).)*safari/i.test(navigator.userAgent);
+}
+
+function isIPad(): boolean | undefined {
+	return (
+		testPlatform(/^iPad/) ||
+		// iPadOS 13 lies and says it's a Mac, but we can distinguish by detecting touch support.
+		(isMac() && navigator.maxTouchPoints > 1)
+	);
+}
+
+export function isIOS(): boolean | undefined {
+	return isIPhone() || isIPad();
+}
+
 export function isVertical(direction: DrawerDirection) {
 	switch (direction) {
 		case "top":
@@ -103,15 +133,12 @@ export function assignStyle(
 	element: HTMLElement | null | undefined,
 	style: Partial<CSSStyleDeclaration>
 ) {
-	console.log(`assigning style ${JSON.stringify(style, null, 2)} to element`, element);
 	if (!element) return () => {};
 
 	const prevStyle = element.style.cssText;
-	console.log(`element prev style ${prevStyle}`);
 	Object.assign(element.style, style);
 
 	return () => {
-		console.log(`resetting style ${JSON.stringify(style, null, 2)} to element`, element);
 		element.style.cssText = prevStyle;
 	};
 }

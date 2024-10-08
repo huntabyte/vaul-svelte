@@ -111,7 +111,7 @@ export class SnapPointsState {
 		this.#root = root;
 
 		$effect(() => {
-			untrack(() => {
+			return untrack(() => {
 				window.addEventListener("resize", this.#onResize);
 				return () => window.removeEventListener("resize", this.#onResize);
 			});
