@@ -1,8 +1,8 @@
 import type {
+	BitsPrimitiveDivAttributes,
 	DialogContentPropsWithoutHTML,
 	DialogOverlayPropsWithoutHTML,
 	Dialog as DrawerPrimitive,
-	PrimitiveDivAttributes,
 	WithChild,
 	WithoutChildrenOrChild,
 } from "bits-ui";
@@ -231,7 +231,7 @@ export type DrawerHandlePropsWithoutHTML = Omit<
 >;
 
 export type DrawerHandleProps = DrawerHandlePropsWithoutHTML &
-	Without<PrimitiveDivAttributes, DrawerHandlePropsWithoutHTML>;
+	Without<BitsPrimitiveDivAttributes, DrawerHandlePropsWithoutHTML>;
 
 export type DrawerContentPropsWithoutHTML = Omit<
 	WithChildren<WithoutChildrenOrChild<DialogContentPropsWithoutHTML>>,
@@ -239,13 +239,13 @@ export type DrawerContentPropsWithoutHTML = Omit<
 >;
 
 export type DrawerContentProps = DrawerContentPropsWithoutHTML &
-	Without<PrimitiveDivAttributes, DrawerContentPropsWithoutHTML>;
+	Without<BitsPrimitiveDivAttributes, DrawerContentPropsWithoutHTML>;
 
 export type DrawerOverlayPropsWithoutHTML = WithChildren<
 	WithoutChildrenOrChild<DialogOverlayPropsWithoutHTML>
 >;
 export type DrawerOverlayProps = DrawerOverlayPropsWithoutHTML &
-	Without<PrimitiveDivAttributes, DrawerOverlayPropsWithoutHTML>;
+	Without<BitsPrimitiveDivAttributes, DrawerOverlayPropsWithoutHTML>;
 
 export type {
 	DialogPortalPropsWithoutHTML as DrawerPortalPropsWithoutHTML,
