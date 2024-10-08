@@ -8,6 +8,7 @@ import {
 	type WritableBoxedValues,
 	afterTick,
 } from "svelte-toolbelt";
+import type { MouseEventHandler, PointerEventHandler } from "svelte/elements";
 import { isInput, isVertical } from "./internal/helpers/is.js";
 import {
 	BORDER_RADIUS,
@@ -745,12 +746,12 @@ class DrawerOverlayState {
 
 type DrawerContentStateProps = WithRefProps &
 	ReadableBoxedValues<{
-		onInteractOutside: (e: Event) => void;
-		onPointerDown: (e: PointerEvent) => void;
-		onPointerMove: (e: PointerEvent) => void;
-		onPointerUp: (e: PointerEvent) => void;
-		onPointerOut: (e: PointerEvent) => void;
-		onContextMenu: (e: MouseEvent) => void;
+		onInteractOutside: (e: MouseEvent | TouchEvent | PointerEvent) => void;
+		onPointerDown: PointerEventHandler<HTMLDivElement>;
+		onPointerMove: PointerEventHandler<HTMLDivElement>;
+		onPointerUp: PointerEventHandler<HTMLDivElement>;
+		onPointerOut: PointerEventHandler<HTMLDivElement>;
+		onContextMenu: MouseEventHandler<HTMLDivElement>;
 		onOpenAutoFocus: (e: Event) => void;
 	}>;
 
@@ -854,7 +855,7 @@ class DrawerContentState {
 		// }
 	};
 
-	onInteractOutside = (e: Event) => {
+	onInteractOutside = (e: MouseEvent | TouchEvent | PointerEvent) => {
 		this.#onInteractOutsideProp.current(e);
 
 		if (!this.#root.modal.current || e.defaultPrevented) {
@@ -873,7 +874,7 @@ class DrawerContentState {
 		}
 	};
 
-	#onpointermove = (e: PointerEvent) => {
+	#onpointermove: PointerEventHandler<HTMLDivElement> = (e) => {
 		this.lastKnownPointerEvent = e;
 		if (this.#root.handleOnly.current) return;
 		this.#onPointerMoveProp.current(e);
@@ -898,26 +899,26 @@ class DrawerContentState {
 		}
 	};
 
-	#onpointerup = (e: PointerEvent) => {
+	#onpointerup: PointerEventHandler<HTMLDivElement> = (e) => {
 		this.#onPointerUpProp.current(e);
 		this.pointerStart = null;
 		this.wasBeyondThePoint = false;
 		this.#root.onRelease(e);
 	};
 
-	#onpointerout = (e: PointerEvent) => {
+	#onpointerout: PointerEventHandler<HTMLDivElement> = (e) => {
 		this.#onPointerOutProp.current(e);
 		if (!this.lastKnownPointerEvent) return;
 		this.handleOnPointerUp(this.lastKnownPointerEvent);
 	};
 
-	#oncontextmenu = (e: MouseEvent) => {
+	#oncontextmenu: MouseEventHandler<HTMLDivElement> = (e) => {
 		this.#onContextMenuProp.current(e);
 		if (!this.lastKnownPointerEvent) return;
 		this.handleOnPointerUp(this.lastKnownPointerEvent);
 	};
 
-	#onpointerdown = (e: PointerEvent) => {
+	#onpointerdown: PointerEventHandler<HTMLDivElement> = (e) => {
 		if (this.#root.handleOnly.current) return;
 		this.#onPointerDownProp.current(e);
 		this.pointerStart = { x: e.pageX, y: e.pageY };

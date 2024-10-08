@@ -27,12 +27,12 @@
 			() => ref,
 			(v) => (ref = v)
 		),
-		onContextMenu: box.with(() => oncontextmenu),
+		onContextMenu: box.with(() => oncontextmenu ?? noop),
 		onInteractOutside: box.with(() => onInteractOutside),
-		onPointerDown: box.with(() => onpointerdown),
-		onPointerMove: box.with(() => onpointermove),
-		onPointerOut: box.with(() => onpointerout),
-		onPointerUp: box.with(() => onpointerup),
+		onPointerDown: box.with(() => onpointerdown ?? noop),
+		onPointerMove: box.with(() => onpointermove ?? noop),
+		onPointerOut: box.with(() => onpointerout ?? noop),
+		onPointerUp: box.with(() => onpointerup ?? noop),
 		onOpenAutoFocus: box.with(() => onOpenAutoFocus),
 	});
 
