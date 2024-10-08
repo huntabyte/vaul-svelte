@@ -103,12 +103,15 @@ export function assignStyle(
 	element: HTMLElement | null | undefined,
 	style: Partial<CSSStyleDeclaration>
 ) {
+	console.log(`assigning style ${JSON.stringify(style, null, 2)} to element`, element);
 	if (!element) return () => {};
 
 	const prevStyle = element.style.cssText;
+	console.log(`element prev style ${prevStyle}`);
 	Object.assign(element.style, style);
 
 	return () => {
+		console.log(`resetting style ${JSON.stringify(style, null, 2)} to element`, element);
 		element.style.cssText = prevStyle;
 	};
 }

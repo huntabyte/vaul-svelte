@@ -6,22 +6,21 @@ import {
 	useRefById,
 } from "svelte-toolbelt";
 import { isInput, isVertical } from "./internal/helpers/is.js";
-import { getTranslate } from "./internal/helpers/style.js";
-import { TRANSITIONS, VELOCITY_THRESHOLD } from "./internal/constants.js";
-import { isIOS, usePreventScroll } from "./prevent-scroll.svelte.js";
+import {
+	BORDER_RADIUS,
+	DRAG_CLASS,
+	NESTED_DISPLACEMENT,
+	TRANSITIONS,
+	VELOCITY_THRESHOLD,
+	WINDOW_TOP_OFFSET,
+} from "./internal/constants.js";
+import { isIOS, usePreventScroll } from "./use-prevent-scroll.svelte.js";
 import { PositionFixed } from "./position-fixed.svelte.js";
 import { createContext } from "./internal/createContext.js";
 import { SnapPointsState } from "./snap-points.svelte.js";
 import type { DrawerDirection, OnDrag, OnRelease } from "./types.js";
-import { reset, set } from "./helpers.js";
+import { getTranslate, reset, set } from "./helpers.js";
 import { useScaleBackground } from "./use-scale-background.svelte.js";
-
-export const DEFAULT_CLOSE_THRESHOLD = 0.25;
-export const DEFAULT_SCROLL_LOCK_TIMEOUT = 100;
-const BORDER_RADIUS = 8;
-const NESTED_DISPLACEMENT = 16;
-const WINDOW_TOP_OFFSET = 26;
-const DRAG_CLASS = "vaul-dragging";
 
 type DrawerRootStateProps = ReadableBoxedValues<{
 	closeThreshold: number;
@@ -149,7 +148,7 @@ export class DrawerRootState {
 			const snapPoints = this.snapPoints.current;
 			const snapPointsOffset = this.snapPointsState.snapPointsOffset;
 			this.drawerNode;
-			untrack(() => {
+			return untrack(() => {
 				const onVisualViewportChange = () => {
 					if (!this.drawerNode || !this.repositionInputs.current) return;
 
@@ -223,7 +222,7 @@ export class DrawerRootState {
 		// Trigger enter animation without using CSS animation
 		$effect(() => {
 			const open = this.open.current;
-			untrack(() => {
+			return untrack(() => {
 				if (open) {
 					set(document.documentElement, {
 						scrollBehavior: "auto",
@@ -728,8 +727,6 @@ class DrawerOverlayState {
 		() => this.#root.snapPoints.current && this.#root.snapPoints.current.length > 0
 	);
 
-	shouldRender = $derived.by(() => this.#root.modal.current);
-
 	#onmouseup = (e: MouseEvent) => {
 		this.#root.onRelease(e);
 	};
@@ -939,6 +936,7 @@ class DrawerContentState {
 				"data-vaul-drawer": "",
 				"data-vaul-drawer-delayed-snap-points": this.delayedSnapPoints ? "true" : "false",
 				"data-vaul-custom-container": this.#root.container.current ? "true" : "false",
+				"data-vaul-snap-points": this.hasSnapPoints ? "true" : "false",
 				style:
 					this.#root.snapPointsOffset && this.#root.snapPointsOffset.length > 0
 						? {
@@ -1078,6 +1076,18 @@ class DrawerHandleState {
 	);
 }
 
+class DrawerPortalState {
+	#root: DrawerRootState;
+
+	constructor(root: DrawerRootState) {
+		this.#root = root;
+	}
+
+	props = $derived.by(() => ({
+		to: this.#root.container.current ? this.#root.container.current : undefined,
+	}));
+}
+
 ////////////////////////////////////
 // CONTEXT
 ////////////////////////////////////
@@ -1102,6 +1112,11 @@ export function useDrawerOverlay(props: DrawerOverlayStateProps) {
 export function useDrawerHandle(props: DrawerHandleStateProps) {
 	const root = getDrawerRootContext();
 	return new DrawerHandleState(props, root);
+}
+
+export function useDrawerPortal() {
+	const root = getDrawerRootContext();
+	return new DrawerPortalState(root);
 }
 
 ////////////////////////////////////

@@ -1,5 +1,5 @@
 import { untrack } from "svelte";
-import { isSafari } from "./prevent-scroll.svelte.js";
+import { isSafari } from "./use-prevent-scroll.svelte.js";
 import type { DrawerRootState } from "./vaul.svelte.js";
 
 let previousBodyPosition: Record<string, string> | null = null;
@@ -19,7 +19,7 @@ export class PositionFixed {
 		this.#root = root;
 
 		$effect(() => {
-			untrack(() => {
+			return untrack(() => {
 				const onScroll = () => {
 					this.#scrollPos = window.scrollY;
 				};

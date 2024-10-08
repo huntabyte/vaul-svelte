@@ -5,7 +5,6 @@
 
 	onMount(() => {
 		onMounted(true);
-
 		return () => {
 			onMounted(false);
 		};

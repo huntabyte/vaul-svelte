@@ -48,8 +48,8 @@ importers:
   packages/vaul-svelte:
     dependencies:
       bits-ui:
-        specifier: 1.0.0-next.14
-        version: 1.0.0-next.14(svelte@5.0.0-next.260)
+        specifier: 1.0.0-next.15
+        version: 1.0.0-next.15(svelte@5.0.0-next.260)
       svelte-toolbelt:
         specifier: ^0.4.1
         version: 0.4.1(svelte@5.0.0-next.260)
@@ -1348,8 +1348,8 @@ packages:
     resolution: {integrity: sha512-jDctJ/IVQbZoJykoeHbhXpOlNBqGNcwXJKJog42E5HDPUwQTSdjCHdihjj0DlnheQ7blbT6dHOafNAiS8ooQKA==}
     engines: {node: '>=8'}
 
-  bits-ui@1.0.0-next.14:
-    resolution: {integrity: sha512-7XyAIQYEP4gt3hGbnHV+t77KwGmhYVoCWnZAJrxnNsRHNovUdmrzMZaUNboL2SOhQI+0NzSi04m5ZAO1t3OhpQ==}
+  bits-ui@1.0.0-next.15:
+    resolution: {integrity: sha512-RjjNO00BFsqWfFQmjGGYSBXD2LoDFZrjWcswS/QqaSIzf0MDoNl7pTRLu9+2nh1BrSIQQgNG3LJjwSjRa21Msg==}
     engines: {node: '>=18', pnpm: '>=8.7.0'}
     peerDependencies:
       svelte: ^5.0.0-next.1
@@ -5208,7 +5208,7 @@ snapshots:
 
   binary-extensions@2.2.0: {}
 
-  bits-ui@1.0.0-next.14(svelte@5.0.0-next.260):
+  bits-ui@1.0.0-next.15(svelte@5.0.0-next.260):
     dependencies:
       '@floating-ui/core': 1.6.5
       '@floating-ui/dom': 1.6.8
