@@ -1,0 +1,9 @@
+{
+  "mode": "pre",
+  "tag": "next",
+  "initialVersions": {
+    "vaul-svelte": "0.3.2",
+    "docs": "0.0.0"
+  },
+  "changesets": []
+}
