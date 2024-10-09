@@ -9,12 +9,12 @@ export type Props = {
 	 *
 	 * @default false
 	 */
-	open?: CreateVaulProps["defaultOpen"] & {};
+	open?: (CreateVaulProps["defaultOpen"] & {}) | undefined;
 
 	/**
 	 * A function called when the open state of the Drawer changes.
 	 */
-	onOpenChange?: OnChangeFn<boolean>;
+	onOpenChange?: OnChangeFn<boolean> | undefined;
 
 	/**
 	 * Number between 0 and 1 that determines when the drawer should be closed.
@@ -22,7 +22,7 @@ export type Props = {
 	 * Example: threshold of 0.5 would close the drawer if the user swiped for
 	 * 50% of the height of the drawer or more.
 	 */
-	closeThreshold?: CreateVaulProps["closeThreshold"] & {};
+	closeThreshold?: (CreateVaulProps["closeThreshold"] & {}) | undefined;
 
 	/**
 	 * Duration in ms for which the drawer is not draggable after
@@ -30,7 +30,7 @@ export type Props = {
 	 *
 	 * @default 500
 	 */
-	scrollLockTimeout?: CreateVaulProps["scrollLockTimeout"] & {};
+	scrollLockTimeout?: (CreateVaulProps["scrollLockTimeout"] & {}) | undefined;
 
 	/**
 	 * Array of numbers from 0 to 100 that corresponds to % of the screen a given
@@ -39,62 +39,62 @@ export type Props = {
 	 * Example [0.2, 0.5, 0.8]. You can also use px values, which doesn't take
 	 * screen height into account.
 	 */
-	snapPoints?: CreateVaulProps["snapPoints"] & {};
+	snapPoints?: (CreateVaulProps["snapPoints"] & {}) | undefined;
 
 	/**
 	 * Index of a `snapPoint` from which the overlay fade should be applied.
 	 *
 	 * @default snapPoints[snapPoints.length - 1] (last snap point)
 	 */
-	fadeFromIndex?: CreateVaulProps["fadeFromIndex"] & {};
+	fadeFromIndex?: (CreateVaulProps["fadeFromIndex"] & {}) | undefined;
 
 	/**
 	 * A callback function that is called when the drawer is dragged
 	 */
-	onDrag?: CreateVaulProps["onDrag"] & {};
+	onDrag?: (CreateVaulProps["onDrag"] & {}) | undefined;
 
 	/**
 	 * A callback function that is called when the drawer is released
 	 */
-	onRelease?: CreateVaulProps["onRelease"] & {};
+	onRelease?: (CreateVaulProps["onRelease"] & {}) | undefined;
 
 	/**
 	 * Whether this drawer is nested inside another drawer.
 	 *
 	 * @default false
 	 */
-	nested?: CreateVaulProps["nested"] & {};
+	nested?: (CreateVaulProps["nested"] & {}) | undefined;
 
 	/**
 	 * A callback function that is called when the drawer is
 	 * about to close.
 	 */
-	onClose?: CreateVaulProps["onClose"] & {};
+	onClose?: (CreateVaulProps["onClose"] & {}) | undefined;
 
 	/**
 	 * Whether the background should scale down when the drawer is open.
 	 *
 	 * @default false
 	 */
-	shouldScaleBackground?: CreateVaulProps["shouldScaleBackground"] & {};
+	shouldScaleBackground?: (CreateVaulProps["shouldScaleBackground"] & {}) | undefined;
 
 	/**
 	 * The background color of the body when the drawer is open and `shouldScaleBackground` is true.
 	 *
 	 * @default "black"
 	 */
-	backgroundColor?: CreateVaulProps["backgroundColor"] & {};
+	backgroundColor?: (CreateVaulProps["backgroundColor"] & {}) | undefined;
 
 	/**
 	 * The active snap point of the drawer. You can bind to this value to
 	 * programatically change the active snap point.
 	 */
-	activeSnapPoint?: CreateVaulProps["defaultActiveSnapPoint"];
+	activeSnapPoint?: CreateVaulProps["defaultActiveSnapPoint"] | undefined;
 
 	/**
 	 * A function called when the active snap point of the Drawer changes.
 	 */
-	onActiveSnapPointChange?: OnChangeFn<number | string | null>;
+	onActiveSnapPointChange?: OnChangeFn<number | string | null> | undefined;
 
 	/**
 	 * Whether the drawer is able to be dismissed naturally.
@@ -104,7 +104,7 @@ export type Props = {
 	 *
 	 * @default true
 	 */
-	dismissible?: boolean;
+	dismissible?: boolean | undefined;
 
 	/**
 	 * The direction from which the drawer should open.
@@ -112,7 +112,7 @@ export type Props = {
 	 * @default 'bottom'
 	 *
 	 */
-	direction?: DrawerDirection;
+	direction?: DrawerDirection | undefined;
 } & DialogPrimitive.Props;
 
 export type OverlayProps = DialogPrimitive.OverlayProps;
