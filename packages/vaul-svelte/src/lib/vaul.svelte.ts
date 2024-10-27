@@ -1,12 +1,11 @@
 import { untrack } from "svelte";
-import {
-	type Box,
-	type Getter,
-	type ReadableBoxedValues,
-	type WithRefProps,
-	type WritableBox,
-	type WritableBoxedValues,
-	afterTick,
+import type {
+	Box,
+	Getter,
+	ReadableBoxedValues,
+	WithRefProps,
+	WritableBox,
+	WritableBoxedValues,
 } from "svelte-toolbelt";
 import type { MouseEventHandler, PointerEventHandler } from "svelte/elements";
 import { isInput, isVertical } from "./internal/helpers/is.js";
@@ -132,7 +131,6 @@ export class DrawerRootState {
 		this.autoFocus = props.autoFocus;
 		//
 		this.snapPointsState = new SnapPointsState(this);
-
 		this.positionFixedState = new PositionFixed(this);
 
 		$effect(() => {
@@ -228,13 +226,13 @@ export class DrawerRootState {
 			});
 		});
 
-		$effect(() => {
-			if (!this.modal.current) {
-				window.requestAnimationFrame(() => {
-					document.body.style.pointerEvents = "auto";
-				});
-			}
-		});
+		// $effect(() => {
+		// 	if (!this.modal.current) {
+		// 		window.requestAnimationFrame(() => {
+		// 			document.body.style.pointerEvents = "auto";
+		// 		});
+		// 	}
+		// });
 	}
 
 	setActiveSnapPoint = (snapPoint: string | number | null) => {
@@ -746,7 +744,7 @@ class DrawerOverlayState {
 
 type DrawerContentStateProps = WithRefProps &
 	ReadableBoxedValues<{
-		onInteractOutside: (e: MouseEvent | TouchEvent | PointerEvent) => void;
+		onInteractOutside: (e: PointerEvent) => void;
 		onPointerDown: PointerEventHandler<HTMLDivElement>;
 		onPointerMove: PointerEventHandler<HTMLDivElement>;
 		onPointerUp: PointerEventHandler<HTMLDivElement>;
@@ -855,7 +853,7 @@ class DrawerContentState {
 		// }
 	};
 
-	onInteractOutside = (e: MouseEvent | TouchEvent | PointerEvent) => {
+	onInteractOutside = (e: PointerEvent) => {
 		this.#onInteractOutsideProp.current(e);
 
 		if (!this.#root.modal.current || e.defaultPrevented) {

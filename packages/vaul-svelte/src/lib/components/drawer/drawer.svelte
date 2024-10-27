@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { Dialog as DialogPrimitive } from "bits-ui";
-	import { box } from "svelte-toolbelt";
+	import { afterSleep, box } from "svelte-toolbelt";
 	import type { RootProps } from "./index.js";
 	import { noop } from "$lib/internal/helpers/noop.js";
 	import { useDrawerRoot } from "$lib/vaul.svelte.js";
@@ -88,8 +88,19 @@
 		container: box.with(() => container),
 	});
 
+	let bodyStyles: any;
+
 	function handleOpenChange(o: boolean) {
 		onOpenChange?.(o);
+
+		if (o && !nested) {
+			bodyStyles = document.body.style.cssText;
+		} else if (!o && !nested) {
+			afterSleep(TRANSITIONS.DURATION * 1000, () => {
+				document.body.style.cssText = bodyStyles;
+			});
+		}
+
 		if (!o && !nested) {
 			rootState.positionFixedState.restorePositionSetting();
 		}
@@ -111,6 +122,13 @@
 			document.body.style.pointerEvents = "auto";
 		}
 	}
+
+	$effect(() => {
+		return () => {
+			if (nested) return;
+			document.body.style.cssText = bodyStyles;
+		};
+	});
 </script>
 
 <DialogPrimitive.Root
@@ -118,6 +136,7 @@
 	open={rootState.open.current}
 	onOpenChange={(o) => {
 		rootState.onDialogOpenChange(o);
+		handleOpenChange(o);
 	}}
 	{...restProps}
 />
