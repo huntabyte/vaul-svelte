@@ -6,6 +6,7 @@
     "docs": "0.0.0"
   },
   "changesets": [
+    "sharp-actors-fly",
     "sour-trainers-boil"
   ]
 }
