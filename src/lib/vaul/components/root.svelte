@@ -119,9 +119,13 @@
 		if (!$localDismissible) {
 			return;
 		}
+
 		const $openDialogIds = get(openDrawerIds);
-		const isLast = $openDialogIds[$openDialogIds.length - 1] === get(drawerId);
-		if (isLast) {
+		const currentId = get(drawerId);
+		// Find the index of the current drawer
+		const currentIndex = $openDialogIds.indexOf(currentId);
+		// Only close if this is the topmost drawer
+		if (currentIndex === $openDialogIds.length - 1) {
 			onOpenChange?.(false);
 			closeDrawer();
 		}
