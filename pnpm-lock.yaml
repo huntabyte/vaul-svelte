@@ -48,7 +48,7 @@ importers:
   packages/vaul-svelte:
     dependencies:
       bits-ui:
-        specifier: 1.0.0-next.28
+        specifier: ^1.0.0-next.28
         version: 1.0.0-next.28(svelte@5.1.3)
       svelte-toolbelt:
         specifier: ^0.4.4
@@ -5020,7 +5020,7 @@ snapshots:
       chai: 5.1.1
       tinyrainbow: 1.2.0
 
-  '@vitest/mocker@2.1.1(@vitest/spy@2.1.1)(vite@5.4.8)':
+  '@vitest/mocker@2.1.1(@vitest/spy@2.1.1)(vite@5.4.8(@types/node@20.14.14))':
     dependencies:
       '@vitest/spy': 2.1.1
       estree-walker: 3.0.3
@@ -7737,7 +7737,7 @@ snapshots:
   vitest@2.1.1(@types/node@20.14.14)(jsdom@24.1.1):
     dependencies:
       '@vitest/expect': 2.1.1
-      '@vitest/mocker': 2.1.1(@vitest/spy@2.1.1)(vite@5.4.8)
+      '@vitest/mocker': 2.1.1(@vitest/spy@2.1.1)(vite@5.4.8(@types/node@20.14.14))
       '@vitest/pretty-format': 2.1.1
       '@vitest/runner': 2.1.1
       '@vitest/snapshot': 2.1.1
