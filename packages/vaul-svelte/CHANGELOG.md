@@ -1,5 +1,13 @@
 # vaul-svelte
 
+## 1.0.0-next.2
+
+### Patch Changes
+
+- update bits UI ([#103](https://github.com/huntabyte/vaul-svelte/pull/103))
+
+- update bits ([#103](https://github.com/huntabyte/vaul-svelte/pull/103))
+
 ## 1.0.0-next.1
 
 ### Patch Changes

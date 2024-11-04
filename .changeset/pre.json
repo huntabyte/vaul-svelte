@@ -6,6 +6,8 @@
     "docs": "0.0.0"
   },
   "changesets": [
+    "large-chairs-promise",
+    "polite-apples-attend",
     "sharp-actors-fly",
     "sour-trainers-boil"
   ]
