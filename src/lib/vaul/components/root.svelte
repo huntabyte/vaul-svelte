@@ -122,12 +122,14 @@
 
 		const $openDialogIds = get(openDrawerIds);
 		const currentId = get(drawerId);
-		// Find the index of the current drawer
-		const currentIndex = $openDialogIds.indexOf(currentId);
-		// Only close if this is the topmost drawer
-		if (currentIndex === $openDialogIds.length - 1) {
-			onOpenChange?.(false);
-			closeDrawer();
+		if (currentId) {
+			// Find the index of the current drawer
+			const currentIndex = $openDialogIds.indexOf(currentId);
+			// Only close if this is the topmost drawer
+			if (currentIndex === $openDialogIds.length - 1) {
+				onOpenChange?.(false);
+				closeDrawer();
+			}
 		}
 	}}
 	{...$$restProps}
