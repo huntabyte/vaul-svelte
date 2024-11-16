@@ -18,6 +18,7 @@
 		onpointerout = noop,
 		onpointermove = noop,
 		children,
+		preventScroll = true,
 		...restProps
 	}: WithChildren<WithoutChildrenOrChild<ContentProps>> = $props();
 
@@ -39,7 +40,7 @@
 	const mergedProps = $derived(mergeProps(restProps, contentState.props));
 </script>
 
-<DialogPrimitive.Content {...mergedProps} preventScroll={true}>
+<DialogPrimitive.Content {...mergedProps} {preventScroll}>
 	{@render children?.()}
 	<Mounted onMounted={(m) => (contentState.mounted = m)} />
 </DialogPrimitive.Content>
