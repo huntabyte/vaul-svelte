@@ -40,7 +40,13 @@
 	const mergedProps = $derived(mergeProps(restProps, contentState.props));
 </script>
 
-<DialogPrimitive.Content {...mergedProps} {preventScroll}>
+<DialogPrimitive.Content
+	{...mergedProps}
+	{preventScroll}
+	onInteractOutside={contentState.onInteractOutside}
+	onFocusOutside={contentState.onFocusOutside}
+	onOpenAutoFocus={contentState.onOpenAutoFocus}
+>
 	{@render children?.()}
 	<Mounted onMounted={(m) => (contentState.mounted = m)} />
 </DialogPrimitive.Content>
