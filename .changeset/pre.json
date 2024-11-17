@@ -6,6 +6,7 @@
     "docs": "0.0.0"
   },
   "changesets": [
+    "fast-pears-provide",
     "large-chairs-promise",
     "polite-apples-attend",
     "sharp-actors-fly",
