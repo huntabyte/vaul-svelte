@@ -43,7 +43,6 @@ type DrawerRootStateProps = ReadableBoxedValues<{
 	noBodyStyles: boolean;
 	preventScrollRestoration: boolean;
 	setBackgroundColorOnScale: boolean;
-	disablePreventScroll: boolean;
 	container: HTMLElement | null;
 	snapToSequentialPoint: boolean;
 	repositionInputs: boolean;
@@ -75,7 +74,6 @@ export class DrawerRootState {
 	noBodyStyles: DrawerRootStateProps["noBodyStyles"];
 	preventScrollRestoration: DrawerRootStateProps["preventScrollRestoration"];
 	setBackgroundColorOnScale: DrawerRootStateProps["setBackgroundColorOnScale"];
-	disablePreventScroll: DrawerRootStateProps["disablePreventScroll"];
 	container: DrawerRootStateProps["container"];
 	snapToSequentialPoint: DrawerRootStateProps["snapToSequentialPoint"];
 	repositionInputs: DrawerRootStateProps["repositionInputs"];
@@ -124,7 +122,6 @@ export class DrawerRootState {
 		this.noBodyStyles = props.noBodyStyles;
 		this.preventScrollRestoration = props.preventScrollRestoration;
 		this.setBackgroundColorOnScale = props.setBackgroundColorOnScale;
-		this.disablePreventScroll = props.disablePreventScroll;
 		this.container = props.container;
 		this.snapToSequentialPoint = props.snapToSequentialPoint;
 		this.repositionInputs = props.repositionInputs;

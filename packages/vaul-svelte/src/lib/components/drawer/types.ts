@@ -177,13 +177,6 @@ export type BaseDrawerRootPropsWithoutHTML = WithChildren<{
 	setBackgroundColorOnScale?: boolean;
 
 	/**
-	 * When `true` scroll will not be prevented outside the drawer.
-	 *
-	 * @default false
-	 */
-	disablePreventScroll?: boolean;
-
-	/**
 	 * When `true` Vaul will reposition inputs rather than scroll then into view if the keyboard is in the way.
 	 * Setting it to `false` will fall back to the default browser behavior.
 	 * @default true when {@link snapPoints} is defined
@@ -233,9 +226,8 @@ export type DrawerHandlePropsWithoutHTML = Omit<
 export type DrawerHandleProps = DrawerHandlePropsWithoutHTML &
 	Without<BitsPrimitiveDivAttributes, DrawerHandlePropsWithoutHTML>;
 
-export type DrawerContentPropsWithoutHTML = Omit<
-	WithChildren<WithoutChildrenOrChild<DialogContentPropsWithoutHTML>>,
-	"preventScroll"
+export type DrawerContentPropsWithoutHTML = WithChildren<
+	WithoutChildrenOrChild<DialogContentPropsWithoutHTML>
 >;
 
 export type DrawerContentProps = DrawerContentPropsWithoutHTML &
