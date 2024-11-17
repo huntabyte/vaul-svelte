@@ -1,5 +1,11 @@
 # vaul-svelte
 
+## 1.0.0-next.3
+
+### Patch Changes
+
+- allow users to pass `preventScroll` to `Drawer.Content` ([#105](https://github.com/huntabyte/vaul-svelte/pull/105))
+
 ## 1.0.0-next.2
 
 ### Patch Changes
