@@ -35,9 +35,9 @@ export function set(
 			return;
 		}
 
-		// eslint-disable-next-line ts/no-explicit-any
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any
 		originalStyles[key] = (el.style as any)[key];
-		// eslint-disable-next-line ts/no-explicit-any
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any
 		(el.style as any)[key] = value;
 	});
 
@@ -50,49 +50,17 @@ export function reset(el: Element | HTMLElement | null, prop?: string) {
 	if (!el || !(el instanceof HTMLElement)) return;
 	const originalStyles = cache.get(el);
 
-	if (!originalStyles) {
-		return;
-	}
+	if (!originalStyles) return;
 
 	if (prop) {
-		// eslint-disable-next-line ts/no-explicit-any
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any
 		(el.style as any)[prop] = originalStyles[prop];
 	} else {
 		Object.entries(originalStyles).forEach(([key, value]) => {
-			// eslint-disable-next-line ts/no-explicit-any
+			// eslint-disable-next-line @typescript-eslint/no-explicit-any
 			(el.style as any)[key] = value;
 		});
 	}
-}
-
-function isMac(): boolean | undefined {
-	return testPlatform(/^Mac/);
-}
-
-function testPlatform(re: RegExp): boolean | undefined {
-	return typeof window !== "undefined" && window.navigator != null
-		? re.test(window.navigator.platform)
-		: undefined;
-}
-
-function isIPhone(): boolean | undefined {
-	return testPlatform(/^iPhone/);
-}
-
-export function isSafari(): boolean | undefined {
-	return /^(?:(?!chrome|android).)*safari/i.test(navigator.userAgent);
-}
-
-function isIPad(): boolean | undefined {
-	return (
-		testPlatform(/^iPad/) ||
-		// iPadOS 13 lies and says it's a Mac, but we can distinguish by detecting touch support.
-		(isMac() && navigator.maxTouchPoints > 1)
-	);
-}
-
-export function isIOS(): boolean | undefined {
-	return isIPhone() || isIPad();
 }
 
 export function isVertical(direction: DrawerDirection) {
@@ -109,9 +77,7 @@ export function isVertical(direction: DrawerDirection) {
 }
 
 export function getTranslate(element: HTMLElement, direction: DrawerDirection): number | null {
-	if (!element) {
-		return null;
-	}
+	if (!element) return null;
 	const style = window.getComputedStyle(element);
 	const transform =
 		// @ts-expect-error - vendor prefix

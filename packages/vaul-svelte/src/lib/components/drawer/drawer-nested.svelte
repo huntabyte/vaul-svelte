@@ -2,7 +2,8 @@
 	import DrawerRoot from "./drawer.svelte";
 	import type { RootProps } from "./index.js";
 	import { noop } from "$lib/internal/helpers/noop.js";
-	import { getDrawerRootContext } from "$lib/vaul.svelte.js";
+	import { DrawerRootContext } from "$lib/vaul.svelte.js";
+	import type { ComponentProps } from "svelte";
 
 	let {
 		open = $bindable(false),
@@ -12,7 +13,7 @@
 		...restProps
 	}: Omit<RootProps, "nested" | "onRelease" | "onClose"> = $props();
 
-	const rootState = getDrawerRootContext();
+	const rootState = DrawerRootContext.get();
 </script>
 
 <DrawerRoot
@@ -31,5 +32,5 @@
 		onOpenChange(o);
 	}}
 	onRelease={(e, o) => rootState.onNestedRelease(e, o)}
-	{...restProps as any}
+	{...restProps as ComponentProps<typeof DrawerRoot>}
 />

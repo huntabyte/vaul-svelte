@@ -1,6 +1,6 @@
-import { untrack } from "svelte";
 import type { DrawerRootState } from "./vaul.svelte.js";
-import { isSafari } from "./helpers.js";
+import { useEventListener, watch } from "runed";
+import { isSafari } from "./internal/helpers/platform.js";
 
 let previousBodyPosition: Record<string, string> | null = null;
 
@@ -8,35 +8,23 @@ export class PositionFixed {
 	#root: DrawerRootState;
 	#activeUrl = $state(typeof window !== "undefined" ? window.location.href : "");
 	#scrollPos = $state(0);
-	#open = $derived.by(() => this.#root.open.current);
-	#noBodyStyles = $derived.by(() => this.#root.noBodyStyles.current);
-	#preventScrollRestoration = $derived.by(() => this.#root.preventScrollRestoration.current);
-	#modal = $derived.by(() => this.#root.modal.current);
-	#nested = $derived.by(() => this.#root.nested.current);
-	#hasBeenOpened = $derived.by(() => this.#root.hasBeenOpened);
 
 	constructor(root: DrawerRootState) {
 		this.#root = root;
+		if (typeof window === "undefined") return;
 
-		$effect(() => {
-			return untrack(() => {
-				const onScroll = () => {
-					this.#scrollPos = window.scrollY;
-				};
+		const onScroll = () => {
+			this.#scrollPos = window.scrollY;
+		};
 
-				onScroll();
+		onScroll();
 
-				window.addEventListener("scroll", onScroll);
-
-				return () => {
-					window.removeEventListener("scroll", onScroll);
-				};
-			});
+		useEventListener(window, "scroll", () => {
+			this.#scrollPos = window.scrollY;
 		});
 
-		$effect(() => {
-			this.#activeUrl;
-			if (!this.#modal) return;
+		watch([() => this.#activeUrl, () => this.#root.modal.current], ([_, modal]) => {
+			if (!modal) return;
 
 			return () => {
 				if (typeof document === "undefined") return;
@@ -48,17 +36,18 @@ export class PositionFixed {
 			};
 		});
 
-		$effect(() => {
-			this.#open;
-			const modal = this.#modal;
-			const hasBeenOpened = this.#hasBeenOpened;
-			const nested = this.#nested;
-			this.#activeUrl;
-
-			untrack(() => {
+		watch(
+			[
+				() => this.#root.open.current,
+				() => this.#root.modal.current,
+				() => this.#root.hasBeenOpened,
+				() => this.#root.nested.current,
+				() => this.#activeUrl,
+			],
+			([open, modal, hasBeenOpened, nested]) => {
 				if (nested || !hasBeenOpened) return;
 				// This is needed to force Safari toolbar to show **before** the drawer starts animating to prevent a gnarly shift from happening
-				if (this.#open) {
+				if (open) {
 					// avoid for standalone mode (PWA)
 					const isStandalone = window.matchMedia("(display-mode: standalone)").matches;
 					!isStandalone && this.setPositionFixed();
@@ -71,15 +60,19 @@ export class PositionFixed {
 				} else {
 					this.restorePositionSetting();
 				}
-			});
-		});
+			}
+		);
 	}
 
 	setPositionFixed = () => {
 		// All browsers on iOS will return true here.
 		if (!isSafari()) return;
 
-		if (previousBodyPosition === null && this.#open && !this.#noBodyStyles) {
+		if (
+			previousBodyPosition === null &&
+			this.#root.open.current &&
+			!this.#root.noBodyStyles.current
+		) {
 			previousBodyPosition = {
 				position: document.body.style.position,
 				top: document.body.style.top,
@@ -119,7 +112,7 @@ export class PositionFixed {
 		// all browsers on iOS will return true here.
 		if (!isSafari()) return;
 
-		if (previousBodyPosition !== null && !this.#noBodyStyles) {
+		if (previousBodyPosition !== null && !this.#root.noBodyStyles.current) {
 			// Convert the position from "px" to Int
 			const y = -Number.parseInt(document.body.style.top, 10);
 			const x = -Number.parseInt(document.body.style.left, 10);
@@ -128,7 +121,10 @@ export class PositionFixed {
 			Object.assign(document.body.style, previousBodyPosition);
 
 			window.requestAnimationFrame(() => {
-				if (this.#preventScrollRestoration && this.#activeUrl !== window.location.href) {
+				if (
+					this.#root.preventScrollRestoration.current &&
+					this.#activeUrl !== window.location.href
+				) {
 					this.#activeUrl = window.location.href;
 					return;
 				}

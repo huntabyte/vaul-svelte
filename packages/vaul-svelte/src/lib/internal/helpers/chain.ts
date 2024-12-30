@@ -1,5 +1,4 @@
-// eslint-disable-next-line ts/no-explicit-any
-export type AnyFunction = (...args: any) => any;
+import type { AnyFunction } from "$lib/types.js";
 
 /**
  * Receives functions as arguments and returns a new function that calls all.

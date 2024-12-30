@@ -1,3 +1,1 @@
-export function noop() {
-	// do nothing;
-}
+export function noop() {}

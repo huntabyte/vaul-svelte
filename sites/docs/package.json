@@ -4,7 +4,7 @@
 	"description": "Documentation for vaul-svelte",
 	"private": true,
 	"scripts": {
-		"dev": "vite dev",
+		"dev": "vite dev --host",
 		"build": "vite build",
 		"preview": "vite preview",
 		"check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
@@ -12,19 +12,19 @@
 	},
 	"devDependencies": {
 		"@sveltejs/adapter-cloudflare": "^4.7.2",
-		"@sveltejs/kit": "^2.6.1",
+		"@sveltejs/kit": "^2.9.1",
 		"@sveltejs/vite-plugin-svelte": "4.0.0",
 		"autoprefixer": "^10.4.17",
 		"postcss": "^8.4.33",
 		"postcss-load-config": "^5.0.2",
-		"svelte": "^5.0.0",
-		"svelte-check": "^4.0.4",
+		"svelte": "^5.16.0",
+		"svelte-check": "^4.1.1",
 		"tailwindcss": "^3.4.13",
 		"typescript": "^5.5.4",
 		"vite": "^5.4.8"
 	},
 	"dependencies": {
-		"bits-ui": "1.0.0-next.28",
+		"bits-ui": "^1.0.0-next.74",
 		"clsx": "^2.1.1",
 		"vaul-svelte": "workspace:*"
 	},

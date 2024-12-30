@@ -1,11 +1,8 @@
-import { untrack } from "svelte";
-import type {
-	Box,
-	Getter,
-	ReadableBoxedValues,
-	WithRefProps,
-	WritableBox,
-	WritableBoxedValues,
+import {
+	useRefById,
+	type ReadableBoxedValues,
+	type WithRefProps,
+	type WritableBoxedValues,
 } from "svelte-toolbelt";
 import type { MouseEventHandler, PointerEventHandler } from "svelte/elements";
 import { isInput, isVertical } from "./internal/helpers/is.js";
@@ -18,11 +15,13 @@ import {
 	WINDOW_TOP_OFFSET,
 } from "./internal/constants.js";
 import { PositionFixed } from "./position-fixed.svelte.js";
-import { createContext } from "./internal/createContext.js";
 import { SnapPointsState } from "./snap-points.svelte.js";
 import type { DrawerDirection, OnDrag, OnRelease } from "./types.js";
-import { getTranslate, isIOS, reset, set } from "./helpers.js";
+import { getTranslate, reset, set } from "./helpers.js";
 import { useScaleBackground } from "./use-scale-background.svelte.js";
+import { Context, watch } from "runed";
+import { on } from "svelte/events";
+import { isIOS, isMobileFirefox } from "./internal/helpers/platform.js";
 
 type DrawerRootStateProps = ReadableBoxedValues<{
 	closeThreshold: number;
@@ -130,30 +129,30 @@ export class DrawerRootState {
 		this.snapPointsState = new SnapPointsState(this);
 		this.positionFixedState = new PositionFixed(this);
 
-		$effect(() => {
-			const activeSnapPointIndex = this.snapPointsState.activeSnapPointIndex;
-			const snapPoints = this.snapPoints.current;
-			const snapPointsOffset = this.snapPointsState.snapPointsOffset;
-			this.drawerNode;
-
-			return untrack(() => {
+		watch(
+			[
+				() => this.snapPointsState.activeSnapPointIndex,
+				() => this.snapPoints.current,
+				() => this.snapPointsState.snapPointsOffset,
+				() => this.drawerNode,
+			],
+			([activeSnapPointIndex, snapPoints, snapPointsOffset, drawerNode]) => {
 				const onVisualViewportChange = () => {
-					if (!this.drawerNode || !this.repositionInputs.current) return;
-
+					if (!drawerNode || !this.repositionInputs.current) return;
 					const focusedElement = document.activeElement as HTMLElement;
 					if (isInput(focusedElement) || this.keyboardIsOpen) {
 						const visualViewportHeight = window.visualViewport?.height || 0;
 						const totalHeight = window.innerHeight;
 						// This is the height of the keyboard
 						let diffFromInitial = totalHeight - visualViewportHeight;
-						const drawerHeight = this.drawerNode.getBoundingClientRect().height || 0;
+						const drawerHeight = drawerNode.getBoundingClientRect().height || 0;
 						// Adjust drawer height only if it's tall enough
 						const isTallEnough = drawerHeight > totalHeight * 0.8;
 
 						if (!this.initialDrawerHeight) {
 							this.initialDrawerHeight = drawerHeight;
 						}
-						const offsetFromTop = this.drawerNode.getBoundingClientRect().top;
+						const offsetFromTop = drawerNode.getBoundingClientRect().top;
 
 						// visualViewport height may change due to some subtle changes to the keyboard. Checking if the height changed by 60 or more will make sure that they keyboard really changed its open state.
 						if (Math.abs(this.previousDiffFromInitial - diffFromInitial) > 60) {
@@ -174,7 +173,7 @@ export class DrawerRootState {
 						this.previousDiffFromInitial = diffFromInitial;
 						// We don't have to change the height if the input is in view, when we are here we are in the opened keyboard state so we can correctly check if the input is in view
 						if (drawerHeight > visualViewportHeight || this.keyboardIsOpen) {
-							const height = this.drawerNode.getBoundingClientRect().height;
+							const height = drawerNode.getBoundingClientRect().height;
 							let newDrawerHeight = height;
 
 							if (height > visualViewportHeight) {
@@ -184,52 +183,49 @@ export class DrawerRootState {
 							}
 							// When fixed, don't move the drawer upwards if there's space, but rather only change it's height so it's fully scrollable when the keyboard is open
 							if (this.fixed.current) {
-								this.drawerNode.style.height = `${height - Math.max(diffFromInitial, 0)}px`;
+								drawerNode.style.height = `${height - Math.max(diffFromInitial, 0)}px`;
 							} else {
-								this.drawerNode.style.height = `${Math.max(newDrawerHeight, visualViewportHeight - offsetFromTop)}px`;
+								drawerNode.style.height = `${Math.max(newDrawerHeight, visualViewportHeight - offsetFromTop)}px`;
 							}
-						} else {
-							this.drawerNode.style.height = `${this.initialDrawerHeight}px`;
+						} else if (!isMobileFirefox()) {
+							drawerNode.style.height = `${this.initialDrawerHeight}px`;
 						}
 
 						if (snapPoints && snapPoints.length > 0 && !this.keyboardIsOpen) {
-							this.drawerNode.style.bottom = `0px`;
+							drawerNode.style.bottom = `0px`;
 						} else {
 							// Negative bottom value would never make sense
-							this.drawerNode.style.bottom = `${Math.max(diffFromInitial, 0)}px`;
+							drawerNode.style.bottom = `${Math.max(diffFromInitial, 0)}px`;
 						}
 					}
 				};
 
-				window.visualViewport?.addEventListener("resize", onVisualViewportChange);
-				return () =>
-					window.visualViewport?.removeEventListener("resize", onVisualViewportChange);
-			});
-		});
+				if (!window.visualViewport) return;
+
+				const remove = on(window.visualViewport, "resize", onVisualViewportChange);
+
+				return () => {
+					remove();
+				};
+			}
+		);
 
 		// Trigger enter animation without using CSS animation
-		$effect(() => {
-			const open = this.open.current;
-			return untrack(() => {
+		watch(
+			() => this.open.current,
+			(open) => {
 				if (open) {
 					set(document.documentElement, {
 						scrollBehavior: "auto",
 					});
 					this.openTime = new Date();
 				}
+
 				return () => {
 					reset(document.documentElement, "scrollBehavior");
 				};
-			});
-		});
-
-		// $effect(() => {
-		// 	if (!this.modal.current) {
-		// 		window.requestAnimationFrame(() => {
-		// 			document.body.style.pointerEvents = "auto";
-		// 		});
-		// 	}
-		// });
+			}
+		);
 	}
 
 	setActiveSnapPoint = (snapPoint: string | number | null) => {
@@ -255,9 +251,7 @@ export class DrawerRootState {
 
 		// iOS doesn't trigger mouseUp after scrolling so we need to listen to touched in order to disallow dragging
 		if (isIOS()) {
-			window.addEventListener("touchend", () => (this.isAllowedToDrag = false), {
-				once: true,
-			});
+			on(window, "touchend", () => (this.isAllowedToDrag = false), { once: true });
 		}
 		// Ensure we maintain correct pointer capture even when going outside of the drawer
 		(e.target as HTMLElement).setPointerCapture(e.pointerId);
@@ -273,6 +267,8 @@ export class DrawerRootState {
 			? getTranslate(this.drawerNode, this.direction.current)
 			: null;
 		const date = new Date();
+
+		if (element.tagName === "SELECT") return false;
 
 		if (element.hasAttribute("data-vaul-no-drag") || element.closest("[data-vaul-no-drag]")) {
 			return false;
@@ -845,9 +841,9 @@ class DrawerContentState {
 
 	onOpenAutoFocus = (e: Event) => {
 		this.#onOpenAutoFocusProp.current(e);
-		// if (!this.#root.autoFocus.current) {
-		// 	e.preventDefault();
-		// }
+		if (!this.#root.autoFocus.current) {
+			e.preventDefault();
+		}
 	};
 
 	onInteractOutside = (e: PointerEvent) => {
@@ -937,7 +933,7 @@ class DrawerContentState {
 				style:
 					this.snapPointsOffset && this.snapPointsOffset.length > 0
 						? {
-								"--snap-point-height": `${this.snapPointsOffset[0]!}px`,
+								"--snap-point-height": `${this.snapPointsOffset[this.#root.snapPointsState.activeSnapPointIndex ?? 0]!}px`,
 							}
 						: undefined,
 				onpointerdown: this.#onpointerdown,
@@ -998,11 +994,10 @@ class DrawerHandleState {
 		// Make sure to clear the timeout id if the user releases the handle before the cancel timeout
 		this.handleCancelInteraction();
 
-		if (
-			(!this.#root.snapPoints.current || this.#root.snapPoints.current.length === 0) &&
-			this.#root.dismissible.current
-		) {
-			this.#root.closeDrawer();
+		if (!this.#root.snapPoints.current || this.#root.snapPoints.current.length === 0) {
+			if (!this.#root.dismissible.current) {
+				this.#root.closeDrawer();
+			}
 			return;
 		}
 
@@ -1088,32 +1083,26 @@ class DrawerPortalState {
 ////////////////////////////////////
 // CONTEXT
 ////////////////////////////////////
-
-export const [setDrawerRootContext, getDrawerRootContext] =
-	createContext<DrawerRootState>("Drawer.Root");
+export const DrawerRootContext = new Context<DrawerRootState>("Drawer.Root");
 
 export function useDrawerRoot(props: DrawerRootStateProps) {
-	return setDrawerRootContext(new DrawerRootState(props));
+	return DrawerRootContext.set(new DrawerRootState(props));
 }
 
 export function useDrawerContent(props: DrawerContentStateProps) {
-	const root = getDrawerRootContext();
-	return new DrawerContentState(props, root);
+	return new DrawerContentState(props, DrawerRootContext.get());
 }
 
 export function useDrawerOverlay(props: DrawerOverlayStateProps) {
-	const root = getDrawerRootContext();
-	return new DrawerOverlayState(props, root);
+	return new DrawerOverlayState(props, DrawerRootContext.get());
 }
 
 export function useDrawerHandle(props: DrawerHandleStateProps) {
-	const root = getDrawerRootContext();
-	return new DrawerHandleState(props, root);
+	return new DrawerHandleState(props, DrawerRootContext.get());
 }
 
 export function useDrawerPortal() {
-	const root = getDrawerRootContext();
-	return new DrawerPortalState(root);
+	return new DrawerPortalState(DrawerRootContext.get());
 }
 
 ////////////////////////////////////
@@ -1126,62 +1115,4 @@ function getScale() {
 
 export function dampenValue(v: number) {
 	return 8 * (Math.log(v + 1) - 2);
-}
-
-type UseRefByIdProps = {
-	/**
-	 * The ID of the node to find.
-	 */
-	id: Box<string>;
-
-	/**
-	 * The ref to set the node to.
-	 */
-	ref: WritableBox<HTMLElement | null>;
-
-	/**
-	 * A reactive condition that will cause the node to be set.
-	 */
-	deps?: Getter<unknown>;
-
-	/**
-	 * A callback fired when the ref changes.
-	 */
-	onRefChange?: (node: HTMLElement | null) => void;
-};
-
-/**
- * Finds the node with that ID and sets it to the boxed node.
- * Reactive using `$effect` to ensure when the ID or condition changes,
- * an update is triggered and new node is found.
- */
-export function useRefById({
-	id,
-	ref,
-	deps = () => true,
-	onRefChange = () => {},
-}: UseRefByIdProps) {
-	const trueDeps = $derived.by(() => deps());
-	$effect(() => {
-		// re-run when the ID changes.
-		id.current;
-		// re-run when the deps changes.
-		trueDeps;
-		return untrack(() => {
-			const node = document.getElementById(id.current);
-			ref.current = node;
-			onRefChange(ref.current);
-
-			return () => {
-				onRefChange(null);
-			};
-		});
-	});
-
-	$effect(() => {
-		return () => {
-			ref.current = null;
-			onRefChange(null);
-		};
-	});
 }
