@@ -4,7 +4,7 @@
 	import Mounted from "../utils/mounted.svelte";
 	import type { ContentProps } from "./index.js";
 	import { useDrawerContent } from "$lib/vaul.svelte.js";
-	import { noop } from "$lib/internal/helpers/noop.js";
+	import { noop } from "$lib/internal/noop.js";
 	import { useId } from "$lib/internal/use-id.js";
 
 	let {
