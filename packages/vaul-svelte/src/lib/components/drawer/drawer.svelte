@@ -29,12 +29,10 @@
 		preventScrollRestoration = true,
 		setBackgroundColorOnScale = true,
 		onAnimationEnd = noop,
-		controlledOpen = false,
 		repositionInputs = true,
 		autoFocus = false,
 		snapToSequentialPoint = false,
 		container = null,
-		controlledActiveSnapPoint = false,
 		modal = true,
 		...restProps
 	}: RootProps = $props();
@@ -43,12 +41,8 @@
 		open: box.with(
 			() => open,
 			(o) => {
-				if (controlledOpen) {
-					handleOpenChange(open);
-				} else {
-					open = o;
-					handleOpenChange(o);
-				}
+				open = o;
+				handleOpenChange(o);
 			}
 		),
 		closeThreshold: box.with(() => closeThreshold),
@@ -61,12 +55,8 @@
 		activeSnapPoint: box.with(
 			() => activeSnapPoint,
 			(v) => {
-				if (controlledActiveSnapPoint) {
-					onActiveSnapPointChange(v);
-				} else {
-					activeSnapPoint = v;
-					onActiveSnapPointChange(v);
-				}
+				activeSnapPoint = v;
+				onActiveSnapPointChange(v);
 			}
 		),
 		onRelease: box.with(() => onRelease),
@@ -86,6 +76,7 @@
 		container: box.with(() => container),
 	});
 
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	let bodyStyles: any;
 
 	function handleOpenChange(o: boolean) {
@@ -130,12 +121,13 @@
 </script>
 
 <DialogPrimitive.Root
-	controlledOpen
-	open={rootState.open.current}
-	onOpenChange={(o) => {
-		rootState.onDialogOpenChange(o);
-		handleOpenChange(o);
-	}}
+	bind:open={
+		() => rootState.open.current,
+		(o) => {
+			rootState.onDialogOpenChange(o);
+			handleOpenChange(o);
+		}
+	}
 	{...restProps}
 />
 

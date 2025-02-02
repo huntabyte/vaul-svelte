@@ -47,18 +47,6 @@ export type BaseDrawerRootPropsWithoutHTML = WithChildren<{
 	onOpenChange?: OnChangeFn<boolean>;
 
 	/**
-	 * When `true` the open state will be controlled, meaning you will be responsible for setting
-	 * the open state of the drawer using the `onOpenChange` prop.
-	 */
-	controlledOpen?: boolean;
-
-	/**
-	 * When `true` the open state will be controlled, meaning you will be responsible for setting
-	 * the open state of the drawer using the `onOpenChange` prop.
-	 */
-	controlledActiveSnapPoint?: boolean;
-
-	/**
 	 * Number between 0 and 1 that determines when the drawer should be closed.
 	 *
 	 * Example: threshold of 0.5 would close the drawer if the user swiped for

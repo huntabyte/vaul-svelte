@@ -1,4 +1,4 @@
-import type { AnyFunction, DrawerDirection } from "./types.js";
+import type { DrawerDirection } from "./types.js";
 
 interface Style {
 	[key: string]: string;
@@ -35,9 +35,9 @@ export function set(
 			return;
 		}
 
-		// eslint-disable-next-line ts/no-explicit-any
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any
 		originalStyles[key] = (el.style as any)[key];
-		// eslint-disable-next-line ts/no-explicit-any
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any
 		(el.style as any)[key] = value;
 	});
 
@@ -55,11 +55,11 @@ export function reset(el: Element | HTMLElement | null, prop?: string) {
 	}
 
 	if (prop) {
-		// eslint-disable-next-line ts/no-explicit-any
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any
 		(el.style as any)[prop] = originalStyles[prop];
 	} else {
 		Object.entries(originalStyles).forEach(([key, value]) => {
-			// eslint-disable-next-line ts/no-explicit-any
+			// eslint-disable-next-line @typescript-eslint/no-explicit-any
 			(el.style as any)[key] = value;
 		});
 	}
@@ -141,18 +141,5 @@ export function assignStyle(
 
 	return () => {
 		element.style.cssText = prevStyle;
-	};
-}
-
-/**
- * Receives functions as arguments and returns a new function that calls all.
- */
-export function chain<T>(...fns: T[]) {
-	return (...args: T extends AnyFunction ? Parameters<T> : never) => {
-		for (const fn of fns) {
-			if (typeof fn === "function") {
-				fn(...args);
-			}
-		}
 	};
 }

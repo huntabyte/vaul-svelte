@@ -1,17 +1,9 @@
-class Counter {
-	value = 0;
-
-	constructor(initialValue: number = 0) {
-		this.value = initialValue;
-	}
-}
-
-const count = new Counter(0);
+globalThis.vaulIdCounter ??= { current: 0 };
 
 /**
  * Generates a unique ID based on a global counter.
  */
-export function useId() {
-	const num = count.value++;
-	return `vaul-${num}`;
+export function useId(prefix = "vaul-svelte") {
+	globalThis.vaulIdCounter.current++;
+	return `${prefix}-${globalThis.vaulIdCounter.current}`;
 }

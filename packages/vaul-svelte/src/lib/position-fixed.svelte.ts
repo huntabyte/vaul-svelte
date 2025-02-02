@@ -1,6 +1,8 @@
-import { untrack } from "svelte";
 import type { DrawerRootState } from "./vaul.svelte.js";
 import { isSafari } from "./helpers.js";
+import { onMountEffect } from "svelte-toolbelt";
+import { on } from "svelte/events";
+import { watch } from "runed";
 
 let previousBodyPosition: Record<string, string> | null = null;
 
@@ -18,26 +20,17 @@ export class PositionFixed {
 	constructor(root: DrawerRootState) {
 		this.#root = root;
 
-		$effect(() => {
-			return untrack(() => {
-				const onScroll = () => {
-					this.#scrollPos = window.scrollY;
-				};
+		onMountEffect(() => {
+			const onScroll = () => {
+				this.#scrollPos = window.scrollY;
+			};
 
-				onScroll();
-
-				window.addEventListener("scroll", onScroll);
-
-				return () => {
-					window.removeEventListener("scroll", onScroll);
-				};
-			});
+			onScroll();
+			return on(window, "scroll", onScroll);
 		});
 
-		$effect(() => {
-			this.#activeUrl;
+		watch([() => this.#activeUrl, () => this.#modal], () => {
 			if (!this.#modal) return;
-
 			return () => {
 				if (typeof document === "undefined") return;
 				// another drawer has opened, safe to ignore the execution
@@ -48,22 +41,23 @@ export class PositionFixed {
 			};
 		});
 
-		$effect(() => {
-			this.#open;
-			const modal = this.#modal;
-			const hasBeenOpened = this.#hasBeenOpened;
-			const nested = this.#nested;
-			this.#activeUrl;
-
-			untrack(() => {
-				if (nested || !hasBeenOpened) return;
+		watch(
+			[
+				() => this.#open,
+				() => this.#modal,
+				() => this.#hasBeenOpened,
+				() => this.#nested,
+				() => this.#activeUrl,
+			],
+			() => {
+				if (this.#nested || !this.#hasBeenOpened) return;
 				// This is needed to force Safari toolbar to show **before** the drawer starts animating to prevent a gnarly shift from happening
 				if (this.#open) {
 					// avoid for standalone mode (PWA)
 					const isStandalone = window.matchMedia("(display-mode: standalone)").matches;
 					!isStandalone && this.setPositionFixed();
 
-					if (!modal) {
+					if (!this.#modal) {
 						window.setTimeout(() => {
 							this.restorePositionSetting();
 						}, 500);
@@ -71,8 +65,8 @@ export class PositionFixed {
 				} else {
 					this.restorePositionSetting();
 				}
-			});
-		});
+			}
+		);
 	}
 
 	setPositionFixed = () => {

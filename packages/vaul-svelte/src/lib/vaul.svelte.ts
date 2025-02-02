@@ -1,11 +1,9 @@
 import { untrack } from "svelte";
-import type {
-	Box,
-	Getter,
-	ReadableBoxedValues,
-	WithRefProps,
-	WritableBox,
-	WritableBoxedValues,
+import {
+	useRefById,
+	type ReadableBoxedValues,
+	type WithRefProps,
+	type WritableBoxedValues,
 } from "svelte-toolbelt";
 import type { MouseEventHandler, PointerEventHandler } from "svelte/elements";
 import { isInput, isVertical } from "./internal/helpers/is.js";
@@ -18,11 +16,11 @@ import {
 	WINDOW_TOP_OFFSET,
 } from "./internal/constants.js";
 import { PositionFixed } from "./position-fixed.svelte.js";
-import { createContext } from "./internal/createContext.js";
 import { SnapPointsState } from "./snap-points.svelte.js";
 import type { DrawerDirection, OnDrag, OnRelease } from "./types.js";
 import { getTranslate, isIOS, reset, set } from "./helpers.js";
 import { useScaleBackground } from "./use-scale-background.svelte.js";
+import { Context } from "runed";
 
 type DrawerRootStateProps = ReadableBoxedValues<{
 	closeThreshold: number;
@@ -1089,31 +1087,26 @@ class DrawerPortalState {
 // CONTEXT
 ////////////////////////////////////
 
-export const [setDrawerRootContext, getDrawerRootContext] =
-	createContext<DrawerRootState>("Drawer.Root");
+export const DrawerRootContext = new Context<DrawerRootState>("Drawer.Root");
 
 export function useDrawerRoot(props: DrawerRootStateProps) {
-	return setDrawerRootContext(new DrawerRootState(props));
+	return DrawerRootContext.set(new DrawerRootState(props));
 }
 
 export function useDrawerContent(props: DrawerContentStateProps) {
-	const root = getDrawerRootContext();
-	return new DrawerContentState(props, root);
+	return new DrawerContentState(props, DrawerRootContext.get());
 }
 
 export function useDrawerOverlay(props: DrawerOverlayStateProps) {
-	const root = getDrawerRootContext();
-	return new DrawerOverlayState(props, root);
+	return new DrawerOverlayState(props, DrawerRootContext.get());
 }
 
 export function useDrawerHandle(props: DrawerHandleStateProps) {
-	const root = getDrawerRootContext();
-	return new DrawerHandleState(props, root);
+	return new DrawerHandleState(props, DrawerRootContext.get());
 }
 
 export function useDrawerPortal() {
-	const root = getDrawerRootContext();
-	return new DrawerPortalState(root);
+	return new DrawerPortalState(DrawerRootContext.get());
 }
 
 ////////////////////////////////////
@@ -1126,62 +1119,4 @@ function getScale() {
 
 export function dampenValue(v: number) {
 	return 8 * (Math.log(v + 1) - 2);
-}
-
-type UseRefByIdProps = {
-	/**
-	 * The ID of the node to find.
-	 */
-	id: Box<string>;
-
-	/**
-	 * The ref to set the node to.
-	 */
-	ref: WritableBox<HTMLElement | null>;
-
-	/**
-	 * A reactive condition that will cause the node to be set.
-	 */
-	deps?: Getter<unknown>;
-
-	/**
-	 * A callback fired when the ref changes.
-	 */
-	onRefChange?: (node: HTMLElement | null) => void;
-};
-
-/**
- * Finds the node with that ID and sets it to the boxed node.
- * Reactive using `$effect` to ensure when the ID or condition changes,
- * an update is triggered and new node is found.
- */
-export function useRefById({
-	id,
-	ref,
-	deps = () => true,
-	onRefChange = () => {},
-}: UseRefByIdProps) {
-	const trueDeps = $derived.by(() => deps());
-	$effect(() => {
-		// re-run when the ID changes.
-		id.current;
-		// re-run when the deps changes.
-		trueDeps;
-		return untrack(() => {
-			const node = document.getElementById(id.current);
-			ref.current = node;
-			onRefChange(ref.current);
-
-			return () => {
-				onRefChange(null);
-			};
-		});
-	});
-
-	$effect(() => {
-		return () => {
-			ref.current = null;
-			onRefChange(null);
-		};
-	});
 }

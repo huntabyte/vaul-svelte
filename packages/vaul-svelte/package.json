@@ -27,8 +27,8 @@
 		"svelte": "^5.0.0"
 	},
 	"devDependencies": {
-		"@sveltejs/kit": "^2.6.1",
-		"@sveltejs/package": "^2.3.5",
+		"@sveltejs/kit": "^2.16.1",
+		"@sveltejs/package": "^2.3.9",
 		"@sveltejs/vite-plugin-svelte": "4.0.0",
 		"@testing-library/dom": "^10.4.0",
 		"@testing-library/jest-dom": "^6.4.8",
@@ -39,10 +39,11 @@
 		"@types/resize-observer-browser": "^0.1.11",
 		"@types/testing-library__jest-dom": "^5.14.9",
 		"autoprefixer": "^10.4.16",
+		"bits-ui": "^1.0.0-next.84",
 		"jsdom": "^24.1.0",
 		"publint": "^0.2.8",
-		"svelte": "^5.0.0",
-		"svelte-check": "^4.0.4",
+		"svelte": "^5.19.6",
+		"svelte-check": "^4.1.4",
 		"tslib": "^2.6.3",
 		"typescript": "^5.5.4",
 		"vite": "^5.4.8",
@@ -53,8 +54,8 @@
 	"types": "./dist/index.d.ts",
 	"type": "module",
 	"dependencies": {
-		"bits-ui": "^1.0.0-next.41",
-		"svelte-toolbelt": "^0.4.4"
+		"runed": "^0.23.2",
+		"svelte-toolbelt": "^0.7.1"
 	},
 	"engines": {
 		"pnpm": ">=8.7.0",

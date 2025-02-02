@@ -1,8 +1,10 @@
-import { untrack } from "svelte";
 import { isBrowser, isVertical } from "./internal/helpers/is.js";
 import type { DrawerRootState } from "./vaul.svelte.js";
 import { set } from "./helpers.js";
 import { TRANSITIONS, VELOCITY_THRESHOLD } from "./internal/constants.js";
+import { watch } from "runed";
+import { onMountEffect } from "svelte-toolbelt";
+import { on } from "svelte/events";
 
 type Dimensions = {
 	innerWidth: number;
@@ -112,31 +114,27 @@ export class SnapPointsState {
 	constructor(root: DrawerRootState) {
 		this.#root = root;
 
-		$effect(() => {
-			return untrack(() => {
-				window.addEventListener("resize", this.#onResize);
-				return () => window.removeEventListener("resize", this.#onResize);
-			});
+		onMountEffect(() => {
+			return on(window, "resize", this.#onResize);
 		});
 
-		$effect(() => {
-			const activeSnapPoint = this.activeSnapPoint;
-			const snapPoints = this.#snapPoints;
-			const snapPointsOffset = this.snapPointsOffset;
-			untrack(() => {
-				if (activeSnapPoint) {
-					const newIndex =
-						snapPoints?.findIndex((snapPoint) => snapPoint === activeSnapPoint) ?? -1;
-					if (
-						snapPointsOffset &&
-						newIndex !== -1 &&
-						typeof snapPointsOffset[newIndex] === "number"
-					) {
-						this.snapToPoint(snapPointsOffset[newIndex]);
-					}
+		watch(
+			[() => this.activeSnapPoint, () => this.#snapPoints, () => this.snapPointsOffset],
+			() => {
+				if (!this.activeSnapPoint) return;
+				const newIndex =
+					this.#snapPoints?.findIndex(
+						(snapPoint) => snapPoint === this.activeSnapPoint
+					) ?? -1;
+				if (
+					this.snapPointsOffset &&
+					newIndex !== -1 &&
+					typeof this.snapPointsOffset[newIndex] === "number"
+				) {
+					this.snapToPoint(this.snapPointsOffset[newIndex]);
 				}
-			});
-		});
+			}
+		);
 	}
 
 	#onResize = () => {
