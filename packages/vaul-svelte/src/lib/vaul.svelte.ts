@@ -5,7 +5,6 @@ import {
 	type WritableBoxedValues,
 } from "svelte-toolbelt";
 import type { MouseEventHandler, PointerEventHandler } from "svelte/elements";
-import { isInput, isVertical } from "./internal/is.js";
 import {
 	BORDER_RADIUS,
 	DRAG_CLASS,
@@ -17,10 +16,12 @@ import {
 import { PositionFixed } from "./position-fixed.svelte.js";
 import { SnapPointsState } from "./snap-points.svelte.js";
 import type { DrawerDirection } from "./types.js";
-import { getTranslate, isIOS, reset, set } from "./helpers.js";
+import { getTranslate, isVertical, reset, set } from "./helpers.js";
 import { useScaleBackground } from "./use-scale-background.svelte.js";
 import { Context, watch } from "runed";
 import { on } from "svelte/events";
+import { isIOS } from "./internal/browser.js";
+import { isInput } from "./use-prevent-scroll.svelte.js";
 
 type DrawerRootStateProps = ReadableBoxedValues<{
 	closeThreshold: number;
@@ -84,18 +85,18 @@ export class DrawerRootState {
 	isDragging = $state(false);
 	justReleased = $state(false);
 	overlayNode = $state<HTMLElement | null>(null);
-	openTime = $state<Date | null>(null);
-	dragStartTime = $state<Date | null>(null);
-	dragEndTime = $state<Date | null>(null);
-	lastTimeDragPrevented = $state<Date | null>(null);
-	isAllowedToDrag = $state(false);
-	nestedOpenChangeTimer = $state<number | null>(null);
-	pointerStart = $state(0);
-	keyboardIsOpen = $state(false);
-	previousDiffFromInitial = $state(0);
+	openTime: Date | null = null;
+	dragStartTime: Date | null = null;
+	dragEndTime: Date | null = null;
+	lastTimeDragPrevented: Date | null = null;
+	isAllowedToDrag: boolean = false;
+	nestedOpenChangeTimer: number | null = null;
+	pointerStart: number = 0;
+	keyboardIsOpen: boolean = false;
+	previousDiffFromInitial: number = 0;
 	drawerNode = $state<HTMLElement | null>(null);
-	drawerHeight = $state(0);
-	drawerWidth = $state(0);
+	drawerHeight: number = $state(0);
+	drawerWidth: number = $state(0);
 	initialDrawerHeight = $state(0);
 	//
 	snapPointsState: SnapPointsState;
@@ -795,7 +796,7 @@ class DrawerContentState {
 			deps: () => this.mounted && this.#root.open.current,
 		});
 
-		useScaleBackground(this.#root);
+		useScaleBackground();
 
 		watch([() => this.hasSnapPoints, () => this.#root.open.current], () => {
 			if (this.hasSnapPoints && this.#root.open.current) {

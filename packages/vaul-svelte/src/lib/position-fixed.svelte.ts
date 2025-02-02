@@ -1,8 +1,8 @@
 import type { DrawerRootState } from "./vaul.svelte.js";
-import { isSafari } from "./helpers.js";
 import { onMountEffect } from "svelte-toolbelt";
 import { on } from "svelte/events";
 import { watch } from "runed";
+import { isSafari } from "./internal/browser.js";
 
 let previousBodyPosition: Record<string, string> | null = null;
 

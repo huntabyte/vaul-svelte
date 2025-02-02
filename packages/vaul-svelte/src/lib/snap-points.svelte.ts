@@ -1,10 +1,10 @@
-import { isBrowser, isVertical } from "./internal/is.js";
 import type { DrawerRootState } from "./vaul.svelte.js";
-import { set } from "./helpers.js";
+import { isVertical, set } from "./helpers.js";
 import { TRANSITIONS, VELOCITY_THRESHOLD } from "./internal/constants.js";
 import { watch } from "runed";
 import { onMountEffect } from "svelte-toolbelt";
 import { on } from "svelte/events";
+import { isBrowser } from "./internal/browser.js";
 
 type Dimensions = {
 	innerWidth: number;

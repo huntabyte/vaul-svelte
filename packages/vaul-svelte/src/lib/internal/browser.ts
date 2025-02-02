@@ -1,3 +1,5 @@
+export const isBrowser = typeof document !== "undefined";
+
 export function isMobileFirefox(): boolean | undefined {
 	const userAgent = navigator.userAgent;
 	return (

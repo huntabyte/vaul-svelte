@@ -5,3 +5,7 @@ export type OnDrag = (event: PointerEvent | MouseEvent, percentageDragged: numbe
 export type OnRelease = (event: PointerEvent | MouseEvent, open: boolean) => void;
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export type AnyFunction = (...args: any) => any;
+
+export type Getters<T> = {
+	[K in keyof T]: () => T[K];
+};

@@ -1,46 +1,34 @@
-import { BORDER_RADIUS, TRANSITIONS, WINDOW_TOP_OFFSET } from "./internal/constants.js";
-import { isVertical } from "./internal/is.js";
-import type { DrawerRootState } from "./vaul.svelte.js";
-import { noop } from "./internal/noop.js";
-import { chain } from "./internal/chain.js";
-import { assignStyle } from "./helpers.js";
-import { onMountEffect } from "svelte-toolbelt";
 import { watch } from "runed";
+import { BORDER_RADIUS, TRANSITIONS, WINDOW_TOP_OFFSET } from "./internal/constants.js";
+import { DrawerRootContext } from "./vaul.svelte.js";
+import { assignStyle, chain, isVertical } from "./helpers.js";
+import { noop } from "./internal/noop.js";
 
-export function useScaleBackground(root: DrawerRootState) {
+export function useScaleBackground() {
+	const ctx = DrawerRootContext.get();
 	let timeoutId: number | null = null;
-	let initialBackgroundColor = "";
+	const initialBackgroundColor =
+		typeof document !== "undefined" ? document.body.style.backgroundColor : "";
 
 	function getScale() {
 		return (window.innerWidth - WINDOW_TOP_OFFSET) / window.innerWidth;
 	}
 
-	onMountEffect(() => {
-		initialBackgroundColor = document.body.style.backgroundColor;
-	});
-
-	watch(
-		[
-			() => root.open.current,
-			() => root.shouldScaleBackground.current,
-			() => root.setBackgroundColorOnScale.current,
-		],
-		() => {
-			if (!root.open.current || !root.shouldScaleBackground.current) return;
-
-			if (timeoutId) window.clearTimeout(timeoutId);
+	watch([() => ctx.open.current, () => ctx.shouldScaleBackground.current], () => {
+		if (ctx.open.current && ctx.shouldScaleBackground.current) {
+			if (timeoutId) clearTimeout(timeoutId);
 			const wrapper =
 				(document.querySelector("[data-vaul-drawer-wrapper]") as HTMLElement) ||
-				(document.querySelector("[vaul-drawer-wrapper]") as HTMLElement);
+				(document.querySelector("[data-vaul-drawer-wrapper]") as HTMLElement);
 
 			if (!wrapper) return;
 
 			chain(
-				root.setBackgroundColorOnScale.current && !root.noBodyStyles.current
+				ctx.setBackgroundColorOnScale.current && !ctx.noBodyStyles.current
 					? assignStyle(document.body, { background: "black" })
 					: noop,
 				assignStyle(wrapper, {
-					transformOrigin: isVertical(root.direction.current) ? "top" : "left",
+					transformOrigin: isVertical(ctx.direction.current) ? "top" : "left",
 					transitionProperty: "transform, border-radius",
 					transitionDuration: `${TRANSITIONS.DURATION}s`,
 					transitionTimingFunction: `cubic-bezier(${TRANSITIONS.EASE.join(",")})`,
@@ -50,7 +38,7 @@ export function useScaleBackground(root: DrawerRootState) {
 			const wrapperStylesCleanup = assignStyle(wrapper, {
 				borderRadius: `${BORDER_RADIUS}px`,
 				overflow: "hidden",
-				...(isVertical(root.direction.current)
+				...(isVertical(ctx.direction.current)
 					? {
 							transform: `scale(${getScale()}) translate3d(0, calc(env(safe-area-inset-top) + 14px), 0)`,
 						}
@@ -70,5 +58,5 @@ export function useScaleBackground(root: DrawerRootState) {
 				}, TRANSITIONS.DURATION * 1000);
 			};
 		}
-	);
+	});
 }
