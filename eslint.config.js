@@ -49,8 +49,8 @@ export default tseslint.config(
 			"sites/docs/.svelte-kit/**/*",
 			"sites/docs/.velite/**/*",
 			".svelte-kit",
-			"packages/bits-ui/dist/**/*",
-			"packages/bits-ui/.svelte-kit/**/*",
+			"packages/vaul-svelte/dist/**/*",
+			"packages/vaul-svelte/.svelte-kit/**/*",
 			"packages/tests/.svelte-kit/**/*",
 		],
 	}
