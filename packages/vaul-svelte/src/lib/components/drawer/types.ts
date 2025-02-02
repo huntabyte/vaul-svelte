@@ -7,7 +7,7 @@ import type {
 	WithoutChildrenOrChild,
 } from "bits-ui";
 import type { WithChildren, Without } from "svelte-toolbelt";
-import type { DrawerDirection, OnChangeFn, OnDrag, OnRelease } from "$lib/types.js";
+import type { DrawerDirection, OnChangeFn } from "$lib/types.js";
 
 export type WithFadeFromProps = {
 	/**
@@ -47,6 +47,18 @@ export type BaseDrawerRootPropsWithoutHTML = WithChildren<{
 	onOpenChange?: OnChangeFn<boolean>;
 
 	/**
+	 * A callback function that is called when the drawer is dragged
+	 */
+	onDrag?: (
+		event: PointerEvent & { currentTarget: HTMLElement },
+		percentageDragged: number
+	) => void;
+	/**
+	 * A callback function that is called when the drawer is released
+	 */
+	onRelease?: (event: PointerEvent & { currentTarget: HTMLElement }, open: boolean) => void;
+
+	/**
 	 * Number between 0 and 1 that determines when the drawer should be closed.
 	 *
 	 * Example: threshold of 0.5 would close the drawer if the user swiped for
@@ -61,16 +73,6 @@ export type BaseDrawerRootPropsWithoutHTML = WithChildren<{
 	 * @default 500
 	 */
 	scrollLockTimeout?: number;
-
-	/**
-	 * A callback function that is called when the drawer is dragged
-	 */
-	onDrag?: OnDrag;
-
-	/**
-	 * A callback function that is called when the drawer is released
-	 */
-	onRelease?: OnRelease;
 
 	/**
 	 * Whether this drawer is nested inside another drawer.

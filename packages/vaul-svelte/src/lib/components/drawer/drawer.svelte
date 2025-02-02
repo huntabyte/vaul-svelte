@@ -2,38 +2,38 @@
 	import { Dialog as DialogPrimitive } from "bits-ui";
 	import { afterSleep, box } from "svelte-toolbelt";
 	import type { RootProps } from "./index.js";
-	import { noop } from "$lib/internal/helpers/noop.js";
+	import { noop } from "$lib/internal/noop.js";
 	import { useDrawerRoot } from "$lib/vaul.svelte.js";
 	import { CLOSE_THRESHOLD, SCROLL_LOCK_TIMEOUT, TRANSITIONS } from "$lib/internal/constants.js";
 
 	let {
 		open = $bindable(false),
 		onOpenChange = noop,
+		onDrag = noop,
+		onRelease = noop,
+		snapPoints,
+		shouldScaleBackground = false,
+		setBackgroundColorOnScale = true,
 		closeThreshold = CLOSE_THRESHOLD,
 		scrollLockTimeout = SCROLL_LOCK_TIMEOUT,
-		snapPoints,
+		dismissible = true,
+		handleOnly = false,
 		fadeFromIndex = snapPoints && snapPoints.length - 1,
-		backgroundColor = "black",
-		nested = false,
-		shouldScaleBackground = false,
 		activeSnapPoint = $bindable(null),
 		onActiveSnapPointChange = noop,
-		onRelease = noop,
-		onDrag = noop,
-		onClose = noop,
-		dismissible = true,
-		direction = "bottom",
+		backgroundColor = "black",
 		fixed = false,
-		handleOnly = false,
-		noBodyStyles = false,
-		preventScrollRestoration = true,
-		setBackgroundColorOnScale = true,
-		onAnimationEnd = noop,
-		repositionInputs = true,
-		autoFocus = false,
-		snapToSequentialPoint = false,
-		container = null,
 		modal = true,
+		onClose = noop,
+		nested = false,
+		noBodyStyles = false,
+		direction = "bottom",
+		snapToSequentialPoint = false,
+		preventScrollRestoration = true,
+		repositionInputs = true,
+		onAnimationEnd = noop,
+		container = null,
+		autoFocus = false,
 		...restProps
 	}: RootProps = $props();
 
@@ -82,14 +82,6 @@
 	function handleOpenChange(o: boolean) {
 		onOpenChange?.(o);
 
-		if (o && !nested) {
-			bodyStyles = document.body.style.cssText;
-		} else if (!o && !nested) {
-			afterSleep(TRANSITIONS.DURATION * 1000, () => {
-				document.body.style.cssText = bodyStyles;
-			});
-		}
-
 		if (!o && !nested) {
 			rootState.positionFixedState.restorePositionSetting();
 		}
@@ -104,6 +96,14 @@
 					document.body.style.pointerEvents = "auto";
 				});
 			}
+		}
+
+		if (o && !nested) {
+			bodyStyles = document.body.style.cssText;
+		} else if (!o && !nested) {
+			afterSleep(TRANSITIONS.DURATION * 1000, () => {
+				document.body.style.cssText = bodyStyles;
+			});
 		}
 
 		if (!o) {

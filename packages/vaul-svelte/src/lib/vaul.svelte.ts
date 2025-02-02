@@ -1,4 +1,3 @@
-import { untrack } from "svelte";
 import {
 	useRefById,
 	type ReadableBoxedValues,
@@ -6,7 +5,7 @@ import {
 	type WritableBoxedValues,
 } from "svelte-toolbelt";
 import type { MouseEventHandler, PointerEventHandler } from "svelte/elements";
-import { isInput, isVertical } from "./internal/helpers/is.js";
+import { isInput, isVertical } from "./internal/is.js";
 import {
 	BORDER_RADIUS,
 	DRAG_CLASS,
@@ -17,10 +16,11 @@ import {
 } from "./internal/constants.js";
 import { PositionFixed } from "./position-fixed.svelte.js";
 import { SnapPointsState } from "./snap-points.svelte.js";
-import type { DrawerDirection, OnDrag, OnRelease } from "./types.js";
+import type { DrawerDirection } from "./types.js";
 import { getTranslate, isIOS, reset, set } from "./helpers.js";
 import { useScaleBackground } from "./use-scale-background.svelte.js";
-import { Context } from "runed";
+import { Context, watch } from "runed";
+import { on } from "svelte/events";
 
 type DrawerRootStateProps = ReadableBoxedValues<{
 	closeThreshold: number;
@@ -31,8 +31,11 @@ type DrawerRootStateProps = ReadableBoxedValues<{
 	fixed: boolean;
 	dismissible: boolean;
 	direction: DrawerDirection;
-	onDrag: OnDrag;
-	onRelease: OnRelease;
+	onDrag: (
+		event: PointerEvent & { currentTarget: HTMLElement },
+		percentageDragged: number
+	) => void;
+	onRelease: (event: PointerEvent & { currentTarget: HTMLElement }, open: boolean) => void;
 	nested: boolean;
 	onClose: () => void;
 	backgroundColor: string | undefined;
@@ -128,106 +131,106 @@ export class DrawerRootState {
 		this.snapPointsState = new SnapPointsState(this);
 		this.positionFixedState = new PositionFixed(this);
 
-		$effect(() => {
-			const activeSnapPointIndex = this.snapPointsState.activeSnapPointIndex;
-			const snapPoints = this.snapPoints.current;
-			const snapPointsOffset = this.snapPointsState.snapPointsOffset;
-			this.drawerNode;
-
-			return untrack(() => {
+		watch(
+			[
+				() => this.snapPointsState.activeSnapPointIndex,
+				() => this.snapPoints.current,
+				() => this.snapPointsState.snapPointsOffset,
+				() => this.drawerNode,
+			],
+			() => {
 				const onVisualViewportChange = () => {
 					if (!this.drawerNode || !this.repositionInputs.current) return;
 
 					const focusedElement = document.activeElement as HTMLElement;
-					if (isInput(focusedElement) || this.keyboardIsOpen) {
-						const visualViewportHeight = window.visualViewport?.height || 0;
-						const totalHeight = window.innerHeight;
-						// This is the height of the keyboard
-						let diffFromInitial = totalHeight - visualViewportHeight;
-						const drawerHeight = this.drawerNode.getBoundingClientRect().height || 0;
-						// Adjust drawer height only if it's tall enough
-						const isTallEnough = drawerHeight > totalHeight * 0.8;
+					if (!(isInput(focusedElement) || this.keyboardIsOpen)) return;
 
-						if (!this.initialDrawerHeight) {
-							this.initialDrawerHeight = drawerHeight;
+					const visualViewportHeight = window.visualViewport?.height || 0;
+					const totalHeight = window.innerHeight;
+					// This is the height of the keyboard
+					let diffFromInitial = totalHeight - visualViewportHeight;
+					const drawerHeight = this.drawerNode.getBoundingClientRect().height || 0;
+					// Adjust drawer height only if it's tall enough
+					const isTallEnough = drawerHeight > totalHeight * 0.8;
+
+					if (!this.initialDrawerHeight) {
+						this.initialDrawerHeight = drawerHeight;
+					}
+					const offsetFromTop = this.drawerNode.getBoundingClientRect().top;
+
+					// visualViewport height may change due to some subtle changes to the keyboard. Checking if the height changed by 60 or more will make sure that they keyboard really changed its open state.
+					if (Math.abs(this.previousDiffFromInitial - diffFromInitial) > 60) {
+						this.keyboardIsOpen = !this.keyboardIsOpen;
+					}
+
+					if (
+						this.snapPoints.current &&
+						this.snapPoints.current.length > 0 &&
+						this.snapPointsState.snapPointsOffset &&
+						this.snapPointsState.activeSnapPointIndex
+					) {
+						const activeSnapPointHeight =
+							this.snapPointsState.snapPointsOffset[
+								this.snapPointsState.activeSnapPointIndex
+							] || 0;
+						diffFromInitial += activeSnapPointHeight;
+					}
+
+					this.previousDiffFromInitial = diffFromInitial;
+					// We don't have to change the height if the input is in view, when we are here we are in the opened keyboard state so we can correctly check if the input is in view
+					if (drawerHeight > visualViewportHeight || this.keyboardIsOpen) {
+						const height = this.drawerNode.getBoundingClientRect().height;
+						let newDrawerHeight = height;
+
+						if (height > visualViewportHeight) {
+							newDrawerHeight =
+								visualViewportHeight -
+								(isTallEnough ? offsetFromTop : WINDOW_TOP_OFFSET);
 						}
-						const offsetFromTop = this.drawerNode.getBoundingClientRect().top;
-
-						// visualViewport height may change due to some subtle changes to the keyboard. Checking if the height changed by 60 or more will make sure that they keyboard really changed its open state.
-						if (Math.abs(this.previousDiffFromInitial - diffFromInitial) > 60) {
-							this.keyboardIsOpen = !this.keyboardIsOpen;
-						}
-
-						if (
-							snapPoints &&
-							snapPoints.length > 0 &&
-							snapPointsOffset &&
-							activeSnapPointIndex
-						) {
-							const activeSnapPointHeight =
-								snapPointsOffset[activeSnapPointIndex] || 0;
-							diffFromInitial += activeSnapPointHeight;
-						}
-
-						this.previousDiffFromInitial = diffFromInitial;
-						// We don't have to change the height if the input is in view, when we are here we are in the opened keyboard state so we can correctly check if the input is in view
-						if (drawerHeight > visualViewportHeight || this.keyboardIsOpen) {
-							const height = this.drawerNode.getBoundingClientRect().height;
-							let newDrawerHeight = height;
-
-							if (height > visualViewportHeight) {
-								newDrawerHeight =
-									visualViewportHeight -
-									(isTallEnough ? offsetFromTop : WINDOW_TOP_OFFSET);
-							}
-							// When fixed, don't move the drawer upwards if there's space, but rather only change it's height so it's fully scrollable when the keyboard is open
-							if (this.fixed.current) {
-								this.drawerNode.style.height = `${height - Math.max(diffFromInitial, 0)}px`;
-							} else {
-								this.drawerNode.style.height = `${Math.max(newDrawerHeight, visualViewportHeight - offsetFromTop)}px`;
-							}
+						// When fixed, don't move the drawer upwards if there's space, but rather only change it's height so it's fully scrollable when the keyboard is open
+						if (this.fixed.current) {
+							this.drawerNode.style.height = `${height - Math.max(diffFromInitial, 0)}px`;
 						} else {
-							this.drawerNode.style.height = `${this.initialDrawerHeight}px`;
+							this.drawerNode.style.height = `${Math.max(newDrawerHeight, visualViewportHeight - offsetFromTop)}px`;
 						}
+					} else {
+						this.drawerNode.style.height = `${this.initialDrawerHeight}px`;
+					}
 
-						if (snapPoints && snapPoints.length > 0 && !this.keyboardIsOpen) {
-							this.drawerNode.style.bottom = `0px`;
-						} else {
-							// Negative bottom value would never make sense
-							this.drawerNode.style.bottom = `${Math.max(diffFromInitial, 0)}px`;
-						}
+					if (
+						this.snapPoints.current &&
+						this.snapPoints.current.length > 0 &&
+						!this.keyboardIsOpen
+					) {
+						this.drawerNode.style.bottom = `0px`;
+					} else {
+						// Negative bottom value would never make sense
+						this.drawerNode.style.bottom = `${Math.max(diffFromInitial, 0)}px`;
 					}
 				};
 
-				window.visualViewport?.addEventListener("resize", onVisualViewportChange);
-				return () =>
-					window.visualViewport?.removeEventListener("resize", onVisualViewportChange);
-			});
-		});
+				if (!window.visualViewport) return;
+
+				return on(window.visualViewport, "resize", onVisualViewportChange);
+			}
+		);
 
 		// Trigger enter animation without using CSS animation
-		$effect(() => {
-			const open = this.open.current;
-			return untrack(() => {
-				if (open) {
+		watch(
+			() => this.open.current,
+			() => {
+				if (this.open.current) {
 					set(document.documentElement, {
 						scrollBehavior: "auto",
 					});
 					this.openTime = new Date();
 				}
+
 				return () => {
 					reset(document.documentElement, "scrollBehavior");
 				};
-			});
-		});
-
-		// $effect(() => {
-		// 	if (!this.modal.current) {
-		// 		window.requestAnimationFrame(() => {
-		// 			document.body.style.pointerEvents = "auto";
-		// 		});
-		// 	}
-		// });
+			}
+		);
 	}
 
 	setActiveSnapPoint = (snapPoint: string | number | null) => {
@@ -253,9 +256,7 @@ export class DrawerRootState {
 
 		// iOS doesn't trigger mouseUp after scrolling so we need to listen to touched in order to disallow dragging
 		if (isIOS()) {
-			window.addEventListener("touchend", () => (this.isAllowedToDrag = false), {
-				once: true,
-			});
+			on(window, "touchend", () => (this.isAllowedToDrag = false), { once: true });
 		}
 		// Ensure we maintain correct pointer capture even when going outside of the drawer
 		(e.target as HTMLElement).setPointerCapture(e.pointerId);
@@ -338,7 +339,7 @@ export class DrawerRootState {
 		return true;
 	};
 
-	onDrag = (e: PointerEvent) => {
+	onDrag: PointerEventHandler<HTMLElement> = (e) => {
 		if (!this.drawerNode) return;
 		if (!this.isDragging) return;
 		const directionMultiplier =
@@ -532,7 +533,7 @@ export class DrawerRootState {
 		this.dragEndTime = new Date();
 	};
 
-	onRelease = (e: PointerEvent | MouseEvent) => {
+	onRelease: PointerEventHandler<HTMLElement> = (e) => {
 		if (!this.isDragging || !this.drawerNode) return;
 
 		this.drawerNode.classList.remove(DRAG_CLASS);
@@ -718,7 +719,7 @@ class DrawerOverlayState {
 	);
 
 	#onmouseup = (e: MouseEvent) => {
-		this.#root.onRelease(e);
+		this.#root.onRelease(e as PointerEvent & { currentTarget: HTMLElement });
 	};
 
 	props = $derived.by(
@@ -762,7 +763,7 @@ class DrawerContentState {
 	//
 	delayedSnapPoints = $state(false);
 	pointerStart = $state<{ x: number; y: number } | null>(null);
-	lastKnownPointerEvent = $state<PointerEvent | null>(null);
+	lastKnownPointerEvent = $state<(PointerEvent & { currentTarget: HTMLElement }) | null>(null);
 	wasBeyondThePoint = $state(false);
 	hasSnapPoints = $derived.by(
 		() => this.#root.snapPoints.current && this.#root.snapPoints.current.length > 0
@@ -796,7 +797,7 @@ class DrawerContentState {
 
 		useScaleBackground(this.#root);
 
-		$effect(() => {
+		watch([() => this.hasSnapPoints, () => this.#root.open.current], () => {
 			if (this.hasSnapPoints && this.#root.open.current) {
 				window.requestAnimationFrame(() => {
 					this.delayedSnapPoints = true;
@@ -835,7 +836,7 @@ class DrawerContentState {
 		return true;
 	};
 
-	handleOnPointerUp = (e: PointerEvent) => {
+	handleOnPointerUp: PointerEventHandler<HTMLElement> = (e) => {
 		this.pointerStart = null;
 		this.wasBeyondThePoint = false;
 		this.#root.onRelease(e);
@@ -1043,7 +1044,7 @@ class DrawerHandleState {
 		this.handleCancelInteraction();
 	};
 
-	#onpointerdown = (e: PointerEvent) => {
+	#onpointerdown: PointerEventHandler<HTMLElement> = (e) => {
 		if (this.#root.handleOnly.current) {
 			this.#root.onDrag(e);
 		}

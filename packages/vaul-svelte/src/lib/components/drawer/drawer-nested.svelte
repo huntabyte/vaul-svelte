@@ -1,7 +1,7 @@
 <script lang="ts">
 	import DrawerRoot from "./drawer.svelte";
 	import type { RootProps } from "./index.js";
-	import { noop } from "$lib/internal/helpers/noop.js";
+	import { noop } from "$lib/internal/noop.js";
 	import { DrawerRootContext } from "$lib/vaul.svelte.js";
 
 	let {

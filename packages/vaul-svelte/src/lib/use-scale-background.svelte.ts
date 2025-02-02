@@ -1,8 +1,8 @@
 import { BORDER_RADIUS, TRANSITIONS, WINDOW_TOP_OFFSET } from "./internal/constants.js";
-import { isVertical } from "./internal/helpers/is.js";
+import { isVertical } from "./internal/is.js";
 import type { DrawerRootState } from "./vaul.svelte.js";
-import { noop } from "./internal/helpers/noop.js";
-import { chain } from "./internal/helpers/chain.js";
+import { noop } from "./internal/noop.js";
+import { chain } from "./internal/chain.js";
 import { assignStyle } from "./helpers.js";
 import { onMountEffect } from "svelte-toolbelt";
 import { watch } from "runed";

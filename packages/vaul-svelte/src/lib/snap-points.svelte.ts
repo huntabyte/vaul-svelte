@@ -1,4 +1,4 @@
-import { isBrowser, isVertical } from "./internal/helpers/is.js";
+import { isBrowser, isVertical } from "./internal/is.js";
 import type { DrawerRootState } from "./vaul.svelte.js";
 import { set } from "./helpers.js";
 import { TRANSITIONS, VELOCITY_THRESHOLD } from "./internal/constants.js";
