@@ -313,7 +313,6 @@ export function useDrawerRoot(opts: UseDrawerRootProps) {
 
 		if (!opts.snapPoints.current) {
 			const translateValue = absDraggedDistance * directionMultiplier;
-			console.log("no snap points transforming");
 			set(drawerNode, {
 				transform: isVertical(opts.direction.current)
 					? `translate3d(0, ${translateValue}px, 0)`
@@ -428,7 +427,6 @@ export function useDrawerRoot(opts: UseDrawerRootProps) {
 	}
 
 	function closeDrawer(fromWithin?: boolean) {
-		console.log("closing drawer");
 		cancelDrag();
 		opts.onClose?.current();
 
@@ -523,7 +521,6 @@ export function useDrawerRoot(opts: UseDrawerRootProps) {
 		}
 
 		if (opts.snapPoints.current) {
-			console.log("releasing snap points");
 			const directionMultiplier =
 				opts.direction.current === "bottom" || opts.direction.current === "right" ? 1 : -1;
 			snapPointsState.onRelease({

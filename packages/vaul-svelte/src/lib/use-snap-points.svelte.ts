@@ -139,7 +139,6 @@ export function useSnapPoints({
 			snapPointsOffset?.findIndex((snapPointDim) => snapPointDim === dimension) ?? null;
 		onSnapPointChange(newSnapPointIndex);
 
-		console.log("snapping to point");
 		set(drawerNode(), {
 			transition: `transform ${TRANSITIONS.DURATION}s cubic-bezier(${TRANSITIONS.EASE.join(",")})`,
 			transform: isVertical(direction.current)
@@ -200,7 +199,6 @@ export function useSnapPoints({
 		const hasDraggedUp = draggedDistance > 0;
 
 		if (isOverlaySnapPoint) {
-			console.log("1");
 			set(overlayNode(), {
 				transition: `opacity ${TRANSITIONS.DURATION}s cubic-bezier(${TRANSITIONS.EASE.join(",")})`,
 			});
@@ -208,10 +206,8 @@ export function useSnapPoints({
 
 		if (!snapToSequentialPoint.current && velocity > 2 && !hasDraggedUp) {
 			if (dismissible) {
-				console.log("2");
 				closeDrawer();
 			} else {
-				console.log("3");
 				snapToPoint(snapPointsOffset[0]);
 			}
 			return;
@@ -224,7 +220,6 @@ export function useSnapPoints({
 			snapPointsOffset &&
 			snapPoints.current
 		) {
-			console.log("4");
 			snapToPoint(snapPointsOffset[snapPoints.current.length - 1]);
 			return;
 		}
@@ -240,30 +235,25 @@ export function useSnapPoints({
 
 		const dim = isVertical(direction.current) ? window.innerHeight : window.innerWidth;
 		if (velocity > VELOCITY_THRESHOLD && Math.abs(draggedDistance) < dim * 0.4) {
-			console.log("5");
 			const dragDirection = hasDraggedUp ? 1 : -1; // 1 = up, -1 = down
 
 			// Don't do anything if we swipe upwards while being on the last snap point
 			if (dragDirection > 0 && isLastSnapPoint && snapPoints.current) {
-				console.log("6");
 				snapToPoint(snapPointsOffset[snapPoints.current.length - 1]);
 				return;
 			}
 
 			if (isFirst && dragDirection < 0 && dismissible) {
-				console.log("7");
 				closeDrawer();
 			}
 
 			if (activeSnapPointIndex === null) {
-				console.log("8");
 				return;
 			}
 
 			snapToPoint(snapPointsOffset[activeSnapPointIndex! + dragDirection]);
 			return;
 		}
-		console.log("10");
 		snapToPoint(closestSnapPoint);
 	}
 
@@ -287,8 +277,6 @@ export function useSnapPoints({
 		) {
 			return;
 		}
-
-		console.log("dragging setting new value", newValue);
 
 		set(drawerNode(), {
 			transform: isVertical(direction.current)
