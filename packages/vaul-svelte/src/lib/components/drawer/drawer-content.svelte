@@ -5,6 +5,7 @@
 	import { noop } from "$lib/internal/noop.js";
 	import { useId } from "$lib/internal/use-id.js";
 	import { useDrawerContent } from "$lib/use-drawer-content.svelte.js";
+	import Mounted from "../utils/mounted.svelte";
 
 	let {
 		id = useId(),
@@ -37,10 +38,6 @@
 		onFocusOutside: box.with(() => onFocusOutside),
 	});
 
-	$effect(() => {
-		console.log(contentState.ctx.snapPointsOffset[contentState.ctx.activeSnapPointIndex ?? 0]);
-	});
-
 	const styleProp = $derived(
 		contentState.ctx.snapPointsOffset && contentState.ctx.snapPointsOffset.length > 0
 			? {
@@ -57,4 +54,5 @@
 
 <DialogPrimitive.Content {...mergedProps}>
 	{@render children?.()}
+	<Mounted onMounted={contentState.setMounted} />
 </DialogPrimitive.Content>

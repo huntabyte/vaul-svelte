@@ -16,6 +16,7 @@ export function useSnapPoints({
 	container,
 	snapToSequentialPoint,
 	activeSnapPoint,
+	open,
 }: Getters<{
 	drawerNode: HTMLElement | null;
 	overlayNode: HTMLElement | null;
@@ -23,6 +24,7 @@ export function useSnapPoints({
 	setOpenTime: (time: Date) => void;
 } & WritableBoxedValues<{
 		activeSnapPoint: number | string | null | undefined;
+		open: boolean;
 	}> &
 	ReadableBoxedValues<{
 		direction: DrawerDirection;
@@ -53,9 +55,7 @@ export function useSnapPoints({
 	);
 
 	const activeSnapPointIndex = $derived(
-		$state
-			.snapshot(snapPoints)
-			.current?.findIndex((snapPoint) => snapPoint === activeSnapPoint.current) ?? null
+		snapPoints.current?.findIndex((snapPoint) => snapPoint === activeSnapPoint.current)
 	);
 
 	const shouldFade = $derived(
@@ -68,6 +68,7 @@ export function useSnapPoints({
 	);
 
 	const snapPointsOffset = $derived.by(() => {
+		open.current;
 		const containerSize = container.current
 			? {
 					width: container.current.getBoundingClientRect().width,
@@ -118,9 +119,14 @@ export function useSnapPoints({
 		);
 	});
 
-	const activeSnapPointOffset = $derived(
-		activeSnapPointIndex !== null ? snapPointsOffset?.[activeSnapPointIndex] : null
-	);
+	const activeSnapPointOffset = $derived.by(() => {
+		if (activeSnapPointIndex !== null) {
+			if (activeSnapPointIndex !== undefined) {
+				return snapPointsOffset[activeSnapPointIndex];
+			}
+		}
+		return null;
+	});
 
 	function onSnapPointChange(activeSnapPointIndex: number) {
 		if (snapPoints.current && activeSnapPointIndex === snapPointsOffset.length) {
@@ -161,24 +167,15 @@ export function useSnapPoints({
 		activeSnapPoint.current = snapPoints.current?.[Math.max(newSnapPointIndex, 0)];
 	}
 
-	watch.pre(
-		[() => activeSnapPoint.current, () => snapPoints.current, () => snapPointsOffset],
-		() => {
-			if (activeSnapPoint.current) {
-				const newIndex =
-					snapPoints.current?.findIndex(
-						(snapPoint) => snapPoint === activeSnapPoint.current
-					) ?? -1;
-				if (
-					snapPointsOffset &&
-					newIndex !== -1 &&
-					typeof snapPointsOffset[newIndex] === "number"
-				) {
-					snapToPoint(snapPointsOffset[newIndex] as number);
-				}
-			}
+	watch([() => activeSnapPoint.current, () => snapPoints.current, () => snapPointsOffset], () => {
+		if (!activeSnapPoint.current) return;
+		const newIndex =
+			snapPoints.current?.findIndex((snapPoint) => snapPoint === activeSnapPoint.current) ??
+			-1;
+		if (snapPointsOffset && newIndex !== -1 && typeof snapPointsOffset[newIndex] === "number") {
+			snapToPoint(snapPointsOffset[newIndex]);
 		}
-	);
+	});
 
 	function onRelease({
 		draggedDistance,
@@ -247,7 +244,7 @@ export function useSnapPoints({
 				closeDrawer();
 			}
 
-			if (activeSnapPointIndex === null) return;
+			if (activeSnapPointIndex == null) return;
 
 			snapToPoint(snapPointsOffset[activeSnapPointIndex + dragDirection]);
 			return;

@@ -5,13 +5,18 @@ type UseDrawerOverlayProps = WithRefProps;
 
 export function useDrawerOverlay(opts: UseDrawerOverlayProps) {
 	const ctx = DrawerContext.get();
+	let mounted = $state(false);
 
 	useRefById({
 		id: opts.id,
 		ref: opts.ref,
-		deps: () => ctx.open.current,
+		deps: () => mounted,
 		onRefChange: (node) => {
-			ctx.setOverlayNode(node);
+			if (!mounted) {
+				ctx.setOverlayNode(null);
+			} else {
+				ctx.setOverlayNode(node);
+			}
 		},
 	});
 
@@ -34,6 +39,9 @@ export function useDrawerOverlay(opts: UseDrawerOverlayProps) {
 		},
 		get shouldRender() {
 			return shouldRender;
+		},
+		setMounted: (value: boolean) => {
+			mounted = value;
 		},
 	};
 }

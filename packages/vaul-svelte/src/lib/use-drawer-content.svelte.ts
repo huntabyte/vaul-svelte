@@ -1,8 +1,9 @@
-import { onMount, type ComponentProps } from "svelte";
+import { type ComponentProps } from "svelte";
 import { useRefById, type ReadableBoxedValues, type WithRefProps } from "svelte-toolbelt";
 import { Dialog as DrawerPrimitive } from "bits-ui";
 import { DrawerContext } from "./context.js";
 import type { DrawerDirection } from "./types.js";
+import { watch } from "runed";
 
 type DrawerPrimitiveContentProps = Pick<
 	ComponentProps<typeof DrawerPrimitive.Content>,
@@ -22,12 +23,17 @@ interface UseDrawerContentProps
 
 export function useDrawerContent(opts: UseDrawerContentProps) {
 	const ctx = DrawerContext.get();
+	let mounted = $state(false);
 	useRefById({
 		id: opts.id,
 		ref: opts.ref,
-		deps: () => ctx.open.current,
+		deps: () => [mounted, ctx.open.current],
 		onRefChange: (node) => {
-			ctx.setDrawerNode(node);
+			if (!mounted) {
+				ctx.setDrawerNode(null);
+			} else {
+				ctx.setDrawerNode(node);
+			}
 		},
 	});
 
@@ -65,11 +71,13 @@ export function useDrawerContent(opts: UseDrawerContentProps) {
 		return true;
 	}
 
-	onMount(() => {
-		if (hasSnapPoints) {
+	watch([() => hasSnapPoints, () => ctx.open.current], () => {
+		if (hasSnapPoints && ctx.open.current) {
 			window.requestAnimationFrame(() => {
 				delayedSnapPoints = true;
 			});
+		} else {
+			delayedSnapPoints = false;
 		}
 	});
 
@@ -182,5 +190,8 @@ export function useDrawerContent(opts: UseDrawerContentProps) {
 			return props;
 		},
 		ctx,
+		setMounted: (value: boolean) => {
+			mounted = value;
+		},
 	};
 }

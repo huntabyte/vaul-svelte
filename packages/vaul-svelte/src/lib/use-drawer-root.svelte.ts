@@ -80,6 +80,7 @@ export function useDrawerRoot(opts: UseDrawerRootProps) {
 			openTime = time;
 		},
 		snapToSequentialPoint: opts.snapToSequentialPoint,
+		open: opts.open,
 	});
 
 	usePreventScroll({
@@ -411,6 +412,7 @@ export function useDrawerRoot(opts: UseDrawerRootProps) {
 			() => snapPointsState.activeSnapPointIndex,
 			() => opts.snapPoints.current,
 			() => snapPointsState.snapPointsOffset,
+			() => drawerNode,
 		],
 		() => {
 			if (!window.visualViewport) return;

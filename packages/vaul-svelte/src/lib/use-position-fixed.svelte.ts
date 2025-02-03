@@ -108,7 +108,7 @@ export function usePositionFixed({
 		return on(window, "scroll", onScroll);
 	});
 
-	watch([() => modal.current], () => {
+	watch([() => modal.current, () => activeUrl], () => {
 		if (!modal.current) return;
 		return () => {
 			if (typeof document === "undefined") return;

@@ -4,6 +4,7 @@
 	import type { OverlayProps } from "./index.js";
 	import { useId } from "$lib/internal/use-id.js";
 	import { useDrawerOverlay } from "$lib/use-drawer-overlay.svelte.js";
+	import Mounted from "../utils/mounted.svelte";
 
 	let {
 		id = useId(),
@@ -25,6 +26,7 @@
 
 {#if overlayState.shouldRender}
 	<DialogPrimitive.Overlay {...mergedProps}>
+		<Mounted onMounted={overlayState.setMounted} />
 		{@render children?.()}
 	</DialogPrimitive.Overlay>
 {/if}
