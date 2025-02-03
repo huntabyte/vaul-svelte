@@ -53,7 +53,9 @@ export function useSnapPoints({
 	);
 
 	const activeSnapPointIndex = $derived(
-		snapPoints.current?.findIndex((snapPoint) => snapPoint === activeSnapPoint.current) ?? null
+		$state
+			.snapshot(snapPoints)
+			.current?.findIndex((snapPoint) => snapPoint === activeSnapPoint.current) ?? null
 	);
 
 	const shouldFade = $derived(
@@ -159,21 +161,24 @@ export function useSnapPoints({
 		activeSnapPoint.current = snapPoints.current?.[Math.max(newSnapPointIndex, 0)];
 	}
 
-	watch([() => activeSnapPoint.current, () => snapPoints.current, () => snapPointsOffset], () => {
-		if (activeSnapPoint.current) {
-			const newIndex =
-				snapPoints.current?.findIndex(
-					(snapPoint) => snapPoint === activeSnapPoint.current
-				) ?? -1;
-			if (
-				snapPointsOffset &&
-				newIndex !== -1 &&
-				typeof snapPointsOffset[newIndex] === "number"
-			) {
-				snapToPoint(snapPointsOffset[newIndex] as number);
+	watch.pre(
+		[() => activeSnapPoint.current, () => snapPoints.current, () => snapPointsOffset],
+		() => {
+			if (activeSnapPoint.current) {
+				const newIndex =
+					snapPoints.current?.findIndex(
+						(snapPoint) => snapPoint === activeSnapPoint.current
+					) ?? -1;
+				if (
+					snapPointsOffset &&
+					newIndex !== -1 &&
+					typeof snapPointsOffset[newIndex] === "number"
+				) {
+					snapToPoint(snapPointsOffset[newIndex] as number);
+				}
 			}
 		}
-	});
+	);
 
 	function onRelease({
 		draggedDistance,
@@ -330,7 +335,7 @@ export function useSnapPoints({
 			return activeSnapPointIndex;
 		},
 		get snapPointsOffset() {
-			return snapPointsOffset;
+			return $state.snapshot(snapPointsOffset);
 		},
 		getPercentageDragged,
 		onRelease,

@@ -1,24 +1,23 @@
 <script lang="ts">
 	import { Dialog as DialogPrimitive, type WithoutChildrenOrChild } from "bits-ui";
 	import { type WithChildren, box, mergeProps } from "svelte-toolbelt";
-	import Mounted from "../utils/mounted.svelte";
 	import type { ContentProps } from "./index.js";
-	import { useDrawerContent } from "$lib/vaul.svelte.js";
 	import { noop } from "$lib/internal/noop.js";
 	import { useId } from "$lib/internal/use-id.js";
+	import { useDrawerContent } from "$lib/use-drawer-content.svelte.js";
 
 	let {
 		id = useId(),
 		ref = $bindable(null),
 		onOpenAutoFocus = noop,
 		onInteractOutside = noop,
+		onFocusOutside = noop,
 		oncontextmenu = noop,
 		onpointerdown = noop,
 		onpointerup = noop,
 		onpointerout = noop,
 		onpointermove = noop,
 		children,
-		preventScroll = true,
 		...restProps
 	}: WithChildren<WithoutChildrenOrChild<ContentProps>> = $props();
 
@@ -28,25 +27,34 @@
 			() => ref,
 			(v) => (ref = v)
 		),
-		onContextMenu: box.with(() => oncontextmenu ?? noop),
+		oncontextmenu: box.with(() => oncontextmenu ?? noop),
 		onInteractOutside: box.with(() => onInteractOutside),
-		onPointerDown: box.with(() => onpointerdown ?? noop),
-		onPointerMove: box.with(() => onpointermove ?? noop),
-		onPointerOut: box.with(() => onpointerout ?? noop),
-		onPointerUp: box.with(() => onpointerup ?? noop),
+		onpointerdown: box.with(() => onpointerdown ?? noop),
+		onpointermove: box.with(() => onpointermove ?? noop),
+		onpointerout: box.with(() => onpointerout ?? noop),
+		onpointerup: box.with(() => onpointerup ?? noop),
 		onOpenAutoFocus: box.with(() => onOpenAutoFocus),
+		onFocusOutside: box.with(() => onFocusOutside),
 	});
 
-	const mergedProps = $derived(mergeProps(restProps, contentState.props));
+	$effect(() => {
+		console.log(contentState.ctx.snapPointsOffset[contentState.ctx.activeSnapPointIndex ?? 0]);
+	});
+
+	const styleProp = $derived(
+		contentState.ctx.snapPointsOffset && contentState.ctx.snapPointsOffset.length > 0
+			? {
+					"--snap-point-height": `${contentState.ctx.snapPointsOffset[contentState.ctx.activeSnapPointIndex ?? 0]}px`,
+				}
+			: {}
+	);
+
+	const mergedProps = $derived(
+		mergeProps(restProps, contentState.props, { style: styleProp })
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	) as any;
 </script>
 
-<DialogPrimitive.Content
-	{...mergedProps}
-	{preventScroll}
-	onInteractOutside={contentState.onInteractOutside}
-	onFocusOutside={contentState.onFocusOutside}
-	onOpenAutoFocus={contentState.onOpenAutoFocus}
->
+<DialogPrimitive.Content {...mergedProps}>
 	{@render children?.()}
-	<Mounted onMounted={(m) => (contentState.mounted = m)} />
 </DialogPrimitive.Content>

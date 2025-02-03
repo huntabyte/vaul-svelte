@@ -9,3 +9,5 @@ export type AnyFunction = (...args: any) => any;
 export type Getters<T> = {
 	[K in keyof T]: () => T[K];
 };
+
+export type VaulPointerEvent<T extends Element = HTMLElement> = PointerEvent & { currentTarget: T };

@@ -123,13 +123,13 @@ export function usePositionFixed({
 	watch(
 		[
 			() => open.current,
-			() => hasBeenOpened.current,
+			() => hasBeenOpened(),
 			() => activeUrl,
 			() => modal.current,
 			() => nested.current,
 		],
 		() => {
-			if (nested.current || !hasBeenOpened.current) return;
+			if (nested.current || !hasBeenOpened()) return;
 			// This is needed to force Safari toolbar to show **before** the drawer starts animating to prevent a gnarly shift from happening
 			if (open.current) {
 				// avoid for standalone mode (PWA)

@@ -1,11 +1,11 @@
 import { watch } from "runed";
 import { BORDER_RADIUS, TRANSITIONS, WINDOW_TOP_OFFSET } from "./internal/constants.js";
-import { DrawerRootContext } from "./vaul.svelte.js";
 import { assignStyle, chain, isVertical } from "./helpers.js";
 import { noop } from "./internal/noop.js";
+import { DrawerContext } from "./context.js";
 
 export function useScaleBackground() {
-	const ctx = DrawerRootContext.get();
+	const ctx = DrawerContext.get();
 	let timeoutId: number | null = null;
 	const initialBackgroundColor =
 		typeof document !== "undefined" ? document.body.style.backgroundColor : "";

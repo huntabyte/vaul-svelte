@@ -1,8 +1,8 @@
 <script lang="ts">
 	import { box, mergeProps } from "svelte-toolbelt";
 	import type { HandleProps } from "./index.js";
-	import { useDrawerHandle } from "$lib/vaul.svelte.js";
 	import { useId } from "$lib/internal/use-id.js";
+	import { useDrawerHandle } from "$lib/use-drawer-handle.svelte.js";
 
 	let {
 		id = useId(),
@@ -25,7 +25,7 @@
 </script>
 
 <div {...mergedProps}>
-	<span {...handleState.hitAreaProps}>
+	<span data-vaul-handle-hitarea="" aria-hidden="true">
 		{@render children?.()}
 	</span>
 </div>

@@ -2,7 +2,7 @@
 	import DrawerRoot from "./drawer.svelte";
 	import type { RootProps } from "./index.js";
 	import { noop } from "$lib/internal/noop.js";
-	import { DrawerRootContext } from "$lib/vaul.svelte.js";
+	import { DrawerContext } from "$lib/context.js";
 
 	let {
 		open = $bindable(false),
@@ -12,7 +12,7 @@
 		...restProps
 	}: Omit<RootProps, "nested" | "onRelease" | "onClose"> = $props();
 
-	const rootState = DrawerRootContext.get();
+	const rootState = DrawerContext.get();
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	const rest = $derived(restProps) as any;
 </script>
@@ -32,6 +32,6 @@
 		}
 		onOpenChange(o);
 	}}
-	onRelease={(e, o) => rootState.onNestedRelease(e, o)}
+	onRelease={rootState.onNestedRelease}
 	{...rest}
 />

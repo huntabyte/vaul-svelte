@@ -65,26 +65,25 @@ let restore: () => void;
  * shift due to the scrollbars disappearing.
  */
 export function usePreventScroll(opts: PreventScrollOptions) {
-	watch.pre(
-		() => opts.isDisabled(),
-		() => {
-			if (opts.isDisabled()) return;
-
-			preventScrollCount++;
-			if (preventScrollCount === 1) {
-				if (isIOS()) {
-					restore = preventScrollMobileSafari();
-				}
-			}
-
-			return () => {
-				preventScrollCount--;
-				if (preventScrollCount === 0) {
-					restore?.();
-				}
-			};
+	watch(opts.isDisabled, () => {
+		if (opts.isDisabled()) {
+			return;
 		}
-	);
+
+		preventScrollCount++;
+		if (preventScrollCount === 1) {
+			if (isIOS()) {
+				restore = preventScrollMobileSafari();
+			}
+		}
+
+		return () => {
+			preventScrollCount--;
+			if (preventScrollCount === 0) {
+				restore?.();
+			}
+		};
+	});
 }
 
 // Mobile Safari is a whole different beast. Even with overflow: hidden,

@@ -1,4 +1,4 @@
-import type { ReadableBoxedValues, WritableBoxedValues } from "svelte-toolbelt";
+import { box, type ReadableBoxedValues, type WritableBoxedValues } from "svelte-toolbelt";
 import type { DrawerDirection } from "./types.js";
 import { useSnapPoints } from "./use-snap-points.svelte.js";
 import { isInput, usePreventScroll } from "./use-prevent-scroll.svelte.js";
@@ -15,8 +15,9 @@ import { isIOS, isMobileFirefox } from "./internal/browser.js";
 import { on } from "svelte/events";
 import { dampenValue, getTranslate, isVertical, reset, set } from "./helpers.js";
 import { watch } from "runed";
+import { DrawerContext } from "./context.js";
 
-type DrawerRootStateProps = ReadableBoxedValues<{
+type UseDrawerRootProps = ReadableBoxedValues<{
 	closeThreshold: number;
 	shouldScaleBackground: boolean;
 	scrollLockTimeout: number;
@@ -25,14 +26,10 @@ type DrawerRootStateProps = ReadableBoxedValues<{
 	fixed: boolean;
 	dismissible: boolean;
 	direction: DrawerDirection;
-	onDrag: (
-		event: PointerEvent & { currentTarget: HTMLElement },
-		percentageDragged: number
-	) => void;
-	onRelease: (event: PointerEvent & { currentTarget: HTMLElement }, open: boolean) => void;
+	onDrag: (event: PointerEvent, percentageDragged: number) => void;
+	onRelease: (event: PointerEvent, open: boolean) => void;
 	nested: boolean;
 	onClose: () => void;
-	backgroundColor: string | undefined;
 	modal: boolean;
 	handleOnly: boolean;
 	noBodyStyles: boolean;
@@ -43,17 +40,20 @@ type DrawerRootStateProps = ReadableBoxedValues<{
 	repositionInputs: boolean;
 	autoFocus: boolean;
 	disablePreventScroll: boolean;
+	onOpenChange: (o: boolean) => void;
+	onAnimationEnd: (open: boolean) => void;
 }> &
 	WritableBoxedValues<{
 		open: boolean;
-		activeSnapPoint: number | string | null | undefined;
+		activeSnapPoint: number | string | null;
 	}>;
 
-export function useDrawerRoot(opts: DrawerRootStateProps) {
+export function useDrawerRoot(opts: UseDrawerRootProps) {
 	let hasBeenOpened = $state(false);
 	let isDragging = $state(false);
 	let justReleased = $state(false);
 	let overlayNode = $state<HTMLElement | null>(null);
+	let drawerNode = $state<HTMLElement | null>(null);
 	let openTime: Date | null = null;
 	let dragStartTime: Date | null = null;
 	let dragEndTime: Date | null = null;
@@ -61,10 +61,9 @@ export function useDrawerRoot(opts: DrawerRootStateProps) {
 	let isAllowedToDrag = false;
 	let nestedOpenChangeTimer: number | null = null;
 	let pointerStart = 0;
-	let keyboardIsOpen = false;
+	let keyboardIsOpen = box(false);
 	let shouldAnimate = !opts.open.current;
 	let previousDiffFromInitial = 0;
-	let drawerNode = $state<HTMLElement | null>(null);
 	let drawerHeight = 0;
 	let drawerWidth = 0;
 	let initialDrawerHeight = 0;
@@ -103,8 +102,8 @@ export function useDrawerRoot(opts: DrawerRootStateProps) {
 		return (window.innerWidth - WINDOW_TOP_OFFSET) / window.innerWidth;
 	}
 
-	function onPress(event: PointerEvent & { currentTarget: HTMLElement }) {
-		if (!opts.dismissible.current || !opts.snapPoints.current) return;
+	function onPress(event: PointerEvent) {
+		if (!opts.dismissible.current && !opts.snapPoints.current) return;
 		if (drawerNode && !drawerNode.contains(event.target as Node)) return;
 
 		drawerHeight = drawerNode?.getBoundingClientRect().height || 0;
@@ -195,7 +194,7 @@ export function useDrawerRoot(opts: DrawerRootStateProps) {
 		return true;
 	}
 
-	function onDrag(event: PointerEvent & { currentTarget: HTMLElement }) {
+	function onDrag(event: PointerEvent) {
 		if (!drawerNode) return;
 
 		// We need to know how much of the drawer has been dragged in percentages so that we can transform background accordingly
@@ -330,11 +329,22 @@ export function useDrawerRoot(opts: DrawerRootStateProps) {
 		});
 	});
 
+	function onDialogOpenChange(o: boolean) {
+		if (!opts.dismissible.current && !o) return;
+		if (o) {
+			hasBeenOpened = true;
+		} else {
+			closeDrawer(true);
+		}
+
+		opts.open.current = o;
+	}
+
 	function onVisualViewportChange() {
 		if (!drawerNode || !opts.repositionInputs.current) return;
 
 		const focusedElement = document.activeElement as HTMLElement;
-		if (isInput(focusedElement) || keyboardIsOpen) {
+		if (isInput(focusedElement) || keyboardIsOpen.current) {
 			const visualViewportHeight = window.visualViewport?.height || 0;
 			const totalHeight = window.innerHeight;
 			// This is the height of the keyboard
@@ -348,9 +358,9 @@ export function useDrawerRoot(opts: DrawerRootStateProps) {
 			}
 			const offsetFromTop = drawerNode.getBoundingClientRect().top;
 
-			// visualViewport height may change due to somq e subtle changes to the keyboard. Checking if the height changed by 60 or more will make sure that they keyboard really changed its open state.
+			// visualViewport height may change due to some subtle changes to the keyboard. Checking if the height changed by 60 or more will make sure that they keyboard really changed its open state.
 			if (Math.abs(previousDiffFromInitial - diffFromInitial) > 60) {
-				keyboardIsOpen = !keyboardIsOpen;
+				keyboardIsOpen.current = !keyboardIsOpen.current;
 			}
 
 			if (
@@ -365,7 +375,7 @@ export function useDrawerRoot(opts: DrawerRootStateProps) {
 			}
 			previousDiffFromInitial = diffFromInitial;
 			// We don't have to change the height if the input is in view, when we are here we are in the opened keyboard state so we can correctly check if the input is in view
-			if (drawerHeight > visualViewportHeight || keyboardIsOpen) {
+			if (drawerHeight > visualViewportHeight || keyboardIsOpen.current) {
 				const height = drawerNode.getBoundingClientRect().height;
 				let newDrawerHeight = height;
 
@@ -383,7 +393,11 @@ export function useDrawerRoot(opts: DrawerRootStateProps) {
 				drawerNode.style.height = `${initialDrawerHeight}px`;
 			}
 
-			if (opts.snapPoints.current && opts.snapPoints.current.length > 0 && !keyboardIsOpen) {
+			if (
+				opts.snapPoints.current &&
+				opts.snapPoints.current.length > 0 &&
+				!keyboardIsOpen.current
+			) {
 				drawerNode.style.bottom = `0px`;
 			} else {
 				// Negative bottom value would never make sense
@@ -419,9 +433,10 @@ export function useDrawerRoot(opts: DrawerRootStateProps) {
 
 		if (!fromWithin) {
 			opts.open.current = false;
+			handleOpenChange(false);
 		}
 
-		setTimeout(() => {
+		window.setTimeout(() => {
 			if (opts.snapPoints.current) {
 				opts.activeSnapPoint.current = opts.snapPoints.current[0];
 			}
@@ -473,7 +488,7 @@ export function useDrawerRoot(opts: DrawerRootStateProps) {
 		}
 	}
 
-	function onRelease(event: React.PointerEvent<HTMLDivElement> | null) {
+	function onRelease(event: PointerEvent | null) {
 		if (!isDragging || !drawerNode) return;
 
 		drawerNode.classList.remove(DRAG_CLASS);
@@ -482,7 +497,12 @@ export function useDrawerRoot(opts: DrawerRootStateProps) {
 		dragEndTime = new Date();
 		const swipeAmount = getTranslate(drawerNode, opts.direction.current);
 
-		if (!event || !shouldDrag(event.target, false) || !swipeAmount || Number.isNaN(swipeAmount))
+		if (
+			!event ||
+			(event.target && !shouldDrag(event.target, false)) ||
+			!swipeAmount ||
+			Number.isNaN(swipeAmount)
+		)
 			return;
 
 		if (dragStartTime === null) return;
@@ -606,10 +626,7 @@ export function useDrawerRoot(opts: DrawerRootStateProps) {
 		}
 	}
 
-	function onNestedDrag(
-		_event: PointerEvent & { currentTarget: HTMLElement },
-		percentageDragged: number
-	) {
+	function onNestedDrag(_event: PointerEvent, percentageDragged: number) {
 		if (percentageDragged < 0) return;
 
 		const initialScale = (window.innerWidth - NESTED_DISPLACEMENT) / window.innerWidth;
@@ -624,7 +641,7 @@ export function useDrawerRoot(opts: DrawerRootStateProps) {
 		});
 	}
 
-	function onNestedRelease(_event: PointerEvent & { currentTarget: HTMLElement }, o: boolean) {
+	function onNestedRelease(_event: PointerEvent, o: boolean) {
 		const dim = isVertical(opts.direction.current) ? window.innerHeight : window.innerWidth;
 		const scale = o ? (dim - NESTED_DISPLACEMENT) / dim : 1;
 		const translate = o ? -NESTED_DISPLACEMENT : 0;
@@ -639,6 +656,31 @@ export function useDrawerRoot(opts: DrawerRootStateProps) {
 		}
 	}
 
+	function handleOpenChange(o: boolean) {
+		opts.onOpenChange.current?.(o);
+
+		if (!o && !opts.nested.current) {
+			restorePositionSetting();
+		}
+
+		setTimeout(() => {
+			opts.onAnimationEnd.current?.(o);
+		}, TRANSITIONS.DURATION * 1000);
+
+		if (o && !opts.modal.current) {
+			if (typeof window !== "undefined") {
+				window.requestAnimationFrame(() => {
+					document.body.style.pointerEvents = "auto";
+				});
+			}
+		}
+
+		if (!o) {
+			// This will be removed when the exit animation ends (`500ms`)
+			document.body.style.pointerEvents = "auto";
+		}
+	}
+
 	watch(
 		() => opts.modal.current,
 		() => {
@@ -649,4 +691,47 @@ export function useDrawerRoot(opts: DrawerRootStateProps) {
 			}
 		}
 	);
+
+	function setOverlayNode(node: HTMLElement | null) {
+		overlayNode = node;
+	}
+
+	function setDrawerNode(node: HTMLElement | null) {
+		drawerNode = node;
+	}
+
+	return DrawerContext.set({
+		...opts,
+		keyboardIsOpen,
+		closeDrawer,
+		setDrawerNode,
+		setOverlayNode,
+		onDrag,
+		onNestedDrag,
+		onNestedOpenChange,
+		onNestedRelease,
+		onRelease,
+		onPress,
+		onDialogOpenChange,
+		get shouldAnimate() {
+			return shouldAnimate;
+		},
+		get isDragging() {
+			return isDragging;
+		},
+		get overlayNode() {
+			return overlayNode;
+		},
+		get drawerNode() {
+			return drawerNode;
+		},
+		get snapPointsOffset() {
+			return snapPointsState.snapPointsOffset;
+		},
+		get shouldFade() {
+			return snapPointsState.shouldFade;
+		},
+		restorePositionSetting,
+		handleOpenChange,
+	});
 }
