@@ -139,6 +139,7 @@ export function useSnapPoints({
 			snapPointsOffset?.findIndex((snapPointDim) => snapPointDim === dimension) ?? null;
 		onSnapPointChange(newSnapPointIndex);
 
+		console.log("snapping to point");
 		set(drawerNode(), {
 			transition: `transform ${TRANSITIONS.DURATION}s cubic-bezier(${TRANSITIONS.EASE.join(",")})`,
 			transform: isVertical(direction.current)
@@ -286,6 +287,8 @@ export function useSnapPoints({
 		) {
 			return;
 		}
+
+		console.log("dragging setting new value", newValue);
 
 		set(drawerNode(), {
 			transform: isVertical(direction.current)

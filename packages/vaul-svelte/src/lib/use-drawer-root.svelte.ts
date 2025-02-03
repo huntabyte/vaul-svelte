@@ -243,8 +243,7 @@ export function useDrawerRoot(opts: UseDrawerRootProps) {
 			return;
 		}
 
-		if (!isAllowedToDrag && event.target && !shouldDrag(event.target, isDraggingInDirection))
-			return;
+		if (!isAllowedToDrag && !shouldDrag(event.target!, isDraggingInDirection)) return;
 		drawerNode.classList.add(DRAG_CLASS);
 		// If shouldDrag gave true once after pressing down on the drawer, we set isAllowedToDrag to true and it will remain true until we let go, there's no reason to disable dragging mid way, ever, and that's the solution to it
 		isAllowedToDrag = true;
@@ -314,7 +313,7 @@ export function useDrawerRoot(opts: UseDrawerRootProps) {
 
 		if (!opts.snapPoints.current) {
 			const translateValue = absDraggedDistance * directionMultiplier;
-
+			console.log("no snap points transforming");
 			set(drawerNode, {
 				transform: isVertical(opts.direction.current)
 					? `translate3d(0, ${translateValue}px, 0)`
@@ -429,6 +428,7 @@ export function useDrawerRoot(opts: UseDrawerRootProps) {
 	}
 
 	function closeDrawer(fromWithin?: boolean) {
+		console.log("closing drawer");
 		cancelDrag();
 		opts.onClose?.current();
 
