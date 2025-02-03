@@ -129,7 +129,7 @@ export function useSnapPoints({
 	});
 
 	function onSnapPointChange(activeSnapPointIndex: number) {
-		if (snapPoints.current && activeSnapPointIndex === snapPointsOffset.length) {
+		if (snapPoints.current && activeSnapPointIndex === snapPointsOffset.length - 1) {
 			setOpenTime(new Date());
 		}
 	}
@@ -199,14 +199,20 @@ export function useSnapPoints({
 		const hasDraggedUp = draggedDistance > 0;
 
 		if (isOverlaySnapPoint) {
+			console.log("1");
 			set(overlayNode(), {
 				transition: `opacity ${TRANSITIONS.DURATION}s cubic-bezier(${TRANSITIONS.EASE.join(",")})`,
 			});
 		}
 
 		if (!snapToSequentialPoint.current && velocity > 2 && !hasDraggedUp) {
-			if (dismissible) closeDrawer();
-			else snapToPoint(snapPointsOffset[0]); // snap to initial point
+			if (dismissible) {
+				console.log("2");
+				closeDrawer();
+			} else {
+				console.log("3");
+				snapToPoint(snapPointsOffset[0]);
+			}
 			return;
 		}
 
@@ -217,7 +223,8 @@ export function useSnapPoints({
 			snapPointsOffset &&
 			snapPoints.current
 		) {
-			snapToPoint(snapPointsOffset[snapPoints.current.length - 1] as number);
+			console.log("4");
+			snapToPoint(snapPointsOffset[snapPoints.current.length - 1]);
 			return;
 		}
 
@@ -232,24 +239,30 @@ export function useSnapPoints({
 
 		const dim = isVertical(direction.current) ? window.innerHeight : window.innerWidth;
 		if (velocity > VELOCITY_THRESHOLD && Math.abs(draggedDistance) < dim * 0.4) {
+			console.log("5");
 			const dragDirection = hasDraggedUp ? 1 : -1; // 1 = up, -1 = down
 
 			// Don't do anything if we swipe upwards while being on the last snap point
 			if (dragDirection > 0 && isLastSnapPoint && snapPoints.current) {
+				console.log("6");
 				snapToPoint(snapPointsOffset[snapPoints.current.length - 1]);
 				return;
 			}
 
 			if (isFirst && dragDirection < 0 && dismissible) {
+				console.log("7");
 				closeDrawer();
 			}
 
-			if (activeSnapPointIndex == null) return;
+			if (activeSnapPointIndex === null) {
+				console.log("8");
+				return;
+			}
 
-			snapToPoint(snapPointsOffset[activeSnapPointIndex + dragDirection]);
+			snapToPoint(snapPointsOffset[activeSnapPointIndex! + dragDirection]);
 			return;
 		}
-
+		console.log("10");
 		snapToPoint(closestSnapPoint);
 	}
 

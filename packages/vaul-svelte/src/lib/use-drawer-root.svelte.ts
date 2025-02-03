@@ -1,4 +1,9 @@
-import { box, type ReadableBoxedValues, type WritableBoxedValues } from "svelte-toolbelt";
+import {
+	afterSleep,
+	box,
+	type ReadableBoxedValues,
+	type WritableBoxedValues,
+} from "svelte-toolbelt";
 import type { DrawerDirection } from "./types.js";
 import { useSnapPoints } from "./use-snap-points.svelte.js";
 import { isInput, usePreventScroll } from "./use-prevent-scroll.svelte.js";
@@ -197,130 +202,124 @@ export function useDrawerRoot(opts: UseDrawerRootProps) {
 
 	function onDrag(event: PointerEvent) {
 		if (!drawerNode) return;
+		if (!isDragging) return;
 
 		// We need to know how much of the drawer has been dragged in percentages so that we can transform background accordingly
-		if (isDragging) {
-			const directionMultiplier =
-				opts.direction.current === "bottom" || opts.direction.current === "right" ? 1 : -1;
-			const draggedDistance =
-				(pointerStart - (isVertical(opts.direction.current) ? event.pageY : event.pageX)) *
-				directionMultiplier;
-			const isDraggingInDirection = draggedDistance > 0;
+		const directionMultiplier =
+			opts.direction.current === "bottom" || opts.direction.current === "right" ? 1 : -1;
+		const draggedDistance =
+			(pointerStart - (isVertical(opts.direction.current) ? event.pageY : event.pageX)) *
+			directionMultiplier;
+		const isDraggingInDirection = draggedDistance > 0;
 
-			// Pre condition for disallowing dragging in the close direction.
-			const noCloseSnapPointsPreCondition =
-				opts.snapPoints.current && !opts.dismissible.current && !isDraggingInDirection;
+		// Pre condition for disallowing dragging in the close direction.
+		const noCloseSnapPointsPreCondition =
+			opts.snapPoints.current && !opts.dismissible.current && !isDraggingInDirection;
 
-			// Disallow dragging down to close when first snap point is the active one and dismissible prop is set to false.
-			if (noCloseSnapPointsPreCondition && snapPointsState.activeSnapPointIndex === 0) return;
+		// Disallow dragging down to close when first snap point is the active one and dismissible prop is set to false.
+		if (noCloseSnapPointsPreCondition && snapPointsState.activeSnapPointIndex === 0) return;
 
-			// We need to capture last time when drag with scroll was triggered and have a timeout between
-			const absDraggedDistance = Math.abs(draggedDistance);
-			const wrapper = document.querySelector("[data-vaul-drawer-wrapper]");
-			const drawerDimension =
-				opts.direction.current === "bottom" || opts.direction.current === "top"
-					? drawerHeight
-					: drawerWidth;
+		// We need to capture last time when drag with scroll was triggered and have a timeout between
+		const absDraggedDistance = Math.abs(draggedDistance);
+		const wrapper = document.querySelector("[data-vaul-drawer-wrapper]");
+		const drawerDimension =
+			opts.direction.current === "bottom" || opts.direction.current === "top"
+				? drawerHeight
+				: drawerWidth;
 
-			// Calculate the percentage dragged, where 1 is the closed position
-			let percentageDragged = absDraggedDistance / drawerDimension;
-			const snapPointPercentageDragged = snapPointsState.getPercentageDragged(
-				absDraggedDistance,
-				isDraggingInDirection
-			);
+		// Calculate the percentage dragged, where 1 is the closed position
+		let percentageDragged = absDraggedDistance / drawerDimension;
+		const snapPointPercentageDragged = snapPointsState.getPercentageDragged(
+			absDraggedDistance,
+			isDraggingInDirection
+		);
 
-			if (snapPointPercentageDragged !== null) {
-				percentageDragged = snapPointPercentageDragged;
-			}
+		if (snapPointPercentageDragged !== null) {
+			percentageDragged = snapPointPercentageDragged;
+		}
 
-			// Disallow close dragging beyond the smallest snap point.
-			if (noCloseSnapPointsPreCondition && percentageDragged >= 1) {
-				return;
-			}
+		// Disallow close dragging beyond the smallest snap point.
+		if (noCloseSnapPointsPreCondition && percentageDragged >= 1) {
+			return;
+		}
 
-			if (
-				!isAllowedToDrag &&
-				event.target &&
-				!shouldDrag(event.target, isDraggingInDirection)
-			)
-				return;
-			drawerNode.classList.add(DRAG_CLASS);
-			// If shouldDrag gave true once after pressing down on the drawer, we set isAllowedToDrag to true and it will remain true until we let go, there's no reason to disable dragging mid way, ever, and that's the solution to it
-			isAllowedToDrag = true;
+		if (!isAllowedToDrag && event.target && !shouldDrag(event.target, isDraggingInDirection))
+			return;
+		drawerNode.classList.add(DRAG_CLASS);
+		// If shouldDrag gave true once after pressing down on the drawer, we set isAllowedToDrag to true and it will remain true until we let go, there's no reason to disable dragging mid way, ever, and that's the solution to it
+		isAllowedToDrag = true;
+		set(drawerNode, {
+			transition: "none",
+		});
+
+		set(overlayNode, {
+			transition: "none",
+		});
+
+		if (opts.snapPoints.current && opts.snapPoints.current.length > 0) {
+			snapPointsState.onDrag({ draggedDistance });
+		}
+
+		// Run this only if snapPoints are not defined or if we are at the last snap point (highest one)
+		if (isDraggingInDirection && !opts.snapPoints.current) {
+			const dampenedDraggedDistance = dampenValue(draggedDistance);
+
+			const translateValue = Math.min(dampenedDraggedDistance * -1, 0) * directionMultiplier;
 			set(drawerNode, {
-				transition: "none",
+				transform: isVertical(opts.direction.current)
+					? `translate3d(0, ${translateValue}px, 0)`
+					: `translate3d(${translateValue}px, 0, 0)`,
 			});
+			return;
+		}
 
-			set(overlayNode, {
-				transition: "none",
+		const opacityValue = 1 - percentageDragged;
+
+		if (
+			snapPointsState.shouldFade ||
+			(opts.fadeFromIndex.current &&
+				snapPointsState.activeSnapPointIndex === opts.fadeFromIndex.current - 1)
+		) {
+			opts.onDrag.current?.(event, percentageDragged);
+
+			set(
+				overlayNode,
+				{
+					opacity: `${opacityValue}`,
+					transition: "none",
+				},
+				true
+			);
+		}
+
+		if (wrapper && overlayNode && opts.shouldScaleBackground.current) {
+			// Calculate percentageDragged as a fraction (0 to 1)
+			const scaleValue = Math.min(getScale() + percentageDragged * (1 - getScale()), 1);
+			const borderRadiusValue = 8 - percentageDragged * 8;
+
+			const translateValue = Math.max(0, 14 - percentageDragged * 14);
+
+			set(
+				wrapper,
+				{
+					borderRadius: `${borderRadiusValue}px`,
+					transform: isVertical(opts.direction.current)
+						? `scale(${scaleValue}) translate3d(0, ${translateValue}px, 0)`
+						: `scale(${scaleValue}) translate3d(${translateValue}px, 0, 0)`,
+					transition: "none",
+				},
+				true
+			);
+		}
+
+		if (!opts.snapPoints.current) {
+			const translateValue = absDraggedDistance * directionMultiplier;
+
+			set(drawerNode, {
+				transform: isVertical(opts.direction.current)
+					? `translate3d(0, ${translateValue}px, 0)`
+					: `translate3d(${translateValue}px, 0, 0)`,
 			});
-
-			if (opts.snapPoints.current) {
-				snapPointsState.onDrag({ draggedDistance });
-			}
-
-			// Run this only if snapPoints are not defined or if we are at the last snap point (highest one)
-			if (isDraggingInDirection && !opts.snapPoints.current) {
-				const dampenedDraggedDistance = dampenValue(draggedDistance);
-
-				const translateValue =
-					Math.min(dampenedDraggedDistance * -1, 0) * directionMultiplier;
-				set(drawerNode, {
-					transform: isVertical(opts.direction.current)
-						? `translate3d(0, ${translateValue}px, 0)`
-						: `translate3d(${translateValue}px, 0, 0)`,
-				});
-				return;
-			}
-
-			const opacityValue = 1 - percentageDragged;
-
-			if (
-				snapPointsState.shouldFade ||
-				(opts.fadeFromIndex.current &&
-					snapPointsState.activeSnapPointIndex === opts.fadeFromIndex.current - 1)
-			) {
-				opts.onDrag.current?.(event, percentageDragged);
-
-				set(
-					overlayNode,
-					{
-						opacity: `${opacityValue}`,
-						transition: "none",
-					},
-					true
-				);
-			}
-
-			if (wrapper && overlayNode && opts.shouldScaleBackground.current) {
-				// Calculate percentageDragged as a fraction (0 to 1)
-				const scaleValue = Math.min(getScale() + percentageDragged * (1 - getScale()), 1);
-				const borderRadiusValue = 8 - percentageDragged * 8;
-
-				const translateValue = Math.max(0, 14 - percentageDragged * 14);
-
-				set(
-					wrapper,
-					{
-						borderRadius: `${borderRadiusValue}px`,
-						transform: isVertical(opts.direction.current)
-							? `scale(${scaleValue}) translate3d(0, ${translateValue}px, 0)`
-							: `scale(${scaleValue}) translate3d(${translateValue}px, 0, 0)`,
-						transition: "none",
-					},
-					true
-				);
-			}
-
-			if (!opts.snapPoints.current) {
-				const translateValue = absDraggedDistance * directionMultiplier;
-
-				set(drawerNode, {
-					transform: isVertical(opts.direction.current)
-						? `translate3d(0, ${translateValue}px, 0)`
-						: `translate3d(${translateValue}px, 0, 0)`,
-				});
-			}
 		}
 	}
 
@@ -439,7 +438,7 @@ export function useDrawerRoot(opts: UseDrawerRootProps) {
 		}
 
 		window.setTimeout(() => {
-			if (opts.snapPoints.current) {
+			if (opts.snapPoints.current && opts.snapPoints.current.length > 0) {
 				opts.activeSnapPoint.current = opts.snapPoints.current[0];
 			}
 		}, TRANSITIONS.DURATION * 1000);
@@ -524,6 +523,7 @@ export function useDrawerRoot(opts: UseDrawerRootProps) {
 		}
 
 		if (opts.snapPoints.current) {
+			console.log("releasing snap points");
 			const directionMultiplier =
 				opts.direction.current === "bottom" || opts.direction.current === "right" ? 1 : -1;
 			snapPointsState.onRelease({
@@ -658,8 +658,18 @@ export function useDrawerRoot(opts: UseDrawerRootProps) {
 		}
 	}
 
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	let bodyStyles: any;
+
 	function handleOpenChange(o: boolean) {
 		opts.onOpenChange.current?.(o);
+		if (o && !opts.nested.current) {
+			bodyStyles = document.body.style.cssText;
+		} else if (!o && !opts.nested.current) {
+			afterSleep(TRANSITIONS.DURATION * 1000, () => {
+				document.body.style.cssText = bodyStyles;
+			});
+		}
 
 		if (!o && !opts.nested.current) {
 			restorePositionSetting();

@@ -64,7 +64,7 @@ export function useDrawerHandle(opts: UseDrawerHandleOpts) {
 		const currentSnapIndex = ctx.snapPoints.current.findIndex(
 			(point) => point === ctx.activeSnapPoint.current
 		);
-		if (currentSnapIndex === -1) return; // activeSnapPoint not found in snapPoints
+		if (currentSnapIndex === -1 || currentSnapIndex === undefined) return; // activeSnapPoint not found in snapPoints
 		const nextSnapPoint = ctx.snapPoints.current[currentSnapIndex + 1];
 		ctx.activeSnapPoint.current = nextSnapPoint;
 	}

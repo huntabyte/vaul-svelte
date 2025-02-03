@@ -38,10 +38,12 @@
 		onFocusOutside: box.with(() => onFocusOutside),
 	});
 
+	const snapPointsOffset = $state.snapshot(contentState.ctx.snapPointsOffset);
+
 	const styleProp = $derived(
-		contentState.ctx.snapPointsOffset && contentState.ctx.snapPointsOffset.length > 0
+		snapPointsOffset && snapPointsOffset.length > 0
 			? {
-					"--snap-point-height": `${contentState.ctx.snapPointsOffset[contentState.ctx.activeSnapPointIndex ?? 0]}px`,
+					"--snap-point-height": `${snapPointsOffset[contentState.ctx.activeSnapPointIndex ?? 0]}px`,
 				}
 			: {}
 	);
