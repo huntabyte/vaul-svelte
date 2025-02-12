@@ -169,13 +169,6 @@ export function useDrawerContent(opts: UseDrawerContentProps) {
 		}
 	}
 
-	$inspect(ctx.direction.current).with((_, v) => console.log("direction", v));
-	$inspect(delayedSnapPoints).with((_, v) => console.log("delayedSnapPoints", v));
-	$inspect(ctx.open.current).with((_, v) => console.log("open", v));
-	$inspect(hasSnapPoints).with((_, v) => console.log("hasSnapPoints", v));
-	$inspect(ctx.container.current).with((_, v) => console.log("container", v));
-	$inspect(ctx.shouldAnimate).with((_, v) => console.log("shouldAnimate", v));
-
 	const props = $derived({
 		id: opts.id.current,
 		"data-vaul-drawer-direction": ctx.direction.current,

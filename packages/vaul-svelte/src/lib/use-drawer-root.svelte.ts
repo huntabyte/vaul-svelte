@@ -246,7 +246,6 @@ export function useDrawerRoot(opts: UseDrawerRootProps) {
 		drawerNode.classList.add(DRAG_CLASS);
 		// If shouldDrag gave true once after pressing down on the drawer, we set isAllowedToDrag to true and it will remain true until we let go, there's no reason to disable dragging mid way, ever, and that's the solution to it
 		isAllowedToDrag = true;
-		console.log("setting transition none");
 		set(drawerNode, {
 			transition: "none",
 		});
@@ -447,7 +446,6 @@ export function useDrawerRoot(opts: UseDrawerRootProps) {
 		const wrapper = document.querySelector("[data-vaul-drawer-wrapper]");
 		const currentSwipeAmount = getTranslate(drawerNode, opts.direction.current);
 
-		console.log("resetting drawer");
 		set(drawerNode, {
 			transform: "translate3d(0, 0, 0)",
 			transition: `transform ${TRANSITIONS.DURATION}s cubic-bezier(${TRANSITIONS.EASE.join(",")})`,
@@ -503,12 +501,10 @@ export function useDrawerRoot(opts: UseDrawerRootProps) {
 			!swipeAmount ||
 			Number.isNaN(swipeAmount)
 		) {
-			console.log("2");
 			return;
 		}
 
 		if (dragStartTime === null) {
-			console.log("3");
 			return;
 		}
 

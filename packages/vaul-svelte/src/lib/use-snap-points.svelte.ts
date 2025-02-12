@@ -291,7 +291,6 @@ export function useSnapPoints({
 		) {
 			return;
 		}
-		console.log(newValue);
 
 		set(drawerNode(), {
 			transform: isVertical(direction.current)
