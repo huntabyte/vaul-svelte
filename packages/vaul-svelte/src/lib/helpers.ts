@@ -48,9 +48,7 @@ export function reset(el: Element | HTMLElement | null, prop?: string) {
 	if (!el || !(el instanceof HTMLElement)) return;
 	let originalStyles = cache.get(el);
 
-	if (!originalStyles) {
-		return;
-	}
+	if (!originalStyles) return;
 
 	if (prop) {
 		(el.style as any)[prop] = originalStyles[prop];
@@ -80,7 +78,7 @@ export function getTranslate(element: HTMLElement, direction: DrawerDirection): 
 	}
 	const style = window.getComputedStyle(element);
 	const transform =
-		// @ts-expect-error - vendor prefixes
+		// @ts-expect-error - shh
 		style.transform || style.webkitTransform || style.mozTransform;
 	let mat = transform.match(/^matrix3d\((.+)\)$/);
 	if (mat) {
