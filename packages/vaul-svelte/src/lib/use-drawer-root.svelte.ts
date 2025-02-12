@@ -67,7 +67,7 @@ export function useDrawerRoot(opts: UseDrawerRootProps) {
 	let nestedOpenChangeTimer: number | null = null;
 	let pointerStart = 0;
 	let keyboardIsOpen = box(false);
-	let shouldAnimate = !opts.open.current;
+	let shouldAnimate = $state(!opts.open.current);
 	let previousDiffFromInitial = 0;
 	let drawerHeight = 0;
 	let drawerWidth = 0;
@@ -201,8 +201,7 @@ export function useDrawerRoot(opts: UseDrawerRootProps) {
 	}
 
 	function onDrag(event: PointerEvent) {
-		if (!drawerNode) return;
-		if (!isDragging) return;
+		if (!drawerNode || !isDragging) return;
 
 		// We need to know how much of the drawer has been dragged in percentages so that we can transform background accordingly
 		const directionMultiplier =
@@ -247,6 +246,7 @@ export function useDrawerRoot(opts: UseDrawerRootProps) {
 		drawerNode.classList.add(DRAG_CLASS);
 		// If shouldDrag gave true once after pressing down on the drawer, we set isAllowedToDrag to true and it will remain true until we let go, there's no reason to disable dragging mid way, ever, and that's the solution to it
 		isAllowedToDrag = true;
+		console.log("setting transition none");
 		set(drawerNode, {
 			transition: "none",
 		});
@@ -255,7 +255,7 @@ export function useDrawerRoot(opts: UseDrawerRootProps) {
 			transition: "none",
 		});
 
-		if (opts.snapPoints.current && opts.snapPoints.current.length > 0) {
+		if (opts.snapPoints.current) {
 			snapPointsState.onDrag({ draggedDistance });
 		}
 
@@ -431,8 +431,8 @@ export function useDrawerRoot(opts: UseDrawerRootProps) {
 		opts.onClose?.current();
 
 		if (!fromWithin) {
-			opts.open.current = false;
 			handleOpenChange(false);
+			opts.open.current = false;
 		}
 
 		window.setTimeout(() => {
@@ -447,6 +447,7 @@ export function useDrawerRoot(opts: UseDrawerRootProps) {
 		const wrapper = document.querySelector("[data-vaul-drawer-wrapper]");
 		const currentSwipeAmount = getTranslate(drawerNode, opts.direction.current);
 
+		console.log("resetting drawer");
 		set(drawerNode, {
 			transform: "translate3d(0, 0, 0)",
 			transition: `transform ${TRANSITIONS.DURATION}s cubic-bezier(${TRANSITIONS.EASE.join(",")})`,
@@ -501,10 +502,15 @@ export function useDrawerRoot(opts: UseDrawerRootProps) {
 			(event.target && !shouldDrag(event.target, false)) ||
 			!swipeAmount ||
 			Number.isNaN(swipeAmount)
-		)
+		) {
+			console.log("2");
 			return;
+		}
 
-		if (dragStartTime === null) return;
+		if (dragStartTime === null) {
+			console.log("3");
+			return;
+		}
 
 		const timeTaken = dragEndTime.getTime() - dragStartTime.getTime();
 		const distMoved =

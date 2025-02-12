@@ -167,15 +167,26 @@ export function useSnapPoints({
 		activeSnapPoint.current = snapPoints.current?.[Math.max(newSnapPointIndex, 0)];
 	}
 
-	watch([() => activeSnapPoint.current, () => snapPoints.current, () => snapPointsOffset], () => {
-		if (!activeSnapPoint.current) return;
-		const newIndex =
-			snapPoints.current?.findIndex((snapPoint) => snapPoint === activeSnapPoint.current) ??
-			-1;
-		if (snapPointsOffset && newIndex !== -1 && typeof snapPointsOffset[newIndex] === "number") {
-			snapToPoint(snapPointsOffset[newIndex]);
+	watch.pre(
+		[() => activeSnapPoint.current, () => snapPoints.current, () => snapPointsOffset],
+		() => {
+			if (!activeSnapPoint.current) {
+				return;
+			}
+			const newIndex =
+				snapPoints.current?.findIndex(
+					(snapPoint) => snapPoint === activeSnapPoint.current
+				) ?? -1;
+			if (
+				snapPointsOffset &&
+				newIndex !== -1 &&
+				typeof snapPointsOffset[newIndex] === "number"
+			) {
+				if (snapPointsOffset[newIndex] === activeSnapPoint.current) return;
+				snapToPoint(snapPointsOffset[newIndex]);
+			}
 		}
-	});
+	);
 
 	function onRelease({
 		draggedDistance,
@@ -188,7 +199,9 @@ export function useSnapPoints({
 		velocity: number;
 		dismissible: boolean;
 	}) {
-		if (fadeFromIndex.current === undefined) return;
+		if (fadeFromIndex.current === undefined) {
+			return;
+		}
 
 		const currentPosition =
 			direction.current === "bottom" || direction.current === "right"
@@ -227,7 +240,6 @@ export function useSnapPoints({
 		// Find the closest snap point to the current position
 		const closestSnapPoint = snapPointsOffset?.reduce((prev, curr) => {
 			if (typeof prev !== "number" || typeof curr !== "number") return prev;
-
 			return Math.abs(curr - currentPosition) < Math.abs(prev - currentPosition)
 				? curr
 				: prev;
@@ -258,7 +270,9 @@ export function useSnapPoints({
 	}
 
 	function onDrag({ draggedDistance }: { draggedDistance: number }) {
-		if (activeSnapPointOffset === null) return;
+		if (activeSnapPointOffset === null) {
+			return;
+		}
 		const newValue =
 			direction.current === "bottom" || direction.current === "right"
 				? activeSnapPointOffset - draggedDistance
@@ -277,6 +291,7 @@ export function useSnapPoints({
 		) {
 			return;
 		}
+		console.log(newValue);
 
 		set(drawerNode(), {
 			transform: isVertical(direction.current)
@@ -291,8 +306,9 @@ export function useSnapPoints({
 			typeof activeSnapPointIndex !== "number" ||
 			!snapPointsOffset ||
 			fadeFromIndex.current === undefined
-		)
+		) {
 			return null;
+		}
 
 		// If this is true we are dragging to a snap point that is supposed to have an overlay
 		const isOverlaySnapPoint = activeSnapPointIndex === fadeFromIndex.current - 1;
@@ -303,8 +319,12 @@ export function useSnapPoints({
 		}
 
 		// Don't animate, but still use this one if we are dragging away from the overlaySnapPoint
-		if (isOverlaySnapPoint && !isDraggingDown) return 1;
-		if (!shouldFade && !isOverlaySnapPoint) return null;
+		if (isOverlaySnapPoint && !isDraggingDown) {
+			return 1;
+		}
+		if (!shouldFade && !isOverlaySnapPoint) {
+			return null;
+		}
 
 		// Either fadeFrom index or the one before
 		const targetSnapPointIndex = isOverlaySnapPoint

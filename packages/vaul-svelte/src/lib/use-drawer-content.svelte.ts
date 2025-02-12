@@ -4,6 +4,7 @@ import { Dialog as DrawerPrimitive } from "bits-ui";
 import { DrawerContext } from "./context.js";
 import type { DrawerDirection } from "./types.js";
 import { watch } from "runed";
+import { useScaleBackground } from "./use-scale-background.svelte.js";
 
 type DrawerPrimitiveContentProps = Pick<
 	ComponentProps<typeof DrawerPrimitive.Content>,
@@ -42,6 +43,8 @@ export function useDrawerContent(opts: UseDrawerContentProps) {
 	let lastKnownPointerEvent: PointerEvent | null = null;
 	let wasBeyondThePoint = false;
 	const hasSnapPoints = $derived(ctx.snapPoints.current && ctx.snapPoints.current.length > 0);
+
+	useScaleBackground();
 
 	function isDeltaInDirection(
 		delta: { x: number; y: number },
@@ -166,6 +169,13 @@ export function useDrawerContent(opts: UseDrawerContentProps) {
 		}
 	}
 
+	$inspect(ctx.direction.current).with((_, v) => console.log("direction", v));
+	$inspect(delayedSnapPoints).with((_, v) => console.log("delayedSnapPoints", v));
+	$inspect(ctx.open.current).with((_, v) => console.log("open", v));
+	$inspect(hasSnapPoints).with((_, v) => console.log("hasSnapPoints", v));
+	$inspect(ctx.container.current).with((_, v) => console.log("container", v));
+	$inspect(ctx.shouldAnimate).with((_, v) => console.log("shouldAnimate", v));
+
 	const props = $derived({
 		id: opts.id.current,
 		"data-vaul-drawer-direction": ctx.direction.current,
@@ -178,8 +188,8 @@ export function useDrawerContent(opts: UseDrawerContentProps) {
 		onOpenAutoFocus,
 		onInteractOutside,
 		onFocusOutside,
-		onpointermove,
 		onpointerup,
+		onpointermove,
 		onpointerout,
 		oncontextmenu,
 		preventScroll: ctx.modal.current,
