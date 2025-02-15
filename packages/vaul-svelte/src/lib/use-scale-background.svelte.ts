@@ -1,51 +1,40 @@
-import { untrack } from "svelte";
+import { watch } from "runed";
 import { BORDER_RADIUS, TRANSITIONS, WINDOW_TOP_OFFSET } from "./internal/constants.js";
-import { isVertical } from "./internal/helpers/is.js";
-import type { DrawerRootState } from "./vaul.svelte.js";
-import { noop } from "./internal/helpers/noop.js";
-import { chain } from "./internal/helpers/chain.js";
-import { assignStyle } from "./helpers.js";
+import { assignStyle, chain, isVertical } from "./helpers.js";
+import { noop } from "./internal/noop.js";
+import { DrawerContext } from "./context.js";
 
-export function useScaleBackground(root: DrawerRootState) {
-	const direction = $derived.by(() => root.direction.current);
-	const isOpen = $derived.by(() => root.open.current);
-	const shouldScaleBackground = $derived.by(() => root.shouldScaleBackground.current);
-	const setBackgroundColorOnScale = $derived.by(() => root.setBackgroundColorOnScale.current);
-	const noBodyStyles = $derived.by(() => root.noBodyStyles.current);
-
-	let timeoutId = $state<number | null>(null);
-	let initialBackgroundColor = $state("");
+export function useScaleBackground() {
+	const ctx = DrawerContext.get();
+	let timeoutId: number | null = null;
+	const initialBackgroundColor =
+		typeof document !== "undefined" ? document.body.style.backgroundColor : "";
 
 	function getScale() {
 		return (window.innerWidth - WINDOW_TOP_OFFSET) / window.innerWidth;
 	}
 
-	$effect(() => {
-		untrack(() => {
-			initialBackgroundColor = document.body.style.backgroundColor;
-		});
-	});
-
-	$effect(() => {
-		isOpen;
-		shouldScaleBackground;
-		setBackgroundColorOnScale;
-
-		return untrack(() => {
-			if (isOpen && shouldScaleBackground) {
-				if (timeoutId) window.clearTimeout(timeoutId);
+	watch(
+		[
+			() => ctx.open.current,
+			() => ctx.shouldScaleBackground.current,
+			() => ctx.setBackgroundColorOnScale.current,
+		],
+		() => {
+			if (ctx.open.current && ctx.shouldScaleBackground.current) {
+				if (timeoutId) clearTimeout(timeoutId);
 				const wrapper =
 					(document.querySelector("[data-vaul-drawer-wrapper]") as HTMLElement) ||
-					(document.querySelector("[vaul-drawer-wrapper]") as HTMLElement);
+					(document.querySelector("[data-vaul-drawer-wrapper]") as HTMLElement);
 
 				if (!wrapper) return;
 
 				chain(
-					setBackgroundColorOnScale && !noBodyStyles
+					ctx.setBackgroundColorOnScale.current && !ctx.noBodyStyles.current
 						? assignStyle(document.body, { background: "black" })
 						: noop,
 					assignStyle(wrapper, {
-						transformOrigin: isVertical(direction) ? "top" : "left",
+						transformOrigin: isVertical(ctx.direction.current) ? "top" : "left",
 						transitionProperty: "transform, border-radius",
 						transitionDuration: `${TRANSITIONS.DURATION}s`,
 						transitionTimingFunction: `cubic-bezier(${TRANSITIONS.EASE.join(",")})`,
@@ -55,7 +44,7 @@ export function useScaleBackground(root: DrawerRootState) {
 				const wrapperStylesCleanup = assignStyle(wrapper, {
 					borderRadius: `${BORDER_RADIUS}px`,
 					overflow: "hidden",
-					...(isVertical(direction)
+					...(isVertical(ctx.direction.current)
 						? {
 								transform: `scale(${getScale()}) translate3d(0, calc(env(safe-area-inset-top) + 14px), 0)`,
 							}
@@ -75,6 +64,6 @@ export function useScaleBackground(root: DrawerRootState) {
 					}, TRANSITIONS.DURATION * 1000);
 				};
 			}
-		});
-	});
+		}
+	);
 }

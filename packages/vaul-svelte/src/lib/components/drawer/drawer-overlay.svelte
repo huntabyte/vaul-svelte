@@ -1,10 +1,10 @@
 <script lang="ts">
 	import { Dialog as DialogPrimitive, type WithoutChildrenOrChild } from "bits-ui";
 	import { type WithChildren, box, mergeProps } from "svelte-toolbelt";
-	import Mounted from "../utils/mounted.svelte";
 	import type { OverlayProps } from "./index.js";
 	import { useId } from "$lib/internal/use-id.js";
-	import { useDrawerOverlay } from "$lib/vaul.svelte.js";
+	import { useDrawerOverlay } from "$lib/use-drawer-overlay.svelte.js";
+	import Mounted from "../utils/mounted.svelte";
 
 	let {
 		id = useId(),
@@ -24,11 +24,9 @@
 	const mergedProps = $derived(mergeProps(restProps, overlayState.props));
 </script>
 
-<DialogPrimitive.Overlay bind:ref {...mergedProps}>
-	<Mounted
-		onMounted={(m) => {
-			overlayState.mounted = m;
-		}}
-	/>
-	{@render children?.()}
-</DialogPrimitive.Overlay>
+{#if overlayState.shouldRender}
+	<DialogPrimitive.Overlay {...mergedProps}>
+		<Mounted onMounted={overlayState.setMounted} />
+		{@render children?.()}
+	</DialogPrimitive.Overlay>
+{/if}

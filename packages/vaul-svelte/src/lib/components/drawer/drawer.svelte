@@ -1,41 +1,39 @@
 <script lang="ts">
 	import { Dialog as DialogPrimitive } from "bits-ui";
-	import { afterSleep, box } from "svelte-toolbelt";
+	import { box } from "svelte-toolbelt";
 	import type { RootProps } from "./index.js";
-	import { noop } from "$lib/internal/helpers/noop.js";
-	import { useDrawerRoot } from "$lib/vaul.svelte.js";
-	import { CLOSE_THRESHOLD, SCROLL_LOCK_TIMEOUT, TRANSITIONS } from "$lib/internal/constants.js";
+	import { noop } from "$lib/internal/noop.js";
+	import { CLOSE_THRESHOLD, SCROLL_LOCK_TIMEOUT } from "$lib/internal/constants.js";
+	import { useDrawerRoot } from "$lib/use-drawer-root.svelte.js";
 
 	let {
 		open = $bindable(false),
 		onOpenChange = noop,
+		onDrag = noop,
+		onRelease = noop,
+		snapPoints,
+		shouldScaleBackground = false,
+		setBackgroundColorOnScale = true,
 		closeThreshold = CLOSE_THRESHOLD,
 		scrollLockTimeout = SCROLL_LOCK_TIMEOUT,
-		snapPoints,
+		dismissible = true,
+		handleOnly = false,
 		fadeFromIndex = snapPoints && snapPoints.length - 1,
-		backgroundColor = "black",
-		nested = false,
-		shouldScaleBackground = false,
 		activeSnapPoint = $bindable(null),
 		onActiveSnapPointChange = noop,
-		onRelease = noop,
-		onDrag = noop,
-		onClose = noop,
-		dismissible = true,
-		direction = "bottom",
 		fixed = false,
-		handleOnly = false,
-		noBodyStyles = false,
-		preventScrollRestoration = true,
-		setBackgroundColorOnScale = true,
-		onAnimationEnd = noop,
-		controlledOpen = false,
-		repositionInputs = true,
-		autoFocus = false,
-		snapToSequentialPoint = false,
-		container = null,
-		controlledActiveSnapPoint = false,
 		modal = true,
+		onClose = noop,
+		nested = false,
+		noBodyStyles = false,
+		direction = "bottom",
+		snapToSequentialPoint = false,
+		preventScrollRestoration = false,
+		repositionInputs = true,
+		onAnimationEnd = noop,
+		container = null,
+		autoFocus = false,
+		disablePreventScroll = true,
 		...restProps
 	}: RootProps = $props();
 
@@ -43,30 +41,21 @@
 		open: box.with(
 			() => open,
 			(o) => {
-				if (controlledOpen) {
-					handleOpenChange(open);
-				} else {
-					open = o;
-					handleOpenChange(o);
-				}
+				open = o;
+				rootState.handleOpenChange(o);
 			}
 		),
 		closeThreshold: box.with(() => closeThreshold),
 		scrollLockTimeout: box.with(() => scrollLockTimeout),
 		snapPoints: box.with(() => snapPoints),
 		fadeFromIndex: box.with(() => fadeFromIndex),
-		backgroundColor: box.with(() => backgroundColor),
 		nested: box.with(() => nested),
 		shouldScaleBackground: box.with(() => shouldScaleBackground),
 		activeSnapPoint: box.with(
 			() => activeSnapPoint,
 			(v) => {
-				if (controlledActiveSnapPoint) {
-					onActiveSnapPointChange(v);
-				} else {
-					activeSnapPoint = v;
-					onActiveSnapPointChange(v);
-				}
+				activeSnapPoint = v;
+				onActiveSnapPointChange(v);
 			}
 		),
 		onRelease: box.with(() => onRelease),
@@ -84,58 +73,20 @@
 		autoFocus: box.with(() => autoFocus),
 		snapToSequentialPoint: box.with(() => snapToSequentialPoint),
 		container: box.with(() => container),
-	});
-
-	let bodyStyles: any;
-
-	function handleOpenChange(o: boolean) {
-		onOpenChange?.(o);
-
-		if (o && !nested) {
-			bodyStyles = document.body.style.cssText;
-		} else if (!o && !nested) {
-			afterSleep(TRANSITIONS.DURATION * 1000, () => {
-				document.body.style.cssText = bodyStyles;
-			});
-		}
-
-		if (!o && !nested) {
-			rootState.positionFixedState.restorePositionSetting();
-		}
-
-		setTimeout(() => {
-			onAnimationEnd?.(o);
-		}, TRANSITIONS.DURATION * 1000);
-
-		if (o && !modal) {
-			if (typeof window !== "undefined") {
-				window.requestAnimationFrame(() => {
-					document.body.style.pointerEvents = "auto";
-				});
-			}
-		}
-
-		if (!o) {
-			// This will be removed when the exit animation ends (`500ms`)
-			document.body.style.pointerEvents = "auto";
-		}
-	}
-
-	$effect(() => {
-		return () => {
-			if (nested) return;
-			document.body.style.cssText = bodyStyles;
-		};
+		disablePreventScroll: box.with(() => disablePreventScroll),
+		onOpenChange: box.with(() => onOpenChange),
+		onAnimationEnd: box.with(() => onAnimationEnd),
 	});
 </script>
 
 <DialogPrimitive.Root
-	controlledOpen
-	open={rootState.open.current}
-	onOpenChange={(o) => {
-		rootState.onDialogOpenChange(o);
-		handleOpenChange(o);
-	}}
+	bind:open={
+		() => rootState.open.current,
+		(o) => {
+			rootState.onDialogOpenChange(o);
+			rootState.handleOpenChange(o);
+		}
+	}
 	{...restProps}
 />
 
@@ -193,29 +144,29 @@
 	}
 
 	:global([data-vaul-drawer][data-vaul-snap-points="true"][data-vaul-drawer-direction="bottom"]) {
-		transform: translate3d(0, 100%, 0);
+		transform: translate3d(0, var(--initial-transform, 100%), 0);
 	}
 
 	:global([data-vaul-drawer][data-vaul-snap-points="true"][data-vaul-drawer-direction="top"]) {
-		transform: translate3d(0, -100%, 0);
+		transform: translate3d(0, calc(var(--initial-transform, 100%) * -1), 0);
 	}
 
 	:global([data-vaul-drawer][data-vaul-snap-points="true"][data-vaul-drawer-direction="left"]) {
-		transform: translate3d(-100%, 0, 0);
+		transform: translate3d(calc(var(--initial-transform, 100%) * -1), 0, 0);
 	}
 
 	:global([data-vaul-drawer][data-vaul-snap-points="true"][data-vaul-drawer-direction="right"]) {
-		transform: translate3d(100%, 0, 0);
+		transform: translate3d(var(--initial-transform, 100%), 0, 0);
 	}
 
 	:global(
-			[data-vaul-drawer][data-vaul-delayed-snap-points="true"][data-vaul-snap-points="true"][data-vaul-drawer-direction="top"]
+			[data-vaul-drawer][data-vaul-delayed-snap-points="true"][data-vaul-drawer-direction="top"]
 		) {
 		transform: translate3d(0, var(--snap-point-height, 0), 0);
 	}
 
 	:global(
-			[data-vaul-drawer][data-vaul-delayed-snap-points="true"][data-vaul-snap-points="true"][data-vaul-drawer-direction="bottom"]
+			[data-vaul-drawer][data-vaul-delayed-snap-points="true"][data-vaul-drawer-direction="bottom"]
 		) {
 		transform: translate3d(0, var(--snap-point-height, 0), 0);
 	}
@@ -241,6 +192,10 @@
 	}
 	:global([data-vaul-overlay][data-state="closed"]) {
 		animation-name: fadeOut;
+	}
+
+	:global([data-vaul-animate="false"]) {
+		animation: none !important;
 	}
 
 	:global([data-vaul-overlay][data-vaul-snap-points="true"]) {
@@ -356,7 +311,7 @@
 
 	@keyframes -global-slideFromBottom {
 		from {
-			transform: translate3d(0, 100%, 0);
+			transform: translate3d(0, var(--initial-transform, 100%), 0);
 		}
 		to {
 			transform: translate3d(0, 0, 0);
@@ -365,13 +320,13 @@
 
 	@keyframes -global-slideToBottom {
 		to {
-			transform: translate3d(0, 100%, 0);
+			transform: translate3d(0, var(--initial-transform, 100%), 0);
 		}
 	}
 
 	@keyframes -global-slideFromTop {
 		from {
-			transform: translate3d(0, -100%, 0);
+			transform: translate3d(0, calc(var(--initial-transform, 100%) * -1), 0);
 		}
 		to {
 			transform: translate3d(0, 0, 0);
@@ -380,13 +335,13 @@
 
 	@keyframes -global-slideToTop {
 		to {
-			transform: translate3d(0, -100%, 0);
+			transform: translate3d(0, calc(var(--initial-transform, 100%) * -1), 0);
 		}
 	}
 
 	@keyframes -global-slideFromLeft {
 		from {
-			transform: translate3d(-100%, 0, 0);
+			transform: translate3d(calc(var(--initial-transform, 100%) * -1), 0, 0);
 		}
 		to {
 			transform: translate3d(0, 0, 0);
@@ -395,13 +350,13 @@
 
 	@keyframes -global-slideToLeft {
 		to {
-			transform: translate3d(-100%, 0, 0);
+			transform: translate3d(calc(var(--initial-transform, 100%) * -1), 0, 0);
 		}
 	}
 
 	@keyframes -global-slideFromRight {
 		from {
-			transform: translate3d(100%, 0, 0);
+			transform: translate3d(var(--initial-transform, 100%), 0, 0);
 		}
 		to {
 			transform: translate3d(0, 0, 0);
@@ -410,7 +365,7 @@
 
 	@keyframes -global-slideToRight {
 		to {
-			transform: translate3d(100%, 0, 0);
+			transform: translate3d(var(--initial-transform, 100%), 0, 0);
 		}
 	}
 
