@@ -42,12 +42,12 @@ Use the drawer in your app.
 
 Play around with the examples on StackBlitz:
 
-- [With scaled background](https://stackblitz.com/edit/vaul-svelte-scaled?file=src%2Froutes%2F%2Bpage.svelte)
-- [Without scaled background](https://stackblitz.com/edit/vaul-svelte-without-scale?file=src%2Froutes%2F%2Bpage.svelte)
-- [With snap points](https://stackblitz.com/edit/vaul-svelte-snap-points?file=src%2Froutes%2F%2Bpage.svelte)
-- [Scrollable with inputs](https://stackblitz.com/edit/vaul-svelte-scrollable-with-inputs?file=src%2Froutes%2F%2Bpage.svelte)
-- [Nested drawers](https://stackblitz.com/edit/vaul-svelte-nested-drawers?file=src%2Froutes%2F%2Bpage.svelte)
-- [Non-dismissible](https://stackblitz.com/edit/vaul-svelte-non-dismissible?file=src%2Froutes%2F%2Bpage.svelte)
+-   [With scaled background](https://stackblitz.com/edit/vaul-svelte-scaled?file=src%2Froutes%2F%2Bpage.svelte)
+-   [Without scaled background](https://stackblitz.com/edit/vaul-svelte-without-scale?file=src%2Froutes%2F%2Bpage.svelte)
+-   [With snap points](https://stackblitz.com/edit/vaul-svelte-snap-points?file=src%2Froutes%2F%2Bpage.svelte)
+-   [Scrollable with inputs](https://stackblitz.com/edit/vaul-svelte-scrollable-with-inputs?file=src%2Froutes%2F%2Bpage.svelte)
+-   [Nested drawers](https://stackblitz.com/edit/vaul-svelte-nested-drawers?file=src%2Froutes%2F%2Bpage.svelte)
+-   [Non-dismissible](https://stackblitz.com/edit/vaul-svelte-non-dismissible?file=src%2Froutes%2F%2Bpage.svelte)
 
 ## API Reference
 
@@ -60,15 +60,25 @@ Additional props:
 
 `closeThreshold`: Number between 0 and 1 that determines when the drawer should be closed. Example: threshold of 0.5 would close the drawer if the user swiped for 50% of the height of the drawer or more.
 
-`scrollLockTimeout`: Duration for which the drawer is not draggable after scrolling content inside of the drawer. Defaults to 500ms
+`scrollLockTimeout`: Duration for which the drawer is not draggable after scrolling content inside of the drawer. Defaults to 500ms.
 
-`snapPoints`: Array of numbers from 0 to 100 that corresponds to % of the screen a given snap point should take up. Should go from least visible. Example `[0.2, 0.5, 0.8]`. You can also use px values, which doesn't take screen height into account.
+`snapPoints`: Array of numbers from 0 to 100 that corresponds to % of the screen a given snap point should take up. Should go from least visible. Example [0.2, 0.5, 0.8]. You can also use px values, which doesn't take screen height into account.
 
-`fadeFromIndex`: Index of a `snapPoint` from which the overlay fade should be applied. Defaults to the last snap point.
+`fadeFromIndex`: Index of a snapPoint from which the overlay fade should be applied. Defaults to the last snap point.
 
-`direction`: Direction of the drawer. Can be `top`, `bottom`, `left`, or `right`. Defaults to `bottom`.
+`modal`: When false it allows to interact with elements outside of the drawer without closing it. Defaults to true.
 
-`backgroundColor`: Background color of the body when the drawer is open and `shouldScaleBackground` is true. Defaults to black.
+`handleOnly`: When true only allows the drawer to be dragged by the <Drawer.Handle /> component. Defaults to false.
+
+`direction`: Direction of the drawer. Can be top or bottom, left, right. Defaults to bottom.
+
+`preventScrollRestoration`: When true it prevents scroll restoration when the drawer is closed after a navigation happens inside of it. Defaults to true.
+
+`disablePreventScroll`: When true scroll prevention mechanism will be disabled. Scroll prevention ensures that page will not scroll on mobile when opening drawer. However this mechanism gets confused when drawer has an input with autofocus and therefore opens simulataneosly with touch keyboard. Defaults to true. modal set to false also disables it.
+
+`noBodyStyles`: When true the body doesn't get any styles assigned from Vaul.
+
+`setBackgroundColorOnScale`: When false we don't change body's background color when the drawer is open. true by default.
 
 `[data-vaul-no-drag]`: When interacting with an element with this data attribute, the drawer won't be dragged.
 
