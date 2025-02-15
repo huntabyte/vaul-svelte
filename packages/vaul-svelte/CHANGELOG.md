@@ -1,5 +1,11 @@
 # vaul-svelte
 
+## 1.0.0-next.6
+
+### Patch Changes
+
+-   fix: snap point release issue ([#119](https://github.com/huntabyte/vaul-svelte/pull/119))
+
 ## 1.0.0-next.5
 
 ### Patch Changes
