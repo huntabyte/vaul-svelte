@@ -1,5 +1,6 @@
 import {
 	afterSleep,
+	afterTick,
 	box,
 	type ReadableBoxedValues,
 	type WritableBoxedValues,
@@ -72,6 +73,7 @@ export function useDrawerRoot(opts: UseDrawerRootProps) {
 	let drawerHeight = 0;
 	let drawerWidth = 0;
 	let initialDrawerHeight = 0;
+	let isReleasing = false;
 
 	const snapPointsState = useSnapPoints({
 		snapPoints: opts.snapPoints,
@@ -86,6 +88,7 @@ export function useDrawerRoot(opts: UseDrawerRootProps) {
 		},
 		snapToSequentialPoint: opts.snapToSequentialPoint,
 		open: opts.open,
+		isReleasing: () => isReleasing,
 	});
 
 	usePreventScroll({
@@ -487,6 +490,16 @@ export function useDrawerRoot(opts: UseDrawerRootProps) {
 	}
 
 	function onRelease(event: PointerEvent | null) {
+		// We keep track of whether we are releasing or not
+		// because we need to differentiate release from outside click/escape keydown
+		isReleasing = true;
+		handleRelease(event);
+		afterTick(() => {
+			isReleasing = false;
+		});
+	}
+
+	function handleRelease(event: PointerEvent | null) {
 		if (!isDragging || !drawerNode) return;
 
 		drawerNode.classList.remove(DRAG_CLASS);
@@ -504,9 +517,7 @@ export function useDrawerRoot(opts: UseDrawerRootProps) {
 			return;
 		}
 
-		if (dragStartTime === null) {
-			return;
-		}
+		if (dragStartTime === null) return;
 
 		const timeTaken = dragEndTime.getTime() - dragStartTime.getTime();
 		const distMoved =

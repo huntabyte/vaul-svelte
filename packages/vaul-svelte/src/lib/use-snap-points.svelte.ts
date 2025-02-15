@@ -17,9 +17,11 @@ export function useSnapPoints({
 	snapToSequentialPoint,
 	activeSnapPoint,
 	open,
+	isReleasing,
 }: Getters<{
 	drawerNode: HTMLElement | null;
 	overlayNode: HTMLElement | null;
+	isReleasing: boolean;
 }> & {
 	setOpenTime: (time: Date) => void;
 } & WritableBoxedValues<{
@@ -167,26 +169,22 @@ export function useSnapPoints({
 		activeSnapPoint.current = snapPoints.current?.[Math.max(newSnapPointIndex, 0)];
 	}
 
-	watch.pre(
-		[() => activeSnapPoint.current, () => snapPoints.current, () => snapPointsOffset],
-		() => {
-			if (!activeSnapPoint.current) {
-				return;
-			}
-			const newIndex =
-				snapPoints.current?.findIndex(
-					(snapPoint) => snapPoint === activeSnapPoint.current
-				) ?? -1;
-			if (
-				snapPointsOffset &&
-				newIndex !== -1 &&
-				typeof snapPointsOffset[newIndex] === "number"
-			) {
-				if (snapPointsOffset[newIndex] === activeSnapPoint.current) return;
-				snapToPoint(snapPointsOffset[newIndex]);
-			}
+	watch([() => activeSnapPoint.current, () => open.current], () => {
+		// we only want to snap to the next point if we are closing via a
+		// means other than release, otherwise a race condition can occur
+		// where the drawer snaps to the previous point and then closes,
+		// rather than continuing to close from the current point
+		const releasing = isReleasing();
+		if (!activeSnapPoint.current || releasing) return;
+
+		const newIndex =
+			snapPoints.current?.findIndex((snapPoint) => snapPoint === activeSnapPoint.current) ??
+			-1;
+		if (snapPointsOffset && newIndex !== -1 && typeof snapPointsOffset[newIndex] === "number") {
+			if (snapPointsOffset[newIndex] === activeSnapPoint.current) return;
+			snapToPoint(snapPointsOffset[newIndex]);
 		}
-	);
+	});
 
 	function onRelease({
 		draggedDistance,
@@ -199,12 +197,10 @@ export function useSnapPoints({
 		velocity: number;
 		dismissible: boolean;
 	}) {
-		if (fadeFromIndex.current === undefined) {
-			return;
-		}
-
+		if (fadeFromIndex.current === undefined) return;
+		const dir = direction.current;
 		const currentPosition =
-			direction.current === "bottom" || direction.current === "right"
+			dir === "bottom" || dir === "right"
 				? (activeSnapPointOffset ?? 0) - draggedDistance
 				: (activeSnapPointOffset ?? 0) + draggedDistance;
 		const isOverlaySnapPoint = activeSnapPointIndex === fadeFromIndex.current - 1;
@@ -245,7 +241,8 @@ export function useSnapPoints({
 				: prev;
 		});
 
-		const dim = isVertical(direction.current) ? window.innerHeight : window.innerWidth;
+		const dim = isVertical(dir) ? window.innerHeight : window.innerWidth;
+
 		if (velocity > VELOCITY_THRESHOLD && Math.abs(draggedDistance) < dim * 0.4) {
 			const dragDirection = hasDraggedUp ? 1 : -1; // 1 = up, -1 = down
 
@@ -259,9 +256,7 @@ export function useSnapPoints({
 				closeDrawer();
 			}
 
-			if (activeSnapPointIndex === null) {
-				return;
-			}
+			if (activeSnapPointIndex === null) return;
 
 			snapToPoint(snapPointsOffset[activeSnapPointIndex! + dragDirection]);
 			return;
@@ -270,30 +265,20 @@ export function useSnapPoints({
 	}
 
 	function onDrag({ draggedDistance }: { draggedDistance: number }) {
-		if (activeSnapPointOffset === null) {
-			return;
-		}
-		const newValue =
-			direction.current === "bottom" || direction.current === "right"
-				? activeSnapPointOffset - draggedDistance
-				: activeSnapPointOffset + draggedDistance;
+		if (activeSnapPointOffset === null) return;
+		const dir = direction.current;
+		const newValue = isBottomOrRight(dir)
+			? activeSnapPointOffset - draggedDistance
+			: activeSnapPointOffset + draggedDistance;
+
+		const lastSnapPoint = snapPointsOffset[snapPointsOffset.length - 1];
 
 		// Don't do anything if we exceed the last(biggest) snap point
-		if (
-			(direction.current === "bottom" || direction.current === "right") &&
-			newValue < snapPointsOffset[snapPointsOffset.length - 1]
-		) {
-			return;
-		}
-		if (
-			(direction.current === "top" || direction.current === "left") &&
-			newValue > snapPointsOffset[snapPointsOffset.length - 1]
-		) {
-			return;
-		}
+		if (isBottomOrRight(dir) && newValue < lastSnapPoint) return;
+		if (!isBottomOrRight(dir) && newValue > lastSnapPoint) return;
 
 		set(drawerNode(), {
-			transform: isVertical(direction.current)
+			transform: isVertical(dir)
 				? `translate3d(0, ${newValue}px, 0)`
 				: `translate3d(${newValue}px, 0, 0)`,
 		});
@@ -361,4 +346,9 @@ export function useSnapPoints({
 		onRelease,
 		onDrag,
 	};
+}
+
+export function isBottomOrRight(direction: DrawerDirection) {
+	if (direction === "bottom" || direction === "right") return true;
+	return false;
 }
