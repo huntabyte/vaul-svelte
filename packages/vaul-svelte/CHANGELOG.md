@@ -1,5 +1,11 @@
 # vaul-svelte
 
+## 1.0.0-next.5
+
+### Patch Changes
+
+-   fix: `onOpenChange` being called twice ([#117](https://github.com/huntabyte/vaul-svelte/pull/117))
+
 ## 1.0.0-next.4
 
 ### Patch Changes
