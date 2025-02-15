@@ -84,7 +84,6 @@
 		() => rootState.open.current,
 		(o) => {
 			rootState.onDialogOpenChange(o);
-			rootState.handleOpenChange(o);
 		}
 	}
 	{...restProps}
