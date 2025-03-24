@@ -21,4 +21,5 @@ export type {
 	DrawerDescriptionProps as DescriptionProps,
 	DrawerCloseProps as CloseProps,
 	DrawerPortalProps as PortalProps,
+	DrawerTriggerProps as TriggerProps,
 } from "./types.js";
