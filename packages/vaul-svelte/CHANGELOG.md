@@ -1,5 +1,11 @@
 # vaul-svelte
 
+## 1.0.0-next.7
+
+### Patch Changes
+
+-   fix: Expose `TriggerProps` ([#125](https://github.com/huntabyte/vaul-svelte/pull/125))
+
 ## 1.0.0-next.6
 
 ### Patch Changes
