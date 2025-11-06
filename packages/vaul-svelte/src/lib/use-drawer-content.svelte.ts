@@ -16,6 +16,8 @@ type DrawerPrimitiveContentProps = Pick<
 	| "onpointerup"
 	| "onpointerout"
 	| "oncontextmenu"
+	| "ontouchmove"
+	| "ontouchend"
 >;
 
 interface UseDrawerContentProps
@@ -159,11 +161,48 @@ export function useDrawerContent(opts: UseDrawerContentProps) {
 
 	function onpointerout(e: PointerEvent & { currentTarget: EventTarget & HTMLDivElement }) {
 		opts.onpointerout.current?.(e);
+		if (e.pointerType === "touch") return;
 		handleOnPointerUp(lastKnownPointerEvent);
 	}
 
 	function oncontextmenu(e: PointerEvent & { currentTarget: EventTarget & HTMLDivElement }) {
 		opts.oncontextmenu.current?.(e);
+		if (lastKnownPointerEvent) {
+			handleOnPointerUp(lastKnownPointerEvent);
+		}
+	}
+
+	function ontouchmove(e: TouchEvent & { currentTarget: EventTarget & HTMLDivElement }) {
+		if (!pointerStart || e.touches.length !== 1) return;
+
+		const touch = e.touches[0];
+		const yPosition = touch.pageY - pointerStart.y;
+		const xPosition = touch.pageX - pointerStart.x;
+
+		const syntheticEvent = {
+			pageX: touch.pageX,
+			pageY: touch.pageY,
+			pointerType: "touch",
+			target: e.target,
+		} as PointerEvent;
+
+		lastKnownPointerEvent = syntheticEvent;
+
+		const swipeStartThreshold = 10;
+		const delta = { x: xPosition, y: yPosition };
+
+		const isAllowedToSwipe = isDeltaInDirection(
+			delta,
+			ctx.direction.current,
+			swipeStartThreshold
+		);
+
+		if (isAllowedToSwipe) {
+			ctx.onDrag(syntheticEvent);
+		}
+	}
+
+	function ontouchend(_e: TouchEvent & { currentTarget: EventTarget & HTMLDivElement }) {
 		if (lastKnownPointerEvent) {
 			handleOnPointerUp(lastKnownPointerEvent);
 		}
@@ -185,6 +224,8 @@ export function useDrawerContent(opts: UseDrawerContentProps) {
 		onpointermove,
 		onpointerout,
 		oncontextmenu,
+		ontouchmove,
+		ontouchend,
 		preventScroll: ctx.modal.current,
 	});
 
