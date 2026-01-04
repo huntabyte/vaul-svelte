@@ -137,6 +137,11 @@
 		transition: transform 0.5s cubic-bezier(0.32, 0.72, 0, 1);
 	}
 
+	:global([data-vaul-drawer][disable-animation="true"]) {
+		transition: transform 0.0s cubic-bezier(0.32, 0.72, 0, 1) !important;
+		animation-duration: 0.0s !important;
+	}
+
 	:global([data-vaul-drawer][data-vaul-drawer-direction="bottom"]) {
 		transform: translate3d(0, 100%, 0);
 	}
